@@ -1,7 +1,7 @@
-//! Mermaid ASCII - Convert Mermaid diagrams to ASCII/Unicode art
+//! Mermaid ASCII - Convert Mermaid diagrams to ASCII/Unicode art and SVG
 //!
 //! This library provides functionality to parse Mermaid diagram syntax and render
-//! it as ASCII or Unicode box-drawing art.
+//! it as ASCII or Unicode box-drawing art, or as SVG.
 //!
 //! # Supported Diagram Types
 //!
@@ -14,6 +14,7 @@
 pub mod types;
 pub mod parser;
 pub mod ascii;
+pub mod svg;
 
 pub use ascii::render_mermaid_ascii;
 pub use types::*;

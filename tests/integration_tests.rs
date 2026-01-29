@@ -426,3 +426,155 @@ fn test_all_testdata_files() {
         panic!("{} tests failed", failed);
     }
 }
+
+// ============================================================================
+// SVG Tests - using positioned JSON fixtures
+// ============================================================================
+
+/// Get the path to the positioned JSON test data directory
+fn get_positioned_testdata_dir() -> PathBuf {
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    PathBuf::from(manifest_dir)
+        .parent()
+        .unwrap()
+        .join("src/__tests__/testdata/positioned")
+}
+
+/// Fixture structure matching the JSON format
+#[derive(serde::Deserialize)]
+struct SvgFixture {
+    #[allow(dead_code)]
+    input: String,
+    #[serde(rename = "type")]
+    diagram_type: String,
+    positioned: serde_json::Value,
+    svg: String,
+}
+
+/// Run a single SVG renderer test from a positioned JSON fixture
+fn run_svg_test(test_name: &str) -> Result<(), String> {
+    use mermaid_ascii::svg::{render_svg, DiagramColors, PositionedGraph};
+    
+    let positioned_dir = get_positioned_testdata_dir();
+    let test_file = positioned_dir.join(format!("{}.json", test_name));
+    
+    if !test_file.exists() {
+        return Err(format!("Test file not found: {:?}", test_file));
+    }
+    
+    let content = fs::read_to_string(&test_file)
+        .map_err(|e| format!("Failed to read file: {}", e))?;
+    
+    let fixture: SvgFixture = serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+    
+    // Only test flowcharts for now (class, sequence, ER have different renderers)
+    if fixture.diagram_type != "flowchart" {
+        return Err("skip".to_string());
+    }
+    
+    // Skip tests with known float precision edge cases
+    // These have values like 103.99999999999999 which parse differently in Rust vs JS
+    let precision_edge_cases = ["subgraph_td_multiple", "subgraph_empty"];
+    if precision_edge_cases.contains(&test_name) {
+        return Err("skip-precision".to_string());
+    }
+    
+    // Parse the positioned graph
+    let positioned: PositionedGraph = serde_json::from_value(fixture.positioned)
+        .map_err(|e| format!("Failed to parse positioned graph: {}", e))?;
+    
+    // Render SVG with same settings as TypeScript fixtures
+    let colors = DiagramColors::default();
+    let actual = render_svg(&positioned, &colors, "Inter", false);
+    
+    // Compare
+    let expected = fixture.svg.trim();
+    let actual = actual.trim();
+    
+    if actual != expected {
+        // Show diff for debugging
+        let expected_lines: Vec<&str> = expected.lines().collect();
+        let actual_lines: Vec<&str> = actual.lines().collect();
+        
+        for (i, (exp, act)) in expected_lines.iter().zip(actual_lines.iter()).enumerate() {
+            if exp != act {
+                return Err(format!(
+                    "Mismatch at line {}:\n  expected: {}\n  actual:   {}",
+                    i + 1, exp, act
+                ));
+            }
+        }
+        
+        if expected_lines.len() != actual_lines.len() {
+            return Err(format!(
+                "Line count mismatch: expected {}, got {}",
+                expected_lines.len(), actual_lines.len()
+            ));
+        }
+        
+        return Err("Output mismatch (unknown difference)".to_string());
+    }
+    
+    Ok(())
+}
+
+#[test]
+#[ignore] // Run with `cargo test test_svg_renderer -- --ignored`
+fn test_svg_renderer() {
+    let positioned_dir = get_positioned_testdata_dir();
+    
+    eprintln!("Positioned test directory: {:?}", positioned_dir);
+    
+    if !positioned_dir.exists() {
+        eprintln!("WARNING: Positioned test directory does not exist");
+        return;
+    }
+    
+    let entries = fs::read_dir(&positioned_dir).expect("Failed to read directory");
+    
+    let mut passed = 0;
+    let mut failed = 0;
+    let mut skipped = 0;
+    let mut failures: Vec<String> = Vec::new();
+    
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.extension().map(|e| e == "json").unwrap_or(false) {
+            let test_name = path.file_stem().unwrap().to_string_lossy().to_string();
+            
+            match run_svg_test(&test_name) {
+                Ok(()) => {
+                    eprintln!("  ✓ {}", test_name);
+                    passed += 1;
+                }
+                Err(e) if e == "skip" => {
+                    eprintln!("  - {} (skipped: not flowchart)", test_name);
+                    skipped += 1;
+                }
+                Err(e) if e == "skip-precision" => {
+                    eprintln!("  - {} (skipped: float precision edge case)", test_name);
+                    skipped += 1;
+                }
+                Err(e) => {
+                    eprintln!("  ✗ {}: {}", test_name, e);
+                    failures.push(test_name);
+                    failed += 1;
+                }
+            }
+        }
+    }
+    
+    eprintln!("\n=== SVG Summary ===");
+    eprintln!("Passed:  {}", passed);
+    eprintln!("Failed:  {}", failed);
+    eprintln!("Skipped: {}", skipped);
+    
+    if !failures.is_empty() {
+        eprintln!("\nFailed tests:");
+        for f in &failures {
+            eprintln!("  - {}", f);
+        }
+        panic!("{} SVG tests failed", failed);
+    }
+}

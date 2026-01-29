@@ -3,12 +3,14 @@ name = "mermaid-ascii"
 version = "0.1.0"
 edition = "2021"
 authors = ["Mermaid ASCII Rust Port"]
-description = "Convert Mermaid diagrams to ASCII art"
+description = "Convert Mermaid diagrams to ASCII art and SVG"
 license = "MIT"
 
 [dependencies]
 regex = "1"
 lazy_static = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 
 [dev-dependencies]
 
