@@ -1,27 +1,30 @@
-use m2svg::{render_mermaid_ascii, AsciiRenderOptions};
+use m2svg::{render_mermaid_ascii, render_to_svg, AsciiRenderOptions};
 use std::io::{self, Read};
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     
     if args.iter().any(|a| a == "-h" || a == "--help") {
-        println!("mermaid-ascii - Convert Mermaid diagrams to ASCII art");
+        println!("m2svg - Convert Mermaid diagrams to ASCII art or SVG");
         println!();
-        println!("Usage: mermaid-ascii [OPTIONS] [INPUT]");
+        println!("Usage: m2svg [OPTIONS] [INPUT]");
         println!();
-        println!("Reads Mermaid diagram from argument or stdin and outputs ASCII art.");
+        println!("Reads Mermaid diagram from argument or stdin and outputs ASCII art or SVG.");
         println!();
         println!("Options:");
         println!("  -h, --help     Show this help message");
-        println!("  -u, --unicode  Use Unicode box-drawing characters (default: ASCII)");
+        println!("  -a, --ascii    Use plain ASCII characters (default: Unicode)");
+        println!("  -s, --svg      Output SVG instead of ASCII");
         println!();
-        println!("Example:");
-        println!("  echo 'graph LR\\n  A --> B' | mermaid-ascii");
-        println!("  mermaid-ascii 'graph LR\\n  A --> B'");
+        println!("Examples:");
+        println!("  echo 'graph LR\\n  A --> B' | m2svg");
+        println!("  m2svg 'graph LR\\n  A --> B'");
+        println!("  m2svg --svg 'graph TD\\n  A --> B' > diagram.svg");
         return;
     }
     
-    let use_unicode = args.iter().any(|a| a == "-u" || a == "--unicode");
+    let use_ascii = args.iter().any(|a| a == "-a" || a == "--ascii");
+    let use_svg = args.iter().any(|a| a == "-s" || a == "--svg");
     
     // Get input from argument or stdin
     let input: String = args.iter()
@@ -40,16 +43,26 @@ fn main() {
         std::process::exit(1);
     }
     
-    let options = AsciiRenderOptions {
-        use_ascii: !use_unicode,
-        ..Default::default()
-    };
-    
-    match render_mermaid_ascii(&input, Some(options)) {
-        Ok(output) => println!("{}", output),
-        Err(e) => {
-            eprintln!("Error: {}", e);
-            std::process::exit(1);
+    if use_svg {
+        match render_to_svg(&input) {
+            Ok(output) => println!("{}", output),
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
+            }
+        }
+    } else {
+        let options = AsciiRenderOptions {
+            use_ascii,
+            ..Default::default()
+        };
+        
+        match render_mermaid_ascii(&input, Some(options)) {
+            Ok(output) => println!("{}", output),
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
+            }
         }
     }
 }
