@@ -1,0 +1,21 @@
+[package]
+name = "mermaid-ascii"
+version = "0.1.0"
+edition = "2021"
+authors = ["Mermaid ASCII Rust Port"]
+description = "Convert Mermaid diagrams to ASCII art"
+license = "MIT"
+
+[dependencies]
+regex = "1"
+lazy_static = "1"
+
+[dev-dependencies]
+
+[[bin]]
+name = "mermaid-ascii"
+path = "src/main.rs"
+
+[lib]
+name = "mermaid_ascii"
+path = "src/lib.rs"
