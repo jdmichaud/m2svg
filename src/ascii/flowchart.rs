@@ -1,12 +1,11 @@
 //! Flowchart ASCII rendering
 
-use crate::types::{MermaidGraph, MermaidSubgraph, Direction as MermaidDirection};
+use crate::types::{MermaidGraph, MermaidSubgraph};
 use super::types::{
     AsciiConfig, AsciiGraph, AsciiNode, AsciiEdge, AsciiSubgraph,
-    GridCoord, DrawingCoord, GraphDirection,
 };
-use super::canvas::{canvas_to_string, set_canvas_size_to_grid};
-use super::grid::{create_mapping, grid_to_drawing_coord};
+use super::canvas::canvas_to_string;
+use super::grid::create_mapping;
 use super::draw::draw_graph;
 
 /// Convert MermaidGraph to AsciiGraph

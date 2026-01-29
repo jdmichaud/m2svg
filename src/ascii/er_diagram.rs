@@ -13,13 +13,13 @@ pub fn render_er_ascii(diagram: &ErDiagram, config: &AsciiConfig) -> Result<Stri
     let use_ascii = config.use_ascii;
     
     // Box-drawing characters
-    let (h_line, v_line, tl, tr, bl, br) = if use_ascii {
+    let (_h_line, _v_line, _tl, _tr, _bl, _br) = if use_ascii {
         ('-', '|', '+', '+', '+', '+')
     } else {
         ('─', '│', '┌', '┐', '└', '┘')
     };
     // Divider T-junctions
-    let (div_l, div_r) = if use_ascii { ('+', '+') } else { ('├', '┤') };
+    let (_div_l, _div_r) = if use_ascii { ('+', '+') } else { ('├', '┤') };
     
     // For simple ER diagrams without attributes, render relationships inline
     let has_attributes = diagram.entities.iter().any(|e| !e.attributes.is_empty());
@@ -62,9 +62,9 @@ pub fn render_er_ascii(diagram: &ErDiagram, config: &AsciiConfig) -> Result<Stri
         let box_height = 3 + attr_lines.len(); // header + attrs + borders
         
         entity_boxes.push(EntityBox {
-            id: entity.id.clone(),
+            _id: entity.id.clone(),
             label: entity.label.clone(),
-            attr_lines,
+            _attr_lines: attr_lines,
             width: box_width,
             height: box_height.max(3),
             x: 0,
@@ -97,7 +97,7 @@ pub fn render_er_ascii(diagram: &ErDiagram, config: &AsciiConfig) -> Result<Stri
 /// Render a simple ER diagram with one relationship inline
 fn render_simple_er(diagram: &ErDiagram, config: &AsciiConfig) -> Result<String, String> {
     let use_ascii = config.use_ascii;
-    let (h_line, v_line, tl, tr, bl, br) = if use_ascii {
+    let (_h_line, _v_line, _tl, _tr, _bl, _br) = if use_ascii {
         ('-', '|', '+', '+', '+', '+')
     } else {
         ('─', '│', '┌', '┐', '└', '┘')
@@ -311,7 +311,7 @@ fn render_er_with_attributes(diagram: &ErDiagram, config: &AsciiConfig) -> Resul
     }
     
     // Bottom border for e1
-    let e1_bottom_y = 3 + e1_attrs.len().max(1) as i32 - 1;
+    let _e1_bottom_y = 3 + e1_attrs.len().max(1) as i32 - 1;
     if e1_attrs.is_empty() {
         // No attrs - bottom comes right after divider
         set_char(&mut canvas, e1_x, 3, bl);
@@ -366,9 +366,9 @@ fn cardinality_to_str(card: Cardinality, use_ascii: bool) -> &'static str {
 }
 
 struct EntityBox {
-    id: String,
+    _id: String,
     label: String,
-    attr_lines: Vec<String>,
+    _attr_lines: Vec<String>,
     width: usize,
     height: usize,
     x: i32,

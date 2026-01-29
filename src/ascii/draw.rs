@@ -3,9 +3,9 @@
 use super::types::{
     AsciiGraph, AsciiNode, Canvas, Direction, DrawingCoord, GridCoord,
     determine_direction_drawing, UP, DOWN, LEFT, RIGHT,
-    UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT, MIDDLE,
+    UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT,
 };
-use super::canvas::{mk_canvas, copy_canvas, get_canvas_size, set_char, get_char, merge_canvases};
+use super::canvas::{mk_canvas, copy_canvas, set_char, merge_canvases};
 use super::grid::{grid_to_drawing_coord, grid_to_drawing_coord_topleft};
 
 /// Draw a node box with centered label text
