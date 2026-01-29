@@ -21,3 +21,9 @@ path = "src/main.rs"
 [lib]
 name = "m2svg"
 path = "src/lib.rs"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
