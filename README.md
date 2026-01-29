@@ -133,3 +133,9 @@ cargo build --release
 ## License
 
 MIT
+
+## Acknowledgments
+
+This project is a Rust port inspired by [mermaid-ascii](https://github.com/mermaid-js/mermaid-ascii),
+part of the beautiful-mermaid TypeScript project. Test fixtures and layout algorithm designs
+were derived from the original work.
