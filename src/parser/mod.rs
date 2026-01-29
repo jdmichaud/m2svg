@@ -13,6 +13,8 @@ pub fn parse_mermaid(text: &str) -> Result<DiagramType, String> {
         .lines()
         .map(|l| l.trim())
         .filter(|l| !l.is_empty() && !l.starts_with("%%"))
+        // Skip configuration lines like paddingX=, paddingY=, etc.
+        .filter(|l| !l.contains('=') || l.contains("-->") || l.contains("--") || l.contains("->"))
         .collect();
     
     if lines.is_empty() {

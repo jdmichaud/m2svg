@@ -11,6 +11,7 @@ use std::collections::HashMap;
 pub fn parse_class_diagram(lines: &[&str]) -> Result<ClassDiagram, String> {
     let mut diagram = ClassDiagram::new();
     let mut class_map: HashMap<String, ClassNode> = HashMap::new();
+    let mut class_order: Vec<String> = Vec::new();  // Track insertion order
     let mut current_namespace: Option<ClassNamespace> = None;
     let mut current_class: Option<String> = None;
     let mut brace_depth = 0;
@@ -78,7 +79,7 @@ pub fn parse_class_diagram(lines: &[&str]) -> Result<ClassDiagram, String> {
             let id = caps[1].to_string();
             let generic = caps.get(2).map(|m| m.as_str());
             
-            let cls = ensure_class(&mut class_map, &id);
+            let cls = ensure_class(&mut class_map, &mut class_order, &id);
             if let Some(g) = generic {
                 cls.label = format!("{}<{}>", id, g);
             }
@@ -97,7 +98,7 @@ pub fn parse_class_diagram(lines: &[&str]) -> Result<ClassDiagram, String> {
             let id = caps[1].to_string();
             let generic = caps.get(2).map(|m| m.as_str());
             
-            let cls = ensure_class(&mut class_map, &id);
+            let cls = ensure_class(&mut class_map, &mut class_order, &id);
             if let Some(g) = generic {
                 cls.label = format!("{}<{}>", id, g);
             }
@@ -111,7 +112,7 @@ pub fn parse_class_diagram(lines: &[&str]) -> Result<ClassDiagram, String> {
         // Inline annotation: `class ClassName { <<interface>> }`
         let inline_annot_re = Regex::new(r"^class\s+(\S+?)\s*\{\s*<<(\w+)>>\s*\}$").unwrap();
         if let Some(caps) = inline_annot_re.captures(line) {
-            let cls = ensure_class(&mut class_map, &caps[1]);
+            let cls = ensure_class(&mut class_map, &mut class_order, &caps[1]);
             cls.annotation = Some(caps[2].to_string());
             continue;
         }
@@ -125,7 +126,7 @@ pub fn parse_class_diagram(lines: &[&str]) -> Result<ClassDiagram, String> {
                 && !rest.contains("o--") && !rest.contains("-->") && !rest.contains("..>")
                 && !rest.contains("..|>")
             {
-                let cls = ensure_class(&mut class_map, &caps[1]);
+                let cls = ensure_class(&mut class_map, &mut class_order, &caps[1]);
                 if let Some(parsed) = parse_member(rest) {
                     if parsed.is_method {
                         cls.methods.push(parsed.member);
@@ -139,18 +140,21 @@ pub fn parse_class_diagram(lines: &[&str]) -> Result<ClassDiagram, String> {
         
         // Relationship
         if let Some(rel) = parse_relationship(line) {
-            ensure_class(&mut class_map, &rel.from);
-            ensure_class(&mut class_map, &rel.to);
+            ensure_class(&mut class_map, &mut class_order, &rel.from);
+            ensure_class(&mut class_map, &mut class_order, &rel.to);
             diagram.relationships.push(rel);
             continue;
         }
     }
     
-    diagram.classes = class_map.into_values().collect();
+    // Convert to ordered list
+    diagram.classes = class_order.iter()
+        .filter_map(|id| class_map.remove(id))
+        .collect();
     Ok(diagram)
 }
 
-fn ensure_class<'a>(class_map: &'a mut HashMap<String, ClassNode>, id: &str) -> &'a mut ClassNode {
+fn ensure_class<'a>(class_map: &'a mut HashMap<String, ClassNode>, class_order: &mut Vec<String>, id: &str) -> &'a mut ClassNode {
     if !class_map.contains_key(id) {
         class_map.insert(id.to_string(), ClassNode {
             id: id.to_string(),
@@ -159,6 +163,7 @@ fn ensure_class<'a>(class_map: &'a mut HashMap<String, ClassNode>, id: &str) -> 
             methods: Vec::new(),
             annotation: None,
         });
+        class_order.push(id.to_string());
     }
     class_map.get_mut(id).unwrap()
 }
@@ -247,30 +252,30 @@ fn parse_member(line: &str) -> Option<ParsedMember> {
 fn parse_relationship(line: &str) -> Option<ClassRelationship> {
     // Pattern: [FROM] ["card"] ARROW ["card"] [TO] [: label]
     // Arrows: <|--, *--, o--, -->, ..|>, ..>
+    // marker_at_from: true = marker at 'from' end, false = marker at 'to' end
     
     let patterns = [
-        (r"^(\S+)\s+<\|--\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Inheritance, true),
-        (r"^(\S+)\s+\*--\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Composition, false),
-        (r"^(\S+)\s+o--\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Aggregation, false),
-        (r"^(\S+)\s+-->\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Association, false),
-        (r"^(\S+)\s+\.\.>\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Dependency, false),
-        (r"^(\S+)\s+\.\.\|>\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Realization, false),
+        // Prefix markers - marker at 'from' side
+        (r"^(\S+)\s+<\|--\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Inheritance, true),   // A <|-- B: marker at A
+        (r"^(\S+)\s+\*--\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Composition, true),    // A *-- B: marker at A
+        (r"^(\S+)\s+o--\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Aggregation, true),     // A o-- B: marker at A
+        // Suffix markers - marker at 'to' side
+        (r"^(\S+)\s+-->\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Association, false),    // A --> B: marker at B
+        (r"^(\S+)\s+\.\.>\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Dependency, false),   // A ..> B: marker at B
+        (r"^(\S+)\s+\.\.\|>\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Realization, false),// A ..|> B: marker at B
         // Reversed patterns
-        (r"^(\S+)\s+--\|>\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Inheritance, false),
-        (r"^(\S+)\s+--\*\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Composition, true),
-        (r"^(\S+)\s+--o\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Aggregation, true),
-        (r"^(\S+)\s+<--\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Association, true),
-        (r"^(\S+)\s+<\.\.\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Dependency, true),
-        (r"^(\S+)\s+<\|\.\.\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Realization, true),
+        (r"^(\S+)\s+--\|>\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Inheritance, false),  // A --|> B: marker at B
+        (r"^(\S+)\s+--\*\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Composition, false),   // A --* B: marker at B
+        (r"^(\S+)\s+--o\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Aggregation, false),    // A --o B: marker at B
+        (r"^(\S+)\s+<--\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Association, true),     // A <-- B: marker at A
+        (r"^(\S+)\s+<\.\.\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Dependency, true),    // A <.. B: marker at A
+        (r"^(\S+)\s+<\|\.\.\s+(\S+)(?:\s*:\s*(.+))?$", RelationshipType::Realization, true), // A <|.. B: marker at A
     ];
     
-    for (pattern, rel_type, reversed) in patterns {
+    for (pattern, rel_type, marker_at_from) in patterns {
         if let Some(caps) = Regex::new(pattern).ok()?.captures(line) {
-            let (from, to) = if reversed {
-                (caps[2].to_string(), caps[1].to_string())
-            } else {
-                (caps[1].to_string(), caps[2].to_string())
-            };
+            let from = caps[1].to_string();
+            let to = caps[2].to_string();
             let label = caps.get(3).map(|m| m.as_str().trim().to_string());
             
             return Some(ClassRelationship {
@@ -280,6 +285,7 @@ fn parse_relationship(line: &str) -> Option<ClassRelationship> {
                 from_cardinality: None,
                 to_cardinality: None,
                 label,
+                marker_at_from,
             });
         }
     }
