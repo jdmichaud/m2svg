@@ -332,6 +332,57 @@ pub fn determine_path(graph: &mut AsciiGraph, edge_idx: usize) {
     }
 }
 
+/// Find the best line segment in an edge's path to place a label on.
+/// Picks the first segment wide enough for the label, or the widest segment overall.
+/// Also increases the column width at the label position to fit the text.
+pub fn determine_label_line(graph: &mut AsciiGraph, edge_idx: usize) {
+    let edge = &graph.edges[edge_idx];
+    if edge.text.is_empty() || edge.path.len() < 2 {
+        return;
+    }
+    
+    let len_label = edge.text.len();
+    let mut prev_step = edge.path[0];
+    let mut largest_line: (GridCoord, GridCoord) = (prev_step, edge.path[1]);
+    let mut largest_line_size = 0;
+    
+    for i in 1..edge.path.len() {
+        let step = edge.path[i];
+        let line = (prev_step, step);
+        let line_width = calculate_line_width(graph, line);
+        
+        if line_width >= len_label {
+            largest_line = line;
+            break;
+        } else if line_width > largest_line_size {
+            largest_line_size = line_width;
+            largest_line = line;
+        }
+        prev_step = step;
+    }
+    
+    // Ensure column at midpoint is wide enough for the label
+    let min_x = largest_line.0.x.min(largest_line.1.x);
+    let max_x = largest_line.0.x.max(largest_line.1.x);
+    let middle_x = min_x + (max_x - min_x) / 2;
+    
+    let current = *graph.column_width.get(&middle_x).unwrap_or(&0);
+    graph.column_width.insert(middle_x, current.max(len_label + 2));
+    
+    graph.edges[edge_idx].label_line = vec![largest_line.0, largest_line.1];
+}
+
+/// Calculate the total character width of a line segment by summing column widths.
+fn calculate_line_width(graph: &AsciiGraph, line: (GridCoord, GridCoord)) -> usize {
+    let mut total = 0;
+    let start_x = line.0.x.min(line.1.x);
+    let end_x = line.0.x.max(line.1.x);
+    for x in start_x..=end_x {
+        total += *graph.column_width.get(&x).unwrap_or(&0);
+    }
+    total
+}
+
 /// Get children of a node (nodes this node has edges to)
 fn get_children(graph: &AsciiGraph, node_idx: usize) -> Vec<usize> {
     let mut children = Vec::new();
@@ -471,6 +522,7 @@ pub fn create_mapping(graph: &mut AsciiGraph) {
     // Determine edge paths (now that column widths are set)
     for i in 0..graph.edges.len() {
         determine_path(graph, i);
+        determine_label_line(graph, i);
         increase_grid_size_for_path(graph, &graph.edges[i].path.clone());
     }
     
