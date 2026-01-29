@@ -215,17 +215,33 @@ pub fn draw_corners(graph: &AsciiGraph, path: &[GridCoord]) -> Canvas {
     canvas
 }
 
-/// Determine the correct corner character
+/// Determine the correct corner character for a path bend
 fn determine_corner(from_dir: Direction, to_dir: Direction) -> char {
+    // from_dir: direction of travel BEFORE the corner
+    // to_dir: direction of travel AFTER the corner
+    // 
+    // The corner character connects:
+    //   - The opposite of from_dir (where we came from)
+    //   - to_dir (where we're going)
+    //
+    // Corner shapes:
+    //   ┌ = RIGHT + DOWN
+    //   ┐ = LEFT + DOWN  
+    //   └ = RIGHT + UP
+    //   ┘ = LEFT + UP
     match (from_dir, to_dir) {
-        (d1, d2) if d1 == UP && d2 == RIGHT => '└',
-        (d1, d2) if d1 == UP && d2 == LEFT => '┘',
-        (d1, d2) if d1 == DOWN && d2 == RIGHT => '┌',
-        (d1, d2) if d1 == DOWN && d2 == LEFT => '┐',
-        (d1, d2) if d1 == LEFT && d2 == UP => '┘',
-        (d1, d2) if d1 == LEFT && d2 == DOWN => '┐',
-        (d1, d2) if d1 == RIGHT && d2 == UP => '└',
-        (d1, d2) if d1 == RIGHT && d2 == DOWN => '┌',
+        // Was going UP (came from below), turning to horizontal
+        (d1, d2) if d1 == UP && d2 == RIGHT => '┌',
+        (d1, d2) if d1 == UP && d2 == LEFT => '┐',
+        // Was going DOWN (came from above), turning to horizontal
+        (d1, d2) if d1 == DOWN && d2 == RIGHT => '└',
+        (d1, d2) if d1 == DOWN && d2 == LEFT => '┘',
+        // Was going RIGHT (came from left), turning to vertical
+        (d1, d2) if d1 == RIGHT && d2 == DOWN => '┐',
+        (d1, d2) if d1 == RIGHT && d2 == UP => '┘',
+        // Was going LEFT (came from right), turning to vertical
+        (d1, d2) if d1 == LEFT && d2 == DOWN => '┌',
+        (d1, d2) if d1 == LEFT && d2 == UP => '└',
         _ => '┼',
     }
 }

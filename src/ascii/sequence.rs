@@ -105,13 +105,20 @@ pub fn render_sequence_ascii(diagram: &SequenceDiagram, config: &AsciiConfig) ->
     for (i, actor) in diagram.actors.iter().enumerate() {
         let cx = ll_x[i] as i32;
         let w = actor_box_widths[i] as i32;
-        let half_w = w / 2;
+        let _half_w = w / 2;
         
         // Header box (top)
         draw_actor_box(&mut canvas, cx, 0, w, &actor.label, use_ascii);
         
         // Footer box (bottom)
         draw_actor_box(&mut canvas, cx, footer_y as i32, w, &actor.label, use_ascii);
+        
+        // In Unicode mode, add lifeline connection characters (┬/┴)
+        // In ASCII mode, the box corners are already '+' which works fine
+        if !use_ascii {
+            set_char(&mut canvas, cx, actor_box_h as i32 - 1, '┬');
+            set_char(&mut canvas, cx, footer_y as i32, '┴');
+        }
         
         // Draw lifeline between boxes
         for y in actor_box_h..footer_y {
@@ -131,7 +138,7 @@ pub fn render_sequence_ascii(diagram: &SequenceDiagram, config: &AsciiConfig) ->
             let x = ll_x[fi] as i32;
             let corner_tr = if use_ascii { '+' } else { '┐' };
             let corner_bl = if use_ascii { '+' } else { '┘' };
-            let arrow_left = if use_ascii { '<' } else { '◄' };
+            let arrow_left = if use_ascii { '<' } else { '◀' };
             let junction = if use_ascii { '+' } else { '├' };
             
             // Top line: junction on lifeline, then go right
@@ -161,10 +168,10 @@ pub fn render_sequence_ascii(diagram: &SequenceDiagram, config: &AsciiConfig) ->
             
             let (arrow_char, line_char) = if ti > fi {
                 // Left to right
-                (if use_ascii { '>' } else { '►' }, if is_dashed { '.' } else { h_line })
+                (if use_ascii { '>' } else { '▶' }, if is_dashed { if use_ascii { '.' } else { '╌' } } else { h_line })
             } else {
                 // Right to left
-                (if use_ascii { '<' } else { '◄' }, if is_dashed { '.' } else { h_line })
+                (if use_ascii { '<' } else { '◀' }, if is_dashed { if use_ascii { '.' } else { '╌' } } else { h_line })
             };
             
             let (start_x, end_x) = if ti > fi {

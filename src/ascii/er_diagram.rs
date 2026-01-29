@@ -18,6 +18,8 @@ pub fn render_er_ascii(diagram: &ErDiagram, config: &AsciiConfig) -> Result<Stri
     } else {
         ('─', '│', '┌', '┐', '└', '┘')
     };
+    // Divider T-junctions
+    let (div_l, div_r) = if use_ascii { ('+', '+') } else { ('├', '┤') };
     
     // For simple ER diagrams without attributes, render relationships inline
     let has_attributes = diagram.entities.iter().any(|e| !e.attributes.is_empty());
@@ -119,13 +121,13 @@ fn render_simple_er(diagram: &ErDiagram, config: &AsciiConfig) -> Result<String,
     let box_height = 3;
     
     // Cardinality symbols
-    let card1 = cardinality_to_str(rel.cardinality1);
-    let card2 = cardinality_to_str(rel.cardinality2);
-    let line_style = if rel.identifying { "--" } else { ".." };
+    let card1 = cardinality_to_str(rel.cardinality1, use_ascii);
+    let card2 = cardinality_to_str(rel.cardinality2, use_ascii);
+    let line_style = if rel.identifying { if use_ascii { "--" } else { "───" } } else { ".." };
     
     // Total width - the label and rel_str share the same space
     let rel_str = format!("{}{}{}",card1, line_style, card2);
-    let middle_width = rel.label.len().max(rel_str.len());
+    let middle_width = rel.label.chars().count().max(rel_str.chars().count());
     let total_w = e1_width + middle_width + e2_width + 1;
     let total_h = box_height;
     
@@ -157,6 +159,7 @@ fn render_er_with_attributes(diagram: &ErDiagram, config: &AsciiConfig) -> Resul
     } else {
         ('─', '│', '┌', '┐', '└', '┘')
     };
+    let (div_l, div_r) = if use_ascii { ('+', '+') } else { ('├', '┤') };
     
     let rel = &diagram.relationships[0];
     
@@ -207,13 +210,13 @@ fn render_er_with_attributes(diagram: &ErDiagram, config: &AsciiConfig) -> Resul
     }).unwrap_or_default();
     
     // Cardinality symbols
-    let card1 = cardinality_to_str(rel.cardinality1);
-    let card2 = cardinality_to_str(rel.cardinality2);
-    let line_style = if rel.identifying { "--" } else { ".." };
+    let card1 = cardinality_to_str(rel.cardinality1, use_ascii);
+    let card2 = cardinality_to_str(rel.cardinality2, use_ascii);
+    let line_style = if rel.identifying { if use_ascii { "--" } else { "───" } } else { ".." };
     let rel_str = format!("{}{}{}", card1, line_style, card2);
     
     // Middle section: max of rel_str length and truncated label
-    let gap_width = rel_str.len();  // The gap is exactly the relationship string length
+    let gap_width = rel_str.chars().count();  // The gap is exactly the relationship string length
     let label_display: String = rel.label.chars().take(gap_width).collect();
     
     // Decide row placement based on attribute count
@@ -268,11 +271,11 @@ fn render_er_with_attributes(diagram: &ErDiagram, config: &AsciiConfig) -> Resul
     set_char(&mut canvas, e2_x + e2_width as i32 - 1, 1, v_line);
     
     // Row 2: Divider - label if label_on_divider, rel_str if !label_on_divider
-    set_char(&mut canvas, e1_x, 2, tl);  // +
+    set_char(&mut canvas, e1_x, 2, div_l);  // ├
     for i in 1..(e1_width as i32 - 1) {
         set_char(&mut canvas, e1_x + i, 2, h_line);
     }
-    set_char(&mut canvas, e1_x + e1_width as i32 - 1, 2, tr);  // +
+    set_char(&mut canvas, e1_x + e1_width as i32 - 1, 2, div_r);  // ┤
     
     if label_on_divider {
         draw_text(&mut canvas, e1_x + e1_width as i32, 2, &label_display);
@@ -280,11 +283,11 @@ fn render_er_with_attributes(diagram: &ErDiagram, config: &AsciiConfig) -> Resul
         draw_text(&mut canvas, e1_x + e1_width as i32, 2, &rel_str);
     }
     
-    set_char(&mut canvas, e2_x, 2, tl);  // +
+    set_char(&mut canvas, e2_x, 2, div_l);  // ├
     for i in 1..(e2_width as i32 - 1) {
         set_char(&mut canvas, e2_x + i, 2, h_line);
     }
-    set_char(&mut canvas, e2_x + e2_width as i32 - 1, 2, tr);  // +
+    set_char(&mut canvas, e2_x + e2_width as i32 - 1, 2, div_r);  // ┤
     
     // Attribute rows for e1 - also draw rel_str on first attr row if label_on_divider
     for (i, attr) in e1_attrs.iter().enumerate() {
@@ -344,12 +347,21 @@ fn render_er_with_attributes(diagram: &ErDiagram, config: &AsciiConfig) -> Resul
     Ok(canvas_to_string(&canvas))
 }
 
-fn cardinality_to_str(card: Cardinality) -> &'static str {
-    match card {
-        Cardinality::One => "||",
-        Cardinality::ZeroOne => "o|",
-        Cardinality::Many => "}|",
-        Cardinality::ZeroMany => "o{",
+fn cardinality_to_str(card: Cardinality, use_ascii: bool) -> &'static str {
+    if use_ascii {
+        match card {
+            Cardinality::One => "||",
+            Cardinality::ZeroOne => "o|",
+            Cardinality::Many => "}|",
+            Cardinality::ZeroMany => "o{",
+        }
+    } else {
+        match card {
+            Cardinality::One => "║",
+            Cardinality::ZeroOne => "o│",
+            Cardinality::Many => "╟",
+            Cardinality::ZeroMany => "o╟",
+        }
     }
 }
 
