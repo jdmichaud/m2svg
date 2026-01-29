@@ -3,6 +3,18 @@
 //! This library provides functionality to parse Mermaid diagram syntax and render
 //! it as ASCII or Unicode box-drawing art, or as SVG.
 //!
+//! # Example
+//!
+//! ```rust
+//! use mermaid_ascii::{render, render_to_svg};
+//!
+//! let ascii = render("graph LR\n  A --> B", false).unwrap();
+//! println!("{}", ascii);
+//!
+//! let svg = render_to_svg("graph LR\n  A --> B").unwrap();
+//! println!("{}", svg);
+//! ```
+//!
 //! # Supported Diagram Types
 //!
 //! - Flowcharts (graph TD / flowchart LR)
@@ -19,6 +31,44 @@ pub mod svg;
 pub use ascii::render_mermaid_ascii;
 pub use types::*;
 pub use parser::parse_mermaid;
+
+/// Render a Mermaid diagram to ASCII/Unicode text.
+///
+/// # Arguments
+/// * `input` - Mermaid diagram text
+/// * `use_ascii` - If true, use plain ASCII (+,-,|,>). If false, use Unicode box-drawing (┌,─,│,►)
+///
+/// # Example
+/// ```rust
+/// let output = mermaid_ascii::render("graph LR\n  A --> B", false).unwrap();
+/// ```
+pub fn render(input: &str, use_ascii: bool) -> Result<String, String> {
+    let opts = AsciiRenderOptions {
+        use_ascii,
+        ..Default::default()
+    };
+    render_mermaid_ascii(input, Some(opts))
+}
+
+/// Render a Mermaid diagram to SVG text.
+///
+/// # Arguments
+/// * `input` - Mermaid diagram text
+///
+/// # Example
+/// ```rust
+/// let svg = mermaid_ascii::render_to_svg("graph LR\n  A --> B").unwrap();
+/// ```
+pub fn render_to_svg(input: &str) -> Result<String, String> {
+    let parsed = parse_mermaid(input)?;
+    match parsed {
+        DiagramType::Flowchart(graph) => {
+            let colors = svg::DiagramColors::default();
+            Ok(svg::render_mermaid_to_svg(&graph, &colors, "Inter", false))
+        }
+        _ => Err("SVG rendering only supported for flowcharts currently".to_string()),
+    }
+}
 
 /// Configuration options for ASCII rendering
 #[derive(Debug, Clone)]

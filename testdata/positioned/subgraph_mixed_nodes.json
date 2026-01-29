@@ -1,0 +1,111 @@
+{
+  "input": "graph LR\nX\nsubgraph one\n    A --> B\nend\nY\nX --> A\nB --> Y",
+  "type": "flowchart",
+  "positioned": {
+    "width": 680,
+    "height": 196,
+    "nodes": [
+      {
+        "id": "X",
+        "label": "X",
+        "shape": "rectangle",
+        "x": 40,
+        "y": 98,
+        "width": 60,
+        "height": 36
+      },
+      {
+        "id": "Y",
+        "label": "Y",
+        "shape": "rectangle",
+        "x": 580,
+        "y": 98,
+        "width": 60,
+        "height": 36
+      },
+      {
+        "id": "A",
+        "label": "A",
+        "shape": "rectangle",
+        "x": 220,
+        "y": 98,
+        "width": 60,
+        "height": 36
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "shape": "rectangle",
+        "x": 400,
+        "y": 98,
+        "width": 60,
+        "height": 36
+      }
+    ],
+    "edges": [
+      {
+        "source": "A",
+        "target": "B",
+        "style": "solid",
+        "hasArrowStart": false,
+        "hasArrowEnd": true,
+        "points": [
+          {
+            "x": 280,
+            "y": 116
+          },
+          {
+            "x": 400,
+            "y": 116
+          }
+        ]
+      },
+      {
+        "source": "X",
+        "target": "A",
+        "style": "solid",
+        "hasArrowStart": false,
+        "hasArrowEnd": true,
+        "points": [
+          {
+            "x": 100,
+            "y": 116
+          },
+          {
+            "x": 220,
+            "y": 116
+          }
+        ]
+      },
+      {
+        "source": "B",
+        "target": "Y",
+        "style": "solid",
+        "hasArrowStart": false,
+        "hasArrowEnd": true,
+        "points": [
+          {
+            "x": 460,
+            "y": 116
+          },
+          {
+            "x": 580,
+            "y": 116
+          }
+        ]
+      }
+    ],
+    "groups": [
+      {
+        "id": "one",
+        "label": "one",
+        "x": 200,
+        "y": 40,
+        "width": 280,
+        "height": 116,
+        "children": []
+      }
+    ]
+  },
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 680 196\" width=\"680\" height=\"196\" style=\"--bg:#FFFFFF;--fg:#27272A;background:var(--bg)\">\n<style>\n  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');\n  text { font-family: 'Inter', system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          var(--fg);\n    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));\n    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));\n    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));\n    --_line:          var(--line, color-mix(in srgb, var(--fg) 30%, var(--bg)));\n    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 50%, var(--bg)));\n    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));\n    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));\n    --_group-fill:    var(--bg);\n    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));\n    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));\n    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));\n  }\n</style>\n<defs>\n  <marker id=\"arrowhead\" markerWidth=\"8\" markerHeight=\"4.8\" refX=\"8\" refY=\"2.4\" orient=\"auto\">\n    <polygon points=\"0 0, 8 2.4, 0 4.8\" fill=\"var(--_arrow)\" />\n  </marker>\n  <marker id=\"arrowhead-start\" markerWidth=\"8\" markerHeight=\"4.8\" refX=\"0\" refY=\"2.4\" orient=\"auto-start-reverse\">\n    <polygon points=\"8 0, 0 2.4, 8 4.8\" fill=\"var(--_arrow)\" />\n  </marker>\n</defs>\n<rect x=\"200\" y=\"40\" width=\"280\" height=\"116\" rx=\"0\" ry=\"0\" fill=\"var(--_group-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"1\" />\n<rect x=\"200\" y=\"40\" width=\"280\" height=\"28\" rx=\"0\" ry=\"0\" fill=\"var(--_group-hdr)\" stroke=\"var(--_node-stroke)\" stroke-width=\"1\" />\n<text x=\"212\" y=\"54\" dy=\"0.35em\" font-size=\"12\" font-weight=\"600\" fill=\"var(--_text-sec)\">one</text>\n<polyline points=\"280,116 400,116\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"0.75\" marker-end=\"url(#arrowhead)\" />\n<polyline points=\"100,116 220,116\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"0.75\" marker-end=\"url(#arrowhead)\" />\n<polyline points=\"460,116 580,116\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"0.75\" marker-end=\"url(#arrowhead)\" />\n<rect x=\"40\" y=\"98\" width=\"60\" height=\"36\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" />\n<rect x=\"580\" y=\"98\" width=\"60\" height=\"36\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" />\n<rect x=\"220\" y=\"98\" width=\"60\" height=\"36\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" />\n<rect x=\"400\" y=\"98\" width=\"60\" height=\"36\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" />\n<text x=\"70\" y=\"116\" text-anchor=\"middle\" dy=\"0.35em\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\">X</text>\n<text x=\"610\" y=\"116\" text-anchor=\"middle\" dy=\"0.35em\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\">Y</text>\n<text x=\"250\" y=\"116\" text-anchor=\"middle\" dy=\"0.35em\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\">A</text>\n<text x=\"430\" y=\"116\" text-anchor=\"middle\" dy=\"0.35em\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\">B</text>\n</svg>"
+}

@@ -1,0 +1,136 @@
+{
+  "input": "graph TD\nsubgraph Frontend\n    UI --> API\nend\nsubgraph Backend\n    API --> Database\n    API --> Cache\nend",
+  "type": "flowchart",
+  "positioned": {
+    "width": 304.95,
+    "height": 504,
+    "nodes": [
+      {
+        "id": "UI",
+        "label": "UI",
+        "shape": "rectangle",
+        "x": 127.8375,
+        "y": 96,
+        "width": 60,
+        "height": 36
+      },
+      {
+        "id": "API",
+        "label": "API",
+        "shape": "rectangle",
+        "x": 127.8375,
+        "y": 252,
+        "width": 60,
+        "height": 36
+      },
+      {
+        "id": "Database",
+        "label": "Database",
+        "shape": "rectangle",
+        "x": 62,
+        "y": 408,
+        "width": 89.2,
+        "height": 36
+      },
+      {
+        "id": "Cache",
+        "label": "Cache",
+        "shape": "rectangle",
+        "x": 175.2,
+        "y": 408,
+        "width": 67.75,
+        "height": 36
+      }
+    ],
+    "edges": [
+      {
+        "source": "UI",
+        "target": "API",
+        "style": "solid",
+        "hasArrowStart": false,
+        "hasArrowEnd": true,
+        "points": [
+          {
+            "x": 157.8375,
+            "y": 132
+          },
+          {
+            "x": 157.8375,
+            "y": 252
+          }
+        ]
+      },
+      {
+        "source": "API",
+        "target": "Database",
+        "style": "solid",
+        "hasArrowStart": false,
+        "hasArrowEnd": true,
+        "points": [
+          {
+            "x": 157.8375,
+            "y": 288
+          },
+          {
+            "x": 157.8375,
+            "y": 308
+          },
+          {
+            "x": 106.6,
+            "y": 308
+          },
+          {
+            "x": 106.6,
+            "y": 408
+          }
+        ]
+      },
+      {
+        "source": "API",
+        "target": "Cache",
+        "style": "solid",
+        "hasArrowStart": false,
+        "hasArrowEnd": true,
+        "points": [
+          {
+            "x": 157.8375,
+            "y": 288
+          },
+          {
+            "x": 157.8375,
+            "y": 308
+          },
+          {
+            "x": 209.075,
+            "y": 308
+          },
+          {
+            "x": 209.075,
+            "y": 408
+          }
+        ]
+      }
+    ],
+    "groups": [
+      {
+        "id": "Frontend",
+        "label": "Frontend",
+        "x": 105.8375,
+        "y": 40,
+        "width": 104,
+        "height": 112,
+        "children": []
+      },
+      {
+        "id": "Backend",
+        "label": "Backend",
+        "x": 40,
+        "y": 196,
+        "width": 224.95,
+        "height": 268,
+        "children": []
+      }
+    ]
+  },
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 304.95 504\" width=\"304.95\" height=\"504\" style=\"--bg:#FFFFFF;--fg:#27272A;background:var(--bg)\">\n<style>\n  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');\n  text { font-family: 'Inter', system-ui, sans-serif; }\n  svg {\n    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */\n    --_text:          var(--fg);\n    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));\n    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));\n    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));\n    --_line:          var(--line, color-mix(in srgb, var(--fg) 30%, var(--bg)));\n    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 50%, var(--bg)));\n    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));\n    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));\n    --_group-fill:    var(--bg);\n    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));\n    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));\n    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));\n  }\n</style>\n<defs>\n  <marker id=\"arrowhead\" markerWidth=\"8\" markerHeight=\"4.8\" refX=\"8\" refY=\"2.4\" orient=\"auto\">\n    <polygon points=\"0 0, 8 2.4, 0 4.8\" fill=\"var(--_arrow)\" />\n  </marker>\n  <marker id=\"arrowhead-start\" markerWidth=\"8\" markerHeight=\"4.8\" refX=\"0\" refY=\"2.4\" orient=\"auto-start-reverse\">\n    <polygon points=\"8 0, 0 2.4, 8 4.8\" fill=\"var(--_arrow)\" />\n  </marker>\n</defs>\n<rect x=\"105.8375\" y=\"40\" width=\"104\" height=\"112\" rx=\"0\" ry=\"0\" fill=\"var(--_group-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"1\" />\n<rect x=\"105.8375\" y=\"40\" width=\"104\" height=\"28\" rx=\"0\" ry=\"0\" fill=\"var(--_group-hdr)\" stroke=\"var(--_node-stroke)\" stroke-width=\"1\" />\n<text x=\"117.8375\" y=\"54\" dy=\"0.35em\" font-size=\"12\" font-weight=\"600\" fill=\"var(--_text-sec)\">Frontend</text>\n<rect x=\"40\" y=\"196\" width=\"224.95\" height=\"268\" rx=\"0\" ry=\"0\" fill=\"var(--_group-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"1\" />\n<rect x=\"40\" y=\"196\" width=\"224.95\" height=\"28\" rx=\"0\" ry=\"0\" fill=\"var(--_group-hdr)\" stroke=\"var(--_node-stroke)\" stroke-width=\"1\" />\n<text x=\"52\" y=\"210\" dy=\"0.35em\" font-size=\"12\" font-weight=\"600\" fill=\"var(--_text-sec)\">Backend</text>\n<polyline points=\"157.8375,132 157.8375,252\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"0.75\" marker-end=\"url(#arrowhead)\" />\n<polyline points=\"157.8375,288 157.8375,308 106.6,308 106.6,408\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"0.75\" marker-end=\"url(#arrowhead)\" />\n<polyline points=\"157.8375,288 157.8375,308 209.075,308 209.075,408\" fill=\"none\" stroke=\"var(--_line)\" stroke-width=\"0.75\" marker-end=\"url(#arrowhead)\" />\n<rect x=\"127.8375\" y=\"96\" width=\"60\" height=\"36\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" />\n<rect x=\"127.8375\" y=\"252\" width=\"60\" height=\"36\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" />\n<rect x=\"62\" y=\"408\" width=\"89.2\" height=\"36\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" />\n<rect x=\"175.2\" y=\"408\" width=\"67.75\" height=\"36\" rx=\"0\" ry=\"0\" fill=\"var(--_node-fill)\" stroke=\"var(--_node-stroke)\" stroke-width=\"0.75\" />\n<text x=\"157.8375\" y=\"114\" text-anchor=\"middle\" dy=\"0.35em\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\">UI</text>\n<text x=\"157.8375\" y=\"270\" text-anchor=\"middle\" dy=\"0.35em\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\">API</text>\n<text x=\"106.6\" y=\"426\" text-anchor=\"middle\" dy=\"0.35em\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\">Database</text>\n<text x=\"209.075\" y=\"426\" text-anchor=\"middle\" dy=\"0.35em\" font-size=\"13\" font-weight=\"500\" fill=\"var(--_text)\">Cache</text>\n</svg>"
+}
