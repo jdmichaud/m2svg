@@ -513,7 +513,7 @@ fn render_node_label(node: &PositionedNode) -> String {
 // ============================================================================
 
 /// Escape special XML characters in text content
-fn escape_xml(text: &str) -> String {
+pub fn escape_xml(text: &str) -> String {
     text.replace('&', "&amp;")
         .replace('<', "&lt;")
         .replace('>', "&gt;")
