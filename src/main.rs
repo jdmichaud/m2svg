@@ -1,4 +1,4 @@
-use mermaid_ascii::{render_mermaid_ascii, AsciiRenderOptions};
+use m2svg::{render_mermaid_ascii, AsciiRenderOptions};
 use std::io::{self, Read};
 
 fn main() {
