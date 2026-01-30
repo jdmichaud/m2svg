@@ -39,12 +39,21 @@ fn normalize_output(s: &str) -> String {
 
 /// Run the renderer and compare output
 fn run_test(test_name: &str) {
-    let testdata_dir = get_testdata_dir();
-    let test_file = testdata_dir.join(format!("{}.txt", test_name));
+    let ascii_dir = get_testdata_dir();
+    let unicode_dir = get_unicode_testdata_dir();
     
-    if !test_file.exists() {
-        panic!("Test file not found: {:?}", test_file);
-    }
+    // Check both directories for the test file
+    let test_file = {
+        let ascii_file = ascii_dir.join(format!("{}.txt", test_name));
+        let unicode_file = unicode_dir.join(format!("{}.txt", test_name));
+        if ascii_file.exists() {
+            ascii_file
+        } else if unicode_file.exists() {
+            unicode_file
+        } else {
+            panic!("Test file not found in ascii or unicode directories: {}", test_name);
+        }
+    };
     
     let content = fs::read_to_string(&test_file)
         .unwrap_or_else(|e| panic!("Failed to read {:?}: {}", test_file, e));
@@ -292,6 +301,11 @@ fn test_cls_dependency() {
 #[test]
 fn test_cls_all_relationships() {
     run_test("cls_all_relationships");
+}
+
+#[test]
+fn test_cls_inheritance_fanout() {
+    run_test("cls_inheritance_fanout");
 }
 
 // =============================================================================
