@@ -427,6 +427,12 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
                 set_char(&mut canvas, x, bar_y, solid_h);
             }
             
+            // Draw corners at the ends of the bar (in Unicode mode only)
+            if !use_ascii {
+                set_char(&mut canvas, leftmost_x, bar_y, corner_tl);
+                set_char(&mut canvas, rightmost_x, bar_y, corner_tr);
+            }
+            
             // Draw junction where parent meets bar (if centered)
             // In ASCII mode, just keep the dash; in Unicode mode, use cross
             if parent_is_centered && !use_ascii {
