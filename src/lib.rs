@@ -84,7 +84,7 @@ pub fn render_to_svg(input: &str) -> Result<String, String> {
 /// Configuration options for ASCII rendering
 #[derive(Debug, Clone)]
 pub struct AsciiRenderOptions {
-    /// true = ASCII chars (+,-,|,>), false = Unicode box-drawing (┌,─,│,►). Default: false
+    /// true = ASCII chars (+,-,|,>), false = Unicode box-drawing (┌,─,│,►). Default: true
     pub use_ascii: bool,
     /// Horizontal spacing between nodes. Default: 5
     pub padding_x: usize,

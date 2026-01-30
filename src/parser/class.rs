@@ -4,8 +4,20 @@ use crate::types::{
     ClassDiagram, ClassMember, ClassNamespace, ClassNode, ClassRelationship, RelationshipType,
     Visibility,
 };
+use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::HashMap;
+
+lazy_static! {
+    static ref RE_ANNOTATION: Regex = Regex::new(r"^<<(\w+)>>$").unwrap();
+    static ref RE_NAMESPACE: Regex = Regex::new(r"^namespace\s+(\S+)\s*\{$").unwrap();
+    static ref RE_CLASS_BLOCK: Regex = Regex::new(r"^class\s+(\S+?)(?:\s*~(\w+)~)?\s*\{$").unwrap();
+    static ref RE_CLASS_ONLY: Regex = Regex::new(r"^class\s+(\S+?)(?:\s*~(\w+)~)?\s*$").unwrap();
+    static ref RE_INLINE_ANNOT: Regex = Regex::new(r"^class\s+(\S+?)\s*\{\s*<<(\w+)>>\s*\}$").unwrap();
+    static ref RE_INLINE_ATTR: Regex = Regex::new(r"^(\S+?)\s*:\s*(.+)$").unwrap();
+    static ref RE_METHOD: Regex = Regex::new(r"^(.+?)\(([^)]*)\)(?:\s*(.+))?$").unwrap();
+    static ref RE_ATTR: Regex = Regex::new(r"^(\S+)\s+(.+)$").unwrap();
+}
 
 /// Parse a Mermaid class diagram
 pub fn parse_class_diagram(lines: &[&str]) -> Result<ClassDiagram, String> {
@@ -30,8 +42,7 @@ pub fn parse_class_diagram(lines: &[&str]) -> Result<ClassDiagram, String> {
             }
             
             // Check for annotation like <<interface>>
-            let annot_re = Regex::new(r"^<<(\w+)>>$").unwrap();
-            if let Some(caps) = annot_re.captures(line) {
+            if let Some(caps) = RE_ANNOTATION.captures(line) {
                 if let Some(ref class_id) = current_class {
                     if let Some(cls) = class_map.get_mut(class_id) {
                         cls.annotation = Some(caps[1].to_string());
@@ -56,8 +67,7 @@ pub fn parse_class_diagram(lines: &[&str]) -> Result<ClassDiagram, String> {
         }
         
         // Namespace block start
-        let ns_re = Regex::new(r"^namespace\s+(\S+)\s*\{$").unwrap();
-        if let Some(caps) = ns_re.captures(line) {
+        if let Some(caps) = RE_NAMESPACE.captures(line) {
             current_namespace = Some(ClassNamespace {
                 name: caps[1].to_string(),
                 class_ids: Vec::new(),
@@ -74,8 +84,7 @@ pub fn parse_class_diagram(lines: &[&str]) -> Result<ClassDiagram, String> {
         }
         
         // Class block start: `class ClassName {` or `class ClassName~Generic~ {`
-        let class_block_re = Regex::new(r"^class\s+(\S+?)(?:\s*~(\w+)~)?\s*\{$").unwrap();
-        if let Some(caps) = class_block_re.captures(line) {
+        if let Some(caps) = RE_CLASS_BLOCK.captures(line) {
             let id = caps[1].to_string();
             let generic = caps.get(2).map(|m| m.as_str());
             
@@ -93,8 +102,7 @@ pub fn parse_class_diagram(lines: &[&str]) -> Result<ClassDiagram, String> {
         }
         
         // Standalone class declaration (no body)
-        let class_only_re = Regex::new(r"^class\s+(\S+?)(?:\s*~(\w+)~)?\s*$").unwrap();
-        if let Some(caps) = class_only_re.captures(line) {
+        if let Some(caps) = RE_CLASS_ONLY.captures(line) {
             let id = caps[1].to_string();
             let generic = caps.get(2).map(|m| m.as_str());
             
@@ -110,16 +118,14 @@ pub fn parse_class_diagram(lines: &[&str]) -> Result<ClassDiagram, String> {
         }
         
         // Inline annotation: `class ClassName { <<interface>> }`
-        let inline_annot_re = Regex::new(r"^class\s+(\S+?)\s*\{\s*<<(\w+)>>\s*\}$").unwrap();
-        if let Some(caps) = inline_annot_re.captures(line) {
+        if let Some(caps) = RE_INLINE_ANNOT.captures(line) {
             let cls = ensure_class(&mut class_map, &mut class_order, &caps[1]);
             cls.annotation = Some(caps[2].to_string());
             continue;
         }
         
         // Inline attribute: `ClassName : +String name`
-        let inline_attr_re = Regex::new(r"^(\S+?)\s*:\s*(.+)$").unwrap();
-        if let Some(caps) = inline_attr_re.captures(line) {
+        if let Some(caps) = RE_INLINE_ATTR.captures(line) {
             let rest = &caps[2];
             // Make sure this isn't a relationship line
             if !rest.contains("<|--") && !rest.contains("--") && !rest.contains("*--")
@@ -191,8 +197,7 @@ fn parse_member(line: &str) -> Option<ParsedMember> {
     };
     
     // Check if it's a method (has parentheses)
-    let method_re = Regex::new(r"^(.+?)\(([^)]*)\)(?:\s*(.+))?$").unwrap();
-    if let Some(caps) = method_re.captures(rest) {
+    if let Some(caps) = RE_METHOD.captures(rest) {
         let name = caps[1].trim().to_string();
         let type_str = caps.get(3).map(|m| m.as_str().trim().to_string());
         
@@ -212,8 +217,7 @@ fn parse_member(line: &str) -> Option<ParsedMember> {
     }
     
     // Attribute: might be "Type name" or "name: Type" or just "name"
-    let attr_re = Regex::new(r"^(\S+)\s+(.+)$").unwrap();
-    if let Some(caps) = attr_re.captures(rest) {
+    if let Some(caps) = RE_ATTR.captures(rest) {
         let first = caps[1].trim();
         let second = caps[2].trim();
         

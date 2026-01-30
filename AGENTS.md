@@ -99,20 +99,17 @@ cargo clippy
 src/
 ├── lib.rs              # Main library exports, render() and render_to_svg()
 ├── main.rs             # CLI binary
-├── parser.rs           # Flowchart/graph parser
-├── layout.rs           # Dagre-style layout algorithm
-├── renderer.rs         # Flowchart ASCII renderer
 ├── types.rs            # Shared type definitions
+├── parser/             # Parsing modules (flowchart, class, er, sequence)
 ├── ascii/              # ASCII rendering modules
 │   ├── mod.rs
 │   ├── canvas.rs       # 2D character canvas utilities
+│   ├── grid.rs         # Grid-based layout algorithm (Dagre-style)
+│   ├── flowchart.rs    # Flowchart ASCII renderer
 │   ├── class_diagram.rs
 │   ├── er_diagram.rs
 │   ├── sequence.rs
-│   └── ...
-├── class/              # Class diagram parsing
-├── er/                 # ER diagram parsing
-├── sequence/           # Sequence diagram parsing
+│   └── pathfinder.rs   # A* pathfinding for edge routing
 └── svg/                # SVG rendering modules
     ├── mod.rs
     ├── from_ascii.rs   # Convert ASCII to SVG
