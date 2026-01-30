@@ -132,10 +132,12 @@ pub fn render_class_svg(
         levels.entry(id.clone()).or_insert(0);
     }
 
-    // Group by level and position
+    // Group by level and position - sort by id for deterministic output
     let max_level = levels.values().copied().max().unwrap_or(0);
     let mut level_nodes: Vec<Vec<String>> = vec![Vec::new(); max_level + 1];
-    for (id, level) in &levels {
+    let mut sorted_ids: Vec<_> = levels.iter().collect();
+    sorted_ids.sort_by_key(|(id, _)| *id);
+    for (id, level) in sorted_ids {
         level_nodes[*level].push(id.clone());
     }
 
@@ -174,8 +176,10 @@ pub fn render_class_svg(
         }
     }
 
-    // Draw class boxes
-    for b in class_boxes.values() {
+    // Draw class boxes - sort by id for deterministic output
+    let mut sorted_boxes: Vec<_> = class_boxes.values().collect();
+    sorted_boxes.sort_by_key(|b| &b.id);
+    for b in sorted_boxes {
         svg.push_str(&draw_class_box(b));
     }
 

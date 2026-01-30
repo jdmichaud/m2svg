@@ -227,29 +227,106 @@ unicode_test!(two_single_root_nodes);
 // SVG tests
 // =============================================================================
 
-#[test]
-#[ignore] // Run with: cargo test test_svg -- --ignored
-fn test_svg_flowchart() {
-    let input = r#"graph TD
-        A[Start] --> B[End]"#;
-    
-    let result = m2svg::render_to_svg(input);
-    assert!(result.is_ok(), "SVG render failed: {:?}", result.err());
-    
-    let svg = result.unwrap();
-    assert!(svg.contains("<svg"), "Output should contain SVG tag");
-    assert!(svg.contains("Start"), "Output should contain node text");
+/// Get the path to the SVG test data directory
+fn get_svg_dir() -> std::path::PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("testdata/svg")
 }
 
-#[test]
-#[ignore] // Run with: cargo test test_svg -- --ignored
-fn test_svg_sequence() {
-    let input = r#"sequenceDiagram
-        Alice->>Bob: Hello"#;
+/// Run an SVG test from the svg directory (exact match like ASCII tests)
+fn run_svg_test(test_name: &str) {
+    let test_file = get_svg_dir().join(format!("{}.txt", test_name));
+    let content = fs::read_to_string(&test_file)
+        .unwrap_or_else(|e| panic!("Failed to read {:?}: {}", test_file, e));
     
-    let result = m2svg::render_to_svg(input);
-    assert!(result.is_ok(), "SVG render failed: {:?}", result.err());
+    let (input, expected) = parse_test_file(&content)
+        .unwrap_or_else(|| panic!("Failed to parse SVG test file: {:?}", test_file));
     
-    let svg = result.unwrap();
-    assert!(svg.contains("<svg"), "Output should contain SVG tag");
+    // Filter out comment lines from input
+    let input: String = input
+        .lines()
+        .filter(|line| !line.trim_start().starts_with('#'))
+        .collect::<Vec<_>>()
+        .join("\n");
+    
+    let actual = m2svg::render_to_svg(&input)
+        .unwrap_or_else(|e| panic!("Failed to render SVG: {}", e));
+    
+    let expected_normalized = normalize_output(&expected);
+    let actual_normalized = normalize_output(&actual);
+    
+    if expected_normalized != actual_normalized {
+        eprintln!("=== Test: {} ===", test_name);
+        eprintln!("Input:\n{}", input);
+        eprintln!("\n--- Expected ---");
+        eprintln!("{}", expected_normalized);
+        eprintln!("\n--- Actual ---");
+        eprintln!("{}", actual_normalized);
+        panic!("SVG output mismatch for test: {}", test_name);
+    }
 }
+
+/// Macro to generate SVG test functions
+macro_rules! svg_test {
+    ($name:ident) => {
+        paste::paste! {
+            #[test]
+            fn [<svg_ $name>]() {
+                run_svg_test(stringify!($name));
+            }
+        }
+    };
+}
+
+// SVG tests from mermaid.js.org examples
+svg_test!(class_annotation);
+svg_test!(class_bankaccount);
+svg_test!(class_basic);
+svg_test!(class_cardinality);
+svg_test!(class_generics);
+svg_test!(class_inheritance);
+svg_test!(class_namespace);
+svg_test!(class_relationships);
+svg_test!(er_attributes);
+svg_test!(er_basic);
+svg_test!(er_order_system);
+svg_test!(er_zero_or_one);
+svg_test!(flowchart_arrow_link);
+svg_test!(flowchart_basic_node);
+svg_test!(flowchart_chaining);
+svg_test!(flowchart_circle);
+svg_test!(flowchart_comprehensive);
+svg_test!(flowchart_cylinder);
+svg_test!(flowchart_decision_tree);
+svg_test!(flowchart_diamond);
+svg_test!(flowchart_dotted_link);
+svg_test!(flowchart_double_circle);
+svg_test!(flowchart_flag);
+svg_test!(flowchart_hexagon);
+svg_test!(flowchart_link_with_text);
+svg_test!(flowchart_loop_back);
+svg_test!(flowchart_lr_direction);
+svg_test!(flowchart_node_with_text);
+svg_test!(flowchart_parallel_links);
+svg_test!(flowchart_round_edges);
+svg_test!(flowchart_stadium);
+svg_test!(flowchart_styling);
+svg_test!(flowchart_subgraphs);
+svg_test!(flowchart_subroutine);
+svg_test!(flowchart_td_direction);
+svg_test!(flowchart_thick_link);
+svg_test!(flowchart_trapezoid);
+svg_test!(sequence_activation);
+svg_test!(sequence_actors);
+svg_test!(sequence_aliases);
+svg_test!(sequence_alt);
+svg_test!(sequence_basic);
+svg_test!(sequence_break);
+svg_test!(sequence_critical);
+svg_test!(sequence_loop);
+svg_test!(sequence_notes);
+svg_test!(sequence_parallel);
+svg_test!(sequence_participants);
+svg_test!(sequence_rect);
+svg_test!(sequence_stacked_activation);
+
+// Legacy SVG tests (kept for backwards compatibility)

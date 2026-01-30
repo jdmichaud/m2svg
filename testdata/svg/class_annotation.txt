@@ -1,0 +1,28 @@
+# Class: Annotations
+# Source: https://mermaid.js.org/syntax/classDiagram.html
+classDiagram
+    class Shape
+    <<interface>> Shape
+    Shape : noOfVertices
+    Shape : draw()
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 184" width="180" height="184" style="--bg:#FFFFFF;--fg:#27272A;background:var(--bg)"><style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 30%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style><rect x="20.0" y="20.0" width="120.0" height="124.0" class="node"/>
+<text x="80.0" y="46.0" class="class-name" text-anchor="middle">Shape</text><line x1="20.0" y1="66.0" x2="140.0" y2="66.0" class="divider"/><text x="32.0" y="72.0" class="member">noOfVertices</text><line x1="20.0" y1="92.0" x2="140.0" y2="92.0" class="divider"/><text x="32.0" y="98.0" class="member">draw</text></svg>

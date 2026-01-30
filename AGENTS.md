@@ -125,7 +125,8 @@ tests/
 
 testdata/
 ├── ascii/              # Test fixtures (input + expected output)
-└── unicode/            # Unicode-specific test fixtures
+├── unicode/            # Unicode-specific test fixtures
+└── svg/                # SVG test fixtures (input + expected SVG output)
 ```
 
 ## Key Conventions
@@ -141,9 +142,12 @@ testdata/
 - Use descriptive error messages
 
 ### Testing
-- Each test fixture in `testdata/ascii/` contains input and expected output separated by `\n---\n`
+- Each test fixture in `testdata/ascii/` and `testdata/svg/` contains input and expected output separated by `\n---\n`
+- ASCII/Unicode tests compare rendered text output exactly
+- SVG tests compare complete SVG output exactly (requires deterministic rendering)
 - Tests auto-detect ASCII vs Unicode mode based on expected output characters
 - Run specific test: `cargo test test_cls_inheritance`
+- Run all SVG tests: `cargo test svg_`
 
 ### Diagram Rendering Pipeline
 1. **Parse** - Convert text to AST (parser modules)
@@ -167,12 +171,27 @@ testdata/
    | B |
    +---+
    ```
-2. Add test function in `tests/integration_tests.rs`:
+2. Add test macro in `tests/integration_tests.rs`:
    ```rust
-   #[test]
-   fn test_my_test() {
-       run_test("my_test");
-   }
+   ascii_test!(my_test);
+   ```
+
+### Adding a new SVG test fixture
+1. Create `testdata/svg/my_svg_test.txt` with format:
+   ```
+   # Optional comment about the test
+   graph TD
+     A --> B
+   ---
+   <svg xmlns=...>...</svg>
+   ```
+2. Add test macro in `tests/integration_tests.rs`:
+   ```rust
+   svg_test!(my_svg_test);
+   ```
+3. To generate expected output, run:
+   ```bash
+   echo 'graph TD; A-->B' | cargo run -- -s -
    ```
 
 ### Fixing rendering issues
@@ -247,6 +266,14 @@ Expected output in test fixtures often has significant trailing whitespace. When
 1. Check for trailing spaces on lines
 2. Compare character-by-character if needed
 3. The separator is exactly `\n---\n` (newline, three dashes, newline)
+
+### Deterministic Output
+SVG output must be deterministic for exact-match testing. Key considerations:
+- **HashMap iteration**: Never iterate over HashMaps directly for output generation
+- **Parser ordering**: Use Vec to track insertion order alongside HashMap lookups
+- **Renderer ordering**: Sort by ID before iterating when generating SVG elements
+- Example fix in `src/svg/class_diagram.rs`: Sort `class_boxes` by ID before drawing
+- Example fix in `src/parser/er.rs`: Track `entity_order` Vec alongside `entity_map`
 
 ### Edge Routing
 Edges use A* pathfinding to avoid nodes. The pathfinder in `src/ascii/pathfinder.rs` treats node bounding boxes as obstacles. Complex layouts may route edges around multiple nodes.
