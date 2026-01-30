@@ -14,7 +14,8 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
     let use_ascii = config.use_ascii;
     let padding = 1;
     let h_gap = 4;  // horizontal gap between class boxes
-    let v_gap = 3;  // vertical gap between levels
+    let v_gap_normal = 3;  // vertical gap for single child inheritance
+    let v_gap_fanout = 4;  // vertical gap when parent has multiple children (for centered layout)
     
     // Build box dimensions for each class
     let mut class_boxes: HashMap<String, ClassBox> = HashMap::new();
@@ -133,26 +134,134 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
         level_groups[lv].push(cls.id.clone());
     }
     
-    // Position classes by level
+    // Determine which levels need extra gap (because parent has multiple children = fan-out)
+    let mut level_has_fanout: Vec<bool> = vec![false; max_level + 1];
+    for (parent_id, child_set) in &children {
+        if child_set.len() > 1 {
+            // This parent has a fan-out, mark its level as needing extra gap
+            if let Some(&lv) = level.get(parent_id) {
+                level_has_fanout[lv] = true;
+            }
+        }
+    }
+    
+    // Position classes bottom-up to center parents over children
+    // First, compute Y positions for each level (top-down for Y)
+    let mut level_y: Vec<usize> = Vec::new();
     let mut current_y: usize = 0;
     
     for lv in 0..=max_level {
         let group = &level_groups[lv];
-        if group.is_empty() { continue; }
-        
+        level_y.push(current_y);
+        if !group.is_empty() {
+            let max_h = group.iter()
+                .filter_map(|id| class_boxes.get(id))
+                .map(|cb| cb.height)
+                .max()
+                .unwrap_or(0);
+            // Use larger gap if this level has fan-outs
+            let v_gap = if level_has_fanout[lv] { v_gap_fanout } else { v_gap_normal };
+            current_y += max_h + v_gap;
+        }
+    }
+    
+    // Assign Y positions to all boxes
+    for cls in &diagram.classes {
+        let lv = level.get(&cls.id).copied().unwrap_or(0);
+        if let Some(cb) = class_boxes.get_mut(&cls.id) {
+            cb.y = level_y[lv] as i32;
+        }
+    }
+    
+    // Position X coordinates bottom-up: start with deepest level, center parents above children
+    // First, position the bottom level left-to-right
+    {
+        let group = &level_groups[max_level];
         let mut current_x: usize = 0;
-        let mut max_h: usize = 0;
-        
         for id in group {
             if let Some(cb) = class_boxes.get_mut(id) {
                 cb.x = current_x as i32;
-                cb.y = current_y as i32;
                 current_x += cb.width + h_gap;
-                max_h = max_h.max(cb.height);
+            }
+        }
+    }
+    
+    // Work upward from bottom, centering parents over their children
+    for lv in (0..max_level).rev() {
+        let group = &level_groups[lv];
+        
+        // Track which nodes have been positioned (centered over children)
+        let mut positioned: HashSet<String> = HashSet::new();
+        
+        // For each node in this level, if it has children, center over them
+        for id in group {
+            if let Some(child_set) = children.get(id) {
+                if !child_set.is_empty() {
+                    // Calculate bounding box of all children
+                    let mut min_x = i32::MAX;
+                    let mut max_x = i32::MIN;
+                    for child_id in child_set {
+                        if let Some(cb) = class_boxes.get(child_id) {
+                            min_x = min_x.min(cb.x);
+                            max_x = max_x.max(cb.x + cb.width as i32);
+                        }
+                    }
+                    
+                    if min_x != i32::MAX {
+                        // Center this parent over children
+                        let children_center = (min_x + max_x) / 2;
+                        if let Some(cb) = class_boxes.get_mut(id) {
+                            cb.x = children_center - cb.width as i32 / 2;
+                            positioned.insert(id.clone());
+                        }
+                    }
+                }
             }
         }
         
-        current_y += max_h + v_gap;
+        // Position remaining nodes (those without children) in gaps
+        let mut used_ranges: Vec<(i32, i32)> = Vec::new();
+        for id in group {
+            if positioned.contains(id) {
+                if let Some(cb) = class_boxes.get(id) {
+                    used_ranges.push((cb.x, cb.x + cb.width as i32));
+                }
+            }
+        }
+        used_ranges.sort_by_key(|(start, _)| *start);
+        
+        let mut current_x: i32 = 0;
+        for id in group {
+            if !positioned.contains(id) {
+                if let Some(cb) = class_boxes.get_mut(id) {
+                    // Find a spot that doesn't overlap
+                    let width = cb.width as i32;
+                    let mut x = current_x;
+                    loop {
+                        let end = x + width;
+                        let overlaps = used_ranges.iter().any(|(s, e)| {
+                            x < *e + h_gap as i32 && end > *s - h_gap as i32
+                        });
+                        if !overlaps {
+                            break;
+                        }
+                        x += 1;
+                    }
+                    cb.x = x;
+                    used_ranges.push((x, x + width));
+                    used_ranges.sort_by_key(|(start, _)| *start);
+                    current_x = x + width + h_gap as i32;
+                }
+            }
+        }
+    }
+    
+    // Ensure no negative X coordinates - shift everything right if needed
+    let min_x = class_boxes.values().map(|cb| cb.x).min().unwrap_or(0);
+    if min_x < 0 {
+        for cb in class_boxes.values_mut() {
+            cb.x -= min_x;
+        }
     }
     
     // Calculate canvas size
@@ -200,8 +309,8 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
     // In ASCII mode, use dashes for corners; in Unicode mode, use box-drawing chars
     let corner_tl = if use_ascii { '-' } else { '┌' };
     let corner_tr = if use_ascii { '-' } else { '┐' };
-    let t_down = if use_ascii { '-' } else { '┬' };
-    let t_up = if use_ascii { '-' } else { '┴' };
+    let _t_down = if use_ascii { '-' } else { '┬' };
+    let _t_up = if use_ascii { '-' } else { '┴' };
     
     for (parent_id, children_info) in &inheritance_by_parent {
         let parent_box = match class_boxes.get(parent_id) {
@@ -296,31 +405,46 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
                 }
             }
         } else {
-            // Multiple children: draw fan-out
+            // Multiple children: draw fan-out with parent centered above
             let leftmost_x = child_data.first().unwrap().0;
             let rightmost_x = child_data.last().unwrap().0;
-            let line_y = marker_y + 1;
+            
+            // Check if parent is centered (within the span of children)
+            let parent_is_centered = parent_center_x >= leftmost_x && parent_center_x <= rightmost_x;
+            
+            // Horizontal bar position - leave room for vertical line from parent if centered
+            let bar_y = if parent_is_centered { marker_y + 2 } else { marker_y + 1 };
+            
+            // If centered, draw vertical line from marker to bar
+            if parent_is_centered {
+                for y in (marker_y + 1)..bar_y {
+                    set_char(&mut canvas, parent_center_x, y, solid_v);
+                }
+            }
             
             // Draw horizontal bar spanning all children
             for x in leftmost_x..=rightmost_x {
-                set_char(&mut canvas, x, line_y, solid_h);
+                set_char(&mut canvas, x, bar_y, solid_h);
             }
             
-            // Draw vertical connection from parent to horizontal bar
-            if parent_center_x >= leftmost_x && parent_center_x <= rightmost_x {
-                // Parent is above the bar - draw T-junction
-                set_char(&mut canvas, parent_center_x, line_y, t_up);
-            } else if parent_center_x < leftmost_x {
-                // Parent is to the left - draw corner and extend bar
-                set_char(&mut canvas, leftmost_x, line_y, corner_tl);
-                for x in parent_center_x..leftmost_x {
-                    set_char(&mut canvas, x, line_y, solid_h);
-                }
-            } else {
-                // Parent is to the right - extend bar
-                set_char(&mut canvas, rightmost_x, line_y, corner_tr);
-                for x in (rightmost_x + 1)..=parent_center_x {
-                    set_char(&mut canvas, x, line_y, solid_h);
+            // Draw junction where parent meets bar (if centered)
+            // In ASCII mode, just keep the dash; in Unicode mode, use cross
+            if parent_is_centered && !use_ascii {
+                let cross = '┼';
+                set_char(&mut canvas, parent_center_x, bar_y, cross);
+            } else if !parent_is_centered {
+                if parent_center_x < leftmost_x {
+                    // Parent is to the left - draw corner and extend bar
+                    set_char(&mut canvas, leftmost_x, bar_y, corner_tl);
+                    for x in parent_center_x..leftmost_x {
+                        set_char(&mut canvas, x, bar_y, solid_h);
+                    }
+                } else {
+                    // Parent is to the right - extend bar
+                    set_char(&mut canvas, rightmost_x, bar_y, corner_tr);
+                    for x in (rightmost_x + 1)..=parent_center_x {
+                        set_char(&mut canvas, x, bar_y, solid_h);
+                    }
                 }
             }
             
@@ -329,17 +453,8 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
                 let child_top_y = child_box.y;
                 let line_v = if *is_dashed { dashed_v } else { solid_v };
                 
-                // Draw junction at bar (T-down for middle children, corners for ends)
-                if *child_cx == leftmost_x {
-                    set_char(&mut canvas, *child_cx, line_y, corner_tl);
-                } else if *child_cx == rightmost_x {
-                    set_char(&mut canvas, *child_cx, line_y, corner_tr);
-                } else {
-                    set_char(&mut canvas, *child_cx, line_y, t_down);
-                }
-                
                 // Vertical line down to child
-                for y in (line_y + 1)..child_top_y {
+                for y in (bar_y + 1)..child_top_y {
                     set_char(&mut canvas, *child_cx, y, line_v);
                 }
             }
