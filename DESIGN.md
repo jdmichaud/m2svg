@@ -1,6 +1,6 @@
 # Design Document
 
-This document describes the high-level architecture of `mermaid-ascii`.
+This document describes the high-level architecture of `m2svg`.
 
 ## Overview
 

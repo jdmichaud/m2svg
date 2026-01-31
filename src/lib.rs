@@ -1,4 +1,4 @@
-//! Mermaid ASCII - Convert Mermaid diagrams to ASCII/Unicode art and SVG
+//! m2svg - Convert Mermaid diagrams to ASCII/Unicode art and SVG
 //!
 //! This library provides functionality to parse Mermaid diagram syntax and render
 //! it as ASCII or Unicode box-drawing art, or as SVG.
@@ -6,7 +6,7 @@
 //! # Example
 //!
 //! ```rust
-//! use mermaid_ascii::{render, render_to_svg};
+//! use m2svg::{render, render_to_svg};
 //!
 //! let ascii = render("graph LR\n  A --> B", false).unwrap();
 //! println!("{}", ascii);
@@ -40,7 +40,7 @@ pub use parser::parse_mermaid;
 ///
 /// # Example
 /// ```rust
-/// let output = mermaid_ascii::render("graph LR\n  A --> B", false).unwrap();
+/// let output = m2svg::render("graph LR\n  A --> B", false).unwrap();
 /// ```
 pub fn render(input: &str, use_ascii: bool) -> Result<String, String> {
     let opts = AsciiRenderOptions {
@@ -57,7 +57,7 @@ pub fn render(input: &str, use_ascii: bool) -> Result<String, String> {
 ///
 /// # Example
 /// ```rust
-/// let svg = mermaid_ascii::render_to_svg("graph LR\n  A --> B").unwrap();
+/// let svg = m2svg::render_to_svg("graph LR\n  A --> B").unwrap();
 /// ```
 pub fn render_to_svg(input: &str) -> Result<String, String> {
     let parsed = parse_mermaid(input)?;

@@ -55,12 +55,12 @@ fn run_test(test_name: &str) {
     // Detect mode from expected output: if it contains Unicode box chars, use Unicode mode
     let use_unicode = expected.contains('┌') || expected.contains('│') || expected.contains('─');
     
-    let options = mermaid_ascii::AsciiRenderOptions {
+    let options = m2svg::AsciiRenderOptions {
         use_ascii: !use_unicode,
         ..Default::default()
     };
     
-    let actual = mermaid_ascii::render_mermaid_ascii(&input, Some(options))
+    let actual = m2svg::render_mermaid_ascii(&input, Some(options))
         .unwrap_or_else(|e| panic!("Failed to render: {}", e));
     
     let expected_normalized = normalize_output(&expected);
@@ -358,12 +358,12 @@ fn run_tests_from_dir(dir: &PathBuf, mode: &str) -> (usize, usize, usize, Vec<St
             // Detect mode from expected output
             let use_unicode = expected.contains('┌') || expected.contains('│') || expected.contains('─');
             
-            let options = mermaid_ascii::AsciiRenderOptions {
+            let options = m2svg::AsciiRenderOptions {
                 use_ascii: !use_unicode,
                 ..Default::default()
             };
             
-            let actual = match mermaid_ascii::render_mermaid_ascii(&input, Some(options)) {
+            let actual = match m2svg::render_mermaid_ascii(&input, Some(options)) {
                 Ok(s) => s,
                 Err(e) => {
                     eprintln!("SKIP: render error: {}", e);
@@ -444,7 +444,7 @@ struct SvgFixture {
 
 /// Run a single SVG renderer test from a positioned JSON fixture
 fn run_svg_test(test_name: &str) -> Result<(), String> {
-    use mermaid_ascii::svg::{render_svg, DiagramColors, PositionedGraph};
+    use m2svg::svg::{render_svg, DiagramColors, PositionedGraph};
     
     let positioned_dir = get_positioned_testdata_dir();
     let test_file = positioned_dir.join(format!("{}.json", test_name));

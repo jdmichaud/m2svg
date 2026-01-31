@@ -1,4 +1,4 @@
-# mermaid-ascii
+# m2svg
 
 A Rust library and CLI for rendering Mermaid diagrams as ASCII art or SVG.
 
@@ -15,7 +15,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-mermaid-ascii = "0.1"
+m2svg = "0.1"
 ```
 
 ## Usage
@@ -23,7 +23,7 @@ mermaid-ascii = "0.1"
 ### Library
 
 ```rust
-use mermaid_ascii::{render, render_to_svg};
+use m2svg::{render, render_to_svg};
 
 // Render to ASCII (Unicode box-drawing)
 let ascii = render("graph LR\n  A --> B", false).unwrap();
@@ -42,13 +42,13 @@ println!("{}", svg);
 
 ```bash
 # Render to ASCII
-echo "graph LR\n  A --> B" | mermaid-ascii
+echo "graph LR\n  A --> B" | m2svg
 
 # Render to ASCII (plain ASCII mode)
-echo "graph LR\n  A --> B" | mermaid-ascii --ascii
+echo "graph LR\n  A --> B" | m2svg --ascii
 
 # Render to SVG
-echo "graph LR\n  A --> B" | mermaid-ascii --svg
+echo "graph LR\n  A --> B" | m2svg --svg
 ```
 
 ## Supported Diagram Types

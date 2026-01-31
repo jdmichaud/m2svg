@@ -1,8 +1,8 @@
 [package]
-name = "mermaid-ascii"
+name = "m2svg"
 version = "0.1.0"
 edition = "2021"
-authors = ["Mermaid ASCII Rust Port"]
+authors = ["m2svg"]
 description = "Convert Mermaid diagrams to ASCII art and SVG"
 license = "MIT"
 
@@ -15,9 +15,9 @@ serde_json = "1"
 [dev-dependencies]
 
 [[bin]]
-name = "mermaid-ascii"
+name = "m2svg"
 path = "src/main.rs"
 
 [lib]
-name = "mermaid_ascii"
+name = "m2svg"
 path = "src/lib.rs"
