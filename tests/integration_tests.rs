@@ -404,7 +404,6 @@ fn run_tests_from_dir(dir: &PathBuf, mode: &str) -> (usize, usize, usize, Vec<St
 }
 
 #[test]
-#[ignore] // Run with `cargo test -- --ignored` to run all tests
 fn test_all_testdata_files() {
     let ascii_dir = get_testdata_dir();
     let unicode_dir = get_unicode_testdata_dir();
