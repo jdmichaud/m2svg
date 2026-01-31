@@ -1,27 +1,21 @@
-//! Integration tests using the TypeScript test data files
+//! Integration tests using test data fixtures
 //!
-//! These tests read the test data files from the TypeScript project
-//! and verify that the Rust implementation produces matching output.
+//! These tests read test data files and verify that the Rust
+//! implementation produces the expected output.
 
 use std::fs;
 use std::path::PathBuf;
 
-/// Get the path to the TypeScript test data directory (ASCII)
+/// Get the path to the test data directory (ASCII)
 fn get_testdata_dir() -> PathBuf {
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
-    PathBuf::from(manifest_dir)
-        .parent()
-        .unwrap()
-        .join("src/__tests__/testdata/ascii")
+    PathBuf::from(manifest_dir).join("testdata/ascii")
 }
 
-/// Get the path to the TypeScript test data directory (Unicode)
+/// Get the path to the test data directory (Unicode)
 fn get_unicode_testdata_dir() -> PathBuf {
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
-    PathBuf::from(manifest_dir)
-        .parent()
-        .unwrap()
-        .join("src/__tests__/testdata/unicode")
+    PathBuf::from(manifest_dir).join("testdata/unicode")
 }
 
 /// Parse a test file into (input, expected_output)
@@ -434,10 +428,7 @@ fn test_all_testdata_files() {
 /// Get the path to the positioned JSON test data directory
 fn get_positioned_testdata_dir() -> PathBuf {
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
-    PathBuf::from(manifest_dir)
-        .parent()
-        .unwrap()
-        .join("src/__tests__/testdata/positioned")
+    PathBuf::from(manifest_dir).join("testdata/positioned")
 }
 
 /// Fixture structure matching the JSON format
