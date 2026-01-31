@@ -27,7 +27,10 @@ pub fn render_svg(
 
     // 1. Group backgrounds (subgraph rectangles with header bands)
     for group in &graph.groups {
-        parts.push(render_group(group));
+        let rendered = render_group(group);
+        if !rendered.is_empty() {
+            parts.push(rendered);
+        }
     }
 
     // 2. Edges (polylines — rendered behind nodes)

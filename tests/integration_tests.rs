@@ -473,13 +473,6 @@ fn run_svg_test(test_name: &str) -> Result<(), String> {
         return Err("skip".to_string());
     }
     
-    // Skip tests with known float precision edge cases
-    // These have values like 103.99999999999999 which parse differently in Rust vs JS
-    let precision_edge_cases = ["subgraph_td_multiple", "subgraph_empty"];
-    if precision_edge_cases.contains(&test_name) {
-        return Err("skip-precision".to_string());
-    }
-    
     // Parse the positioned graph
     let positioned: PositionedGraph = serde_json::from_value(fixture.positioned)
         .map_err(|e| format!("Failed to parse positioned graph: {}", e))?;
