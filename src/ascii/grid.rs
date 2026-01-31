@@ -1,9 +1,9 @@
 //! Grid-based layout operations
 
 use super::types::{
-    AsciiGraph, AsciiNode, DrawingCoord, Direction, GridCoord,
+    AsciiGraph, DrawingCoord, Direction, GridCoord,
     GraphDirection, grid_coord_direction, determine_direction, get_opposite,
-    UP, DOWN, LEFT, RIGHT, UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT, MIDDLE,
+    UP, DOWN, LEFT, RIGHT, UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT,
 };
 use super::pathfinder::{get_path, merge_path};
 use super::canvas::set_canvas_size_to_grid;

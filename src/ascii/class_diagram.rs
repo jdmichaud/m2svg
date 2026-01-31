@@ -197,8 +197,8 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
         let is_hierarchical = matches!(rel.rel_type, RelationshipType::Inheritance | RelationshipType::Realization);
         
         // Determine which box is on top based on Y position
-        let from_bottom_y = from_box.y + from_box.height as i32 - 1;
-        let to_bottom_y = to_box.y + to_box.height as i32 - 1;
+        let _from_bottom_y = from_box.y + from_box.height as i32 - 1;
+        let _to_bottom_y = to_box.y + to_box.height as i32 - 1;
         
         let (top_box, bottom_box) = if from_box.y < to_box.y {
             (from_box, to_box)

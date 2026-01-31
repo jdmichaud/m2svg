@@ -13,7 +13,7 @@ pub fn render_sequence_ascii(diagram: &SequenceDiagram, config: &AsciiConfig) ->
     let use_ascii = config.use_ascii;
     
     // Box-drawing characters
-    let (h_line, v_line, tl, tr, bl, br) = if use_ascii {
+    let (h_line, v_line, _tl, _tr, _bl, _br) = if use_ascii {
         ('-', '|', '+', '+', '+', '+')
     } else {
         ('─', '│', '┌', '┐', '└', '┘')
@@ -91,7 +91,7 @@ pub fn render_sequence_ascii(diagram: &SequenceDiagram, config: &AsciiConfig) ->
     let mut total_w = last_ll + last_half + 2;
     
     // Ensure canvas is wide enough for self-message labels
-    for (m, msg) in diagram.messages.iter().enumerate() {
+    for (_m, msg) in diagram.messages.iter().enumerate() {
         if msg.from == msg.to {
             let fi = actor_idx.get(msg.from.as_str()).copied().unwrap_or(0);
             let self_right = ll_x[fi] + 6 + 2 + msg.label.len();
