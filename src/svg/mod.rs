@@ -1,8 +1,10 @@
-//! SVG renderer - converts positioned graphs into SVG strings.
+//! SVG renderer - converts diagrams into SVG strings.
 //!
-//! Two modes:
-//! 1. `render_svg` - from pre-positioned PositionedGraph (for testing against fixtures)
-//! 2. `render_mermaid_to_svg` - directly from parsed MermaidGraph using ASCII layout
+//! Supports all diagram types:
+//! - Flowcharts (render_mermaid_to_svg)
+//! - Sequence diagrams (render_sequence_svg)
+//! - Class diagrams (render_class_svg)
+//! - ER diagrams (render_er_svg)
 //!
 //! Pure string building, no DOM manipulation.
 
@@ -11,8 +13,14 @@ mod renderer;
 mod theme;
 mod styles;
 mod from_ascii;
+mod sequence;
+mod class_diagram;
+mod er_diagram;
 
 pub use types::*;
 pub use renderer::render_svg;
 pub use theme::DiagramColors;
 pub use from_ascii::render_mermaid_to_svg;
+pub use sequence::render_sequence_svg;
+pub use class_diagram::render_class_svg;
+pub use er_diagram::render_er_svg;

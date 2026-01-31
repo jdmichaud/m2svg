@@ -61,12 +61,23 @@ pub fn render(input: &str, use_ascii: bool) -> Result<String, String> {
 /// ```
 pub fn render_to_svg(input: &str) -> Result<String, String> {
     let parsed = parse_mermaid(input)?;
+    let colors = svg::DiagramColors::default();
+    let font = "Inter";
+    let transparent = false;
+    
     match parsed {
         DiagramType::Flowchart(graph) => {
-            let colors = svg::DiagramColors::default();
-            Ok(svg::render_mermaid_to_svg(&graph, &colors, "Inter", false))
+            Ok(svg::render_mermaid_to_svg(&graph, &colors, font, transparent))
         }
-        _ => Err("SVG rendering only supported for flowcharts currently".to_string()),
+        DiagramType::Sequence(diagram) => {
+            Ok(svg::render_sequence_svg(&diagram, &colors, font, transparent))
+        }
+        DiagramType::Class(diagram) => {
+            Ok(svg::render_class_svg(&diagram, &colors, font, transparent))
+        }
+        DiagramType::Er(diagram) => {
+            Ok(svg::render_er_svg(&diagram, &colors, font, transparent))
+        }
     }
 }
 
