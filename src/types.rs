@@ -280,6 +280,7 @@ pub struct ClassRelationship {
     pub from_cardinality: Option<String>,
     pub to_cardinality: Option<String>,
     pub label: Option<String>,
+    pub marker_at_from: bool,  // true = marker at 'from' end, false = marker at 'to' end
 }
 
 #[derive(Debug, Clone)]

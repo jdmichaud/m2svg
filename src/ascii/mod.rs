@@ -15,13 +15,39 @@ use crate::types::DiagramType;
 use crate::AsciiRenderOptions;
 use types::AsciiConfig;
 
+/// Parse configuration from input text (lines like paddingX=2, paddingY=1)
+fn parse_config_from_text(text: &str, base_opts: AsciiRenderOptions) -> AsciiRenderOptions {
+    let mut opts = base_opts;
+    
+    for line in text.lines() {
+        let line = line.trim().to_lowercase();
+        if line.starts_with("paddingx=") {
+            if let Some(val) = line.strip_prefix("paddingx=") {
+                if let Ok(n) = val.parse::<usize>() {
+                    opts.padding_x = n;
+                }
+            }
+        } else if line.starts_with("paddingy=") {
+            if let Some(val) = line.strip_prefix("paddingy=") {
+                if let Ok(n) = val.parse::<usize>() {
+                    opts.padding_y = n;
+                }
+            }
+        }
+    }
+    
+    opts
+}
+
 /// Render Mermaid diagram text to an ASCII/Unicode string.
 ///
 /// Synchronous — no async layout engine needed.
 /// Auto-detects diagram type from the header line and dispatches to
 /// the appropriate renderer.
 pub fn render_mermaid_ascii(text: &str, options: Option<AsciiRenderOptions>) -> Result<String, String> {
-    let opts = options.unwrap_or_default();
+    let base_opts = options.unwrap_or_default();
+    // Parse any config lines from the input
+    let opts = parse_config_from_text(text, base_opts);
     
     let config = AsciiConfig {
         use_ascii: opts.use_ascii,

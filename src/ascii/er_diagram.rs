@@ -19,9 +19,15 @@ pub fn render_er_ascii(diagram: &ErDiagram, config: &AsciiConfig) -> Result<Stri
         ('─', '│', '┌', '┐', '└', '┘')
     };
     
-    // For simple ER diagrams, render relationships inline
-    if diagram.relationships.len() == 1 && diagram.entities.len() <= 2 {
+    // For simple ER diagrams without attributes, render relationships inline
+    let has_attributes = diagram.entities.iter().any(|e| !e.attributes.is_empty());
+    if diagram.relationships.len() == 1 && diagram.entities.len() <= 2 && !has_attributes {
         return render_simple_er(diagram, config);
+    }
+    
+    // For ER diagrams with attributes, render inline but with attribute rows
+    if diagram.relationships.len() == 1 && diagram.entities.len() <= 2 && has_attributes {
+        return render_er_with_attributes(diagram, config);
     }
     
     // Calculate dimensions for each entity
@@ -139,6 +145,201 @@ fn render_simple_er(diagram: &ErDiagram, config: &AsciiConfig) -> Result<String,
     // Draw second entity box - right after the middle section
     let e2_x = rel_x + middle_width as i32;
     draw_simple_box(&mut canvas, e2_x, 0, e2_width as i32, box_height as i32, e2_label, use_ascii);
+    
+    Ok(canvas_to_string(&canvas))
+}
+
+/// Render an ER diagram with attributes - relationship inline with attribute rows below
+fn render_er_with_attributes(diagram: &ErDiagram, config: &AsciiConfig) -> Result<String, String> {
+    let use_ascii = config.use_ascii;
+    let (h_line, v_line, tl, tr, bl, br) = if use_ascii {
+        ('-', '|', '+', '+', '+', '+')
+    } else {
+        ('─', '│', '┌', '┐', '└', '┘')
+    };
+    
+    let rel = &diagram.relationships[0];
+    
+    // Find entities and their attributes
+    let e1 = diagram.entities.iter()
+        .find(|e| e.id == rel.entity1);
+    let e2 = diagram.entities.iter()
+        .find(|e| e.id == rel.entity2);
+    
+    let e1_label = e1.map(|e| e.label.as_str()).unwrap_or(&rel.entity1);
+    let e2_label = e2.map(|e| e.label.as_str()).unwrap_or(&rel.entity2);
+    
+    // Format attribute lines with keys - keys come BEFORE type for display
+    let e1_attrs: Vec<String> = e1.map(|e| {
+        e.attributes.iter().map(|a| {
+            let key_prefix = a.keys.iter()
+                .map(|k| match k {
+                    crate::types::ErKey::PK => "PK",
+                    crate::types::ErKey::FK => "FK",
+                    crate::types::ErKey::UK => "UK",
+                })
+                .collect::<Vec<_>>()
+                .join(" ");
+            if key_prefix.is_empty() {
+                format!("   {} {}", a.attr_type, a.name)
+            } else {
+                format!("{} {} {}", key_prefix, a.attr_type, a.name)
+            }
+        }).collect()
+    }).unwrap_or_default();
+    
+    let e2_attrs: Vec<String> = e2.map(|e| {
+        e.attributes.iter().map(|a| {
+            let key_prefix = a.keys.iter()
+                .map(|k| match k {
+                    crate::types::ErKey::PK => "PK",
+                    crate::types::ErKey::FK => "FK",
+                    crate::types::ErKey::UK => "UK",
+                })
+                .collect::<Vec<_>>()
+                .join(" ");
+            if key_prefix.is_empty() {
+                format!("   {} {}", a.attr_type, a.name)
+            } else {
+                format!("{} {} {}", key_prefix, a.attr_type, a.name)
+            }
+        }).collect()
+    }).unwrap_or_default();
+    
+    // Cardinality symbols
+    let card1 = cardinality_to_str(rel.cardinality1);
+    let card2 = cardinality_to_str(rel.cardinality2);
+    let line_style = if rel.identifying { "--" } else { ".." };
+    let rel_str = format!("{}{}{}", card1, line_style, card2);
+    
+    // Middle section: max of rel_str length and truncated label
+    let gap_width = rel_str.len();  // The gap is exactly the relationship string length
+    let label_display: String = rel.label.chars().take(gap_width).collect();
+    
+    // Decide row placement based on attribute count
+    // If e1 has 2+ attrs, put label on divider (row 2) and rel_str on first attr (row 3)
+    // Otherwise put label on name row (row 1) and rel_str on divider (row 2)
+    let label_on_divider = e1_attrs.len() >= 2;
+    
+    // Calculate entity box widths
+    let e1_attr_max = e1_attrs.iter().map(|s| s.len()).max().unwrap_or(0);
+    let e2_attr_max = e2_attrs.iter().map(|s| s.len()).max().unwrap_or(0);
+    let e1_inner = (e1_label.len()).max(e1_attr_max);
+    let e2_inner = (e2_label.len()).max(e2_attr_max);
+    let e1_width = e1_inner + 4; // +2 padding +2 borders
+    let e2_width = e2_inner + 4;
+    
+    // Position entities
+    let e1_x = 0i32;
+    let e2_x = e1_width as i32 + gap_width as i32;
+    
+    // Calculate height
+    let e1_total_rows = 3 + e1_attrs.len(); // top + name + divider + attrs + bottom
+    let e2_total_rows = 3 + e2_attrs.len();
+    let total_h = e1_total_rows.max(e2_total_rows) + 1;
+    let total_w = e2_x as usize + e2_width + 4;
+    
+    let mut canvas = mk_canvas(total_w, total_h);
+    
+    // Row 0: Top borders  
+    set_char(&mut canvas, e1_x, 0, tl);
+    for i in 1..(e1_width as i32 - 1) {
+        set_char(&mut canvas, e1_x + i, 0, h_line);
+    }
+    set_char(&mut canvas, e1_x + e1_width as i32 - 1, 0, tr);
+    
+    set_char(&mut canvas, e2_x, 0, tl);
+    for i in 1..(e2_width as i32 - 1) {
+        set_char(&mut canvas, e2_x + i, 0, h_line);
+    }
+    set_char(&mut canvas, e2_x + e2_width as i32 - 1, 0, tr);
+    
+    // Row 1: Entity names - label only if !label_on_divider
+    set_char(&mut canvas, e1_x, 1, v_line);
+    draw_text(&mut canvas, e1_x + 2, 1, e1_label);
+    set_char(&mut canvas, e1_x + e1_width as i32 - 1, 1, v_line);
+    
+    if !label_on_divider {
+        draw_text(&mut canvas, e1_x + e1_width as i32, 1, &label_display);
+    }
+    
+    set_char(&mut canvas, e2_x, 1, v_line);
+    draw_text(&mut canvas, e2_x + 2, 1, e2_label);
+    set_char(&mut canvas, e2_x + e2_width as i32 - 1, 1, v_line);
+    
+    // Row 2: Divider - label if label_on_divider, rel_str if !label_on_divider
+    set_char(&mut canvas, e1_x, 2, tl);  // +
+    for i in 1..(e1_width as i32 - 1) {
+        set_char(&mut canvas, e1_x + i, 2, h_line);
+    }
+    set_char(&mut canvas, e1_x + e1_width as i32 - 1, 2, tr);  // +
+    
+    if label_on_divider {
+        draw_text(&mut canvas, e1_x + e1_width as i32, 2, &label_display);
+    } else {
+        draw_text(&mut canvas, e1_x + e1_width as i32, 2, &rel_str);
+    }
+    
+    set_char(&mut canvas, e2_x, 2, tl);  // +
+    for i in 1..(e2_width as i32 - 1) {
+        set_char(&mut canvas, e2_x + i, 2, h_line);
+    }
+    set_char(&mut canvas, e2_x + e2_width as i32 - 1, 2, tr);  // +
+    
+    // Attribute rows for e1 - also draw rel_str on first attr row if label_on_divider
+    for (i, attr) in e1_attrs.iter().enumerate() {
+        let y = 3 + i as i32;
+        set_char(&mut canvas, e1_x, y, v_line);
+        draw_text(&mut canvas, e1_x + 2, y, attr);
+        set_char(&mut canvas, e1_x + e1_width as i32 - 1, y, v_line);
+        
+        // Draw rel_str on first attribute row when label is on divider
+        if i == 0 && label_on_divider {
+            draw_text(&mut canvas, e1_x + e1_width as i32, y, &rel_str);
+        }
+    }
+    
+    // Attribute rows for e2
+    for (i, attr) in e2_attrs.iter().enumerate() {
+        let y = 3 + i as i32;
+        set_char(&mut canvas, e2_x, y, v_line);
+        draw_text(&mut canvas, e2_x + 2, y, attr);
+        set_char(&mut canvas, e2_x + e2_width as i32 - 1, y, v_line);
+    }
+    
+    // Bottom border for e1
+    let e1_bottom_y = 3 + e1_attrs.len().max(1) as i32 - 1;
+    if e1_attrs.is_empty() {
+        // No attrs - bottom comes right after divider
+        set_char(&mut canvas, e1_x, 3, bl);
+        for i in 1..(e1_width as i32 - 1) {
+            set_char(&mut canvas, e1_x + i, 3, h_line);
+        }
+        set_char(&mut canvas, e1_x + e1_width as i32 - 1, 3, br);
+    } else {
+        let y = 3 + e1_attrs.len() as i32;
+        set_char(&mut canvas, e1_x, y, bl);
+        for i in 1..(e1_width as i32 - 1) {
+            set_char(&mut canvas, e1_x + i, y, h_line);
+        }
+        set_char(&mut canvas, e1_x + e1_width as i32 - 1, y, br);
+    }
+    
+    // Bottom border for e2
+    if e2_attrs.is_empty() {
+        set_char(&mut canvas, e2_x, 3, bl);
+        for i in 1..(e2_width as i32 - 1) {
+            set_char(&mut canvas, e2_x + i, 3, h_line);
+        }
+        set_char(&mut canvas, e2_x + e2_width as i32 - 1, 3, br);
+    } else {
+        let y = 3 + e2_attrs.len() as i32;
+        set_char(&mut canvas, e2_x, y, bl);
+        for i in 1..(e2_width as i32 - 1) {
+            set_char(&mut canvas, e2_x + i, y, h_line);
+        }
+        set_char(&mut canvas, e2_x + e2_width as i32 - 1, y, br);
+    }
     
     Ok(canvas_to_string(&canvas))
 }
