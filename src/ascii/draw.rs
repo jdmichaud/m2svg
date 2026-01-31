@@ -342,20 +342,34 @@ fn draw_arrow_label(graph: &AsciiGraph, edge_idx: usize) -> Canvas {
     let mut canvas = copy_canvas(&graph.canvas);
     let edge = &graph.edges[edge_idx];
     
-    if edge.text.is_empty() || edge.path.len() < 2 {
+    if edge.text.is_empty() {
         return canvas;
     }
     
-    // Find a good position for the label (midpoint of path)
-    let mid_idx = edge.path.len() / 2;
-    let mid_coord = edge.path[mid_idx];
-    let dc = grid_to_drawing_coord(graph, mid_coord, None);
+    // Use label_line if available, otherwise fall back to path midpoint
+    let (center_x, center_y) = if edge.label_line.len() >= 2 {
+        // Use the label_line segment
+        let dc1 = grid_to_drawing_coord(graph, edge.label_line[0], None);
+        let dc2 = grid_to_drawing_coord(graph, edge.label_line[1], None);
+        let min_x = dc1.x.min(dc2.x);
+        let max_x = dc1.x.max(dc2.x);
+        let min_y = dc1.y.min(dc2.y);
+        let max_y = dc1.y.max(dc2.y);
+        (min_x + (max_x - min_x) / 2, min_y + (max_y - min_y) / 2)
+    } else if edge.path.len() >= 2 {
+        // Fall back to path midpoint
+        let mid_idx = edge.path.len() / 2;
+        let dc = grid_to_drawing_coord(graph, edge.path[mid_idx], None);
+        (dc.x, dc.y)
+    } else {
+        return canvas;
+    };
     
-    // Draw label centered on the midpoint
+    // Draw label centered ON the line (not above)
     let label = &edge.text;
-    let start_x = dc.x - (label.len() as i32) / 2;
+    let start_x = center_x - (label.len() as i32) / 2;
     for (i, c) in label.chars().enumerate() {
-        set_char(&mut canvas, start_x + i as i32, dc.y - 1, c);
+        set_char(&mut canvas, start_x + i as i32, center_y, c);
     }
     
     canvas
