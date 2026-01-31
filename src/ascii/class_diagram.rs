@@ -178,6 +178,10 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
     
     // Draw relationship lines
     let (solid_v, dashed_v) = if use_ascii { ('|', ':') } else { ('│', '┊') };
+    let (solid_h, _dashed_h) = if use_ascii { ('-', '.') } else { ('─', '┄') };
+    // In ASCII mode, use dashes for the horizontal connector (no corners)
+    // In Unicode mode, use proper corner characters
+    let (corner_tr, corner_bl) = if use_ascii { ('-', '-') } else { ('┘', '┌') };
     
     for rel in &diagram.relationships {
         let from_box = class_boxes.get(&rel.from);
@@ -275,7 +279,7 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
         let mid_y = (top_bottom_y + 1 + bottom_top_y) / 2;
         
         // Get marker character  
-        let marker_char = get_marker_shape(&rel.rel_type, is_hierarchical);
+        let marker_char = get_marker_shape(&rel.rel_type, is_hierarchical, use_ascii);
         
         // Determine if marker is at source (top) or target (bottom)
         let marker_at_source = matches!(rel.rel_type, 
@@ -303,15 +307,34 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
                     set_char(&mut canvas, top_center_x, y, line_v);
                 }
             } else if top_center_x != bottom_center_x {
-                // No label but centers don't align: draw horizontal connector
-                let min_x = top_center_x.min(bottom_center_x);
-                let max_x = top_center_x.max(bottom_center_x);
-                // Draw horizontal line at arrow_y + 1
-                for x in min_x..=max_x {
-                    set_char(&mut canvas, x, arrow_y + 1, '-');
+                // No label but centers don't align: draw horizontal connector with corners
+                // The corner at top_center goes down then horizontal
+                // The corner at bottom_center goes horizontal then down
+                let line_y = arrow_y + 1;
+                
+                if top_center_x > bottom_center_x {
+                    // Top is to the right of bottom: ┌┘ style
+                    //    △   <- top_center_x
+                    //   ┌┘   <- corner_bl at bottom_center_x, corner_tr at top_center_x
+                    //   │    <- vertical from bottom_center_x
+                    set_char(&mut canvas, bottom_center_x, line_y, corner_bl);  // ┌
+                    set_char(&mut canvas, top_center_x, line_y, corner_tr);      // ┘
+                    // Draw horizontal line between corners (if any space)
+                    for x in (bottom_center_x + 1)..top_center_x {
+                        set_char(&mut canvas, x, line_y, solid_h);
+                    }
+                } else {
+                    // Top is to the left of bottom: ┐└ style (mirror)
+                    let corner_tl = if use_ascii { '-' } else { '┐' };
+                    let corner_br = if use_ascii { '-' } else { '└' };
+                    set_char(&mut canvas, top_center_x, line_y, corner_tl);
+                    set_char(&mut canvas, bottom_center_x, line_y, corner_br);
+                    for x in (top_center_x + 1)..bottom_center_x {
+                        set_char(&mut canvas, x, line_y, solid_h);
+                    }
                 }
                 // Draw vertical connector from child's center down
-                for y in (arrow_y + 2)..bottom_top_y {
+                for y in (line_y + 1)..bottom_top_y {
                     set_char(&mut canvas, bottom_center_x, y, line_v);
                 }
             } else {
@@ -371,12 +394,20 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
     Ok(canvas_to_string(&canvas))
 }
 
-fn get_marker_shape(rel_type: &RelationshipType, _is_hierarchical: bool) -> char {
+fn get_marker_shape(rel_type: &RelationshipType, _is_hierarchical: bool, use_ascii: bool) -> char {
     match rel_type {
-        RelationshipType::Inheritance | RelationshipType::Realization => '^',
-        RelationshipType::Composition => '*',
-        RelationshipType::Aggregation => 'o',
-        RelationshipType::Association | RelationshipType::Dependency => 'v',
+        RelationshipType::Inheritance | RelationshipType::Realization => {
+            if use_ascii { '^' } else { '△' }
+        },
+        RelationshipType::Composition => {
+            if use_ascii { '*' } else { '◆' }
+        },
+        RelationshipType::Aggregation => {
+            if use_ascii { 'o' } else { '◇' }
+        },
+        RelationshipType::Association | RelationshipType::Dependency => {
+            if use_ascii { 'v' } else { '▼' }
+        },
     }
 }
 

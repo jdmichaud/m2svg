@@ -130,10 +130,26 @@ pub fn merge_junctions(c1: char, c2: char) -> char {
         ('│', '┴') | ('┴', '│') => '┼',
         ('│', '├') | ('├', '│') => '├',  // T-junction going right
         ('│', '┤') | ('┤', '│') => '┤',  // T-junction going left
+        // Corner merging: opposite corners combine to full cross
         ('┌', '┘') | ('┘', '┌') => '┼',
         ('┐', '└') | ('└', '┐') => '┼',
+        // Corner merging: same-side corners combine to T-junctions
+        ('┌', '└') | ('└', '┌') => '├',  // Both have RIGHT arm → ├
+        ('┐', '┘') | ('┘', '┐') => '┤',  // Both have LEFT arm → ┤
+        ('┌', '┐') | ('┐', '┌') => '┬',  // Both have DOWN arm → ┬
+        ('└', '┘') | ('┘', '└') => '┴',  // Both have UP arm → ┴
+        // T-junction merging
         ('┬', '┴') | ('┴', '┬') => '┼',
         ('├', '┤') | ('┤', '├') => '┼',
+        // T-junction + corner = full cross or enhanced T
+        ('├', '┐') | ('┐', '├') => '┼',  // ├ (UP,DOWN,RIGHT) + ┐ (LEFT,DOWN) → ┼
+        ('├', '┘') | ('┘', '├') => '┼',  // ├ (UP,DOWN,RIGHT) + ┘ (LEFT,UP) → ┼
+        ('┤', '┌') | ('┌', '┤') => '┼',  // ┤ (UP,DOWN,LEFT) + ┌ (RIGHT,DOWN) → ┼
+        ('┤', '└') | ('└', '┤') => '┼',  // ┤ (UP,DOWN,LEFT) + └ (RIGHT,UP) → ┼
+        ('┬', '└') | ('└', '┬') => '┼',  // ┬ (LEFT,RIGHT,DOWN) + └ (RIGHT,UP) → ┼
+        ('┬', '┘') | ('┘', '┬') => '┼',  // ┬ (LEFT,RIGHT,DOWN) + ┘ (LEFT,UP) → ┼
+        ('┴', '┌') | ('┌', '┴') => '┼',  // ┴ (LEFT,RIGHT,UP) + ┌ (RIGHT,DOWN) → ┼
+        ('┴', '┐') | ('┐', '┴') => '┼',  // ┴ (LEFT,RIGHT,UP) + ┐ (LEFT,DOWN) → ┼
         _ => c2,  // Default to the new character
     }
 }
