@@ -55,7 +55,7 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
         };
         
         class_boxes.insert(cls.id.clone(), ClassBox {
-            id: cls.id.clone(),
+            _id: cls.id.clone(),
             label: cls.label.clone(),
             annotation: cls.annotation.clone(),
             attr_lines,
@@ -172,18 +172,182 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
         draw_class_box(&mut canvas, cb, use_ascii);
     }
     
-    // Sort class boxes by X position for calculating label space limits
-    let mut sorted_boxes: Vec<_> = class_boxes.values().collect();
-    sorted_boxes.sort_by_key(|cb| cb.x);
-    
-    // Draw relationship lines
-    let (solid_v, dashed_v) = if use_ascii { ('|', ':') } else { ('│', '┊') };
-    let (solid_h, _dashed_h) = if use_ascii { ('-', '.') } else { ('─', '┄') };
-    // In ASCII mode, use dashes for the horizontal connector (no corners)
-    // In Unicode mode, use proper corner characters
-    let (corner_tr, corner_bl) = if use_ascii { ('-', '-') } else { ('┘', '┌') };
+    // Group inheritance relationships by parent for fan-out rendering
+    // Each entry stores (child_id, label, is_dashed)
+    let mut inheritance_by_parent: HashMap<String, Vec<(String, Option<String>, bool)>> = HashMap::new();
+    let mut non_hierarchical_rels: Vec<_> = Vec::new();
     
     for rel in &diagram.relationships {
+        let is_hierarchical = matches!(rel.rel_type, RelationshipType::Inheritance | RelationshipType::Realization);
+        if is_hierarchical {
+            // Determine parent based on marker position
+            let (parent_id, child_id) = if rel.marker_at_from {
+                (rel.from.clone(), rel.to.clone())
+            } else {
+                (rel.to.clone(), rel.from.clone())
+            };
+            let is_dashed = matches!(rel.rel_type, RelationshipType::Realization);
+            inheritance_by_parent.entry(parent_id).or_default().push((child_id, rel.label.clone(), is_dashed));
+        } else {
+            non_hierarchical_rels.push(rel);
+        }
+    }
+    
+    // Draw inheritance fan-outs
+    let (solid_v, dashed_v) = if use_ascii { ('|', ':') } else { ('│', '┊') };
+    let (solid_h, _dashed_h) = if use_ascii { ('-', '.') } else { ('─', '┄') };
+    let marker_char = if use_ascii { '^' } else { '△' };
+    // In ASCII mode, use dashes for corners; in Unicode mode, use box-drawing chars
+    let corner_tl = if use_ascii { '-' } else { '┌' };
+    let corner_tr = if use_ascii { '-' } else { '┐' };
+    let t_down = if use_ascii { '-' } else { '┬' };
+    let t_up = if use_ascii { '-' } else { '┴' };
+    
+    for (parent_id, children_info) in &inheritance_by_parent {
+        let parent_box = match class_boxes.get(parent_id) {
+            Some(b) => b,
+            None => continue,
+        };
+        
+        // Get all child boxes with their info
+        let mut child_data: Vec<(i32, &ClassBox, Option<&String>, bool)> = children_info.iter()
+            .filter_map(|(cid, label, is_dashed)| {
+                class_boxes.get(cid).map(|cb| (cb.x + cb.width as i32 / 2, cb, label.as_ref(), *is_dashed))
+            })
+            .collect();
+        child_data.sort_by_key(|(x, _, _, _)| *x);
+        
+        if child_data.is_empty() { continue; }
+        
+        let parent_center_x = parent_box.x + parent_box.width as i32 / 2;
+        let parent_bottom_y = parent_box.y + parent_box.height as i32 - 1;
+        
+        // Draw inheritance marker below parent
+        let marker_y = parent_bottom_y + 1;
+        set_char(&mut canvas, parent_center_x, marker_y, marker_char);
+        
+        if child_data.len() == 1 {
+            // Single child: draw vertical line with optional label
+            let (child_cx, child_box, label_opt, is_dashed) = child_data[0];
+            let child_top_y = child_box.y;
+            let line_v = if is_dashed { dashed_v } else { solid_v };
+            
+            // Calculate midpoint for label (same as non-hierarchical relationships)
+            let mid_y = (parent_bottom_y + 1 + child_top_y) / 2;
+            
+            // Draw label if present (with space padding for readability)
+            if let Some(lbl) = label_opt {
+                let padded = format!(" {} ", lbl);  // Add space padding on both sides
+                let label_start = parent_center_x - (padded.len() as i32 / 2);
+                for (i, ch) in padded.chars().enumerate() {
+                    let x = label_start + i as i32;
+                    if x >= 0 {
+                        set_char(&mut canvas, x, mid_y, ch);
+                    }
+                }
+                // Draw vertical lines above and below label
+                for y in (marker_y + 1)..mid_y {
+                    set_char(&mut canvas, parent_center_x, y, line_v);
+                }
+                for y in (mid_y + 1)..child_top_y {
+                    set_char(&mut canvas, child_cx, y, line_v);
+                }
+                // If centers don't align, draw horizontal connector at label level
+                if parent_center_x != child_cx {
+                    let (left_x, right_x) = if parent_center_x < child_cx {
+                        (parent_center_x, child_cx)
+                    } else {
+                        (child_cx, parent_center_x)
+                    };
+                    for x in left_x..=right_x {
+                        // Don't overwrite label chars
+                        let label_start = parent_center_x - (lbl.len() as i32 / 2);
+                        let label_end = label_start + lbl.len() as i32 - 1;
+                        if x < label_start || x > label_end {
+                            set_char(&mut canvas, x, mid_y, solid_h);
+                        }
+                    }
+                }
+            } else if child_cx == parent_center_x {
+                // No label, aligned: simple vertical line
+                for y in (marker_y + 1)..child_top_y {
+                    set_char(&mut canvas, parent_center_x, y, line_v);
+                }
+            } else {
+                // No label, not aligned: draw elbow
+                let line_y = marker_y + 1;
+                
+                // Horizontal connector
+                let (left_x, right_x) = if parent_center_x < child_cx {
+                    (parent_center_x, child_cx)
+                } else {
+                    (child_cx, parent_center_x)
+                };
+                
+                set_char(&mut canvas, left_x, line_y, corner_tl);
+                set_char(&mut canvas, right_x, line_y, corner_tr);
+                for x in (left_x + 1)..right_x {
+                    set_char(&mut canvas, x, line_y, solid_h);
+                }
+                
+                // Vertical from child_cx down to child
+                for y in (line_y + 1)..child_top_y {
+                    set_char(&mut canvas, child_cx, y, line_v);
+                }
+            }
+        } else {
+            // Multiple children: draw fan-out
+            let leftmost_x = child_data.first().unwrap().0;
+            let rightmost_x = child_data.last().unwrap().0;
+            let line_y = marker_y + 1;
+            
+            // Draw horizontal bar spanning all children
+            for x in leftmost_x..=rightmost_x {
+                set_char(&mut canvas, x, line_y, solid_h);
+            }
+            
+            // Draw vertical connection from parent to horizontal bar
+            if parent_center_x >= leftmost_x && parent_center_x <= rightmost_x {
+                // Parent is above the bar - draw T-junction
+                set_char(&mut canvas, parent_center_x, line_y, t_up);
+            } else if parent_center_x < leftmost_x {
+                // Parent is to the left - draw corner and extend bar
+                set_char(&mut canvas, leftmost_x, line_y, corner_tl);
+                for x in parent_center_x..leftmost_x {
+                    set_char(&mut canvas, x, line_y, solid_h);
+                }
+            } else {
+                // Parent is to the right - extend bar
+                set_char(&mut canvas, rightmost_x, line_y, corner_tr);
+                for x in (rightmost_x + 1)..=parent_center_x {
+                    set_char(&mut canvas, x, line_y, solid_h);
+                }
+            }
+            
+            // Draw vertical lines from bar down to each child
+            for (child_cx, child_box, _label_opt, is_dashed) in &child_data {
+                let child_top_y = child_box.y;
+                let line_v = if *is_dashed { dashed_v } else { solid_v };
+                
+                // Draw junction at bar (T-down for middle children, corners for ends)
+                if *child_cx == leftmost_x {
+                    set_char(&mut canvas, *child_cx, line_y, corner_tl);
+                } else if *child_cx == rightmost_x {
+                    set_char(&mut canvas, *child_cx, line_y, corner_tr);
+                } else {
+                    set_char(&mut canvas, *child_cx, line_y, t_down);
+                }
+                
+                // Vertical line down to child
+                for y in (line_y + 1)..child_top_y {
+                    set_char(&mut canvas, *child_cx, y, line_v);
+                }
+            }
+        }
+    }
+    
+    // Draw non-hierarchical relationship lines
+    for rel in &non_hierarchical_rels {
         let from_box = class_boxes.get(&rel.from);
         let to_box = class_boxes.get(&rel.to);
         if from_box.is_none() || to_box.is_none() { continue; }
@@ -194,164 +358,31 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
         let is_dashed = matches!(rel.rel_type, RelationshipType::Dependency | RelationshipType::Realization);
         let line_v = if is_dashed { dashed_v } else { solid_v };
         
-        let is_hierarchical = matches!(rel.rel_type, RelationshipType::Inheritance | RelationshipType::Realization);
-        
-        // Determine which box is on top based on Y position
-        let _from_bottom_y = from_box.y + from_box.height as i32 - 1;
-        let _to_bottom_y = to_box.y + to_box.height as i32 - 1;
-        
         let (top_box, bottom_box) = if from_box.y < to_box.y {
             (from_box, to_box)
         } else {
             (to_box, from_box)
         };
         
-        // Calculate truncated label to prevent overlap with next label
-        // For labels at x<0, left portion gets clipped naturally
-        // We need to ensure the right end doesn't touch the next label
-        let truncated_label = {
-            let same_row_boxes: Vec<_> = sorted_boxes.iter()
-                .filter(|cb| cb.y == top_box.y)
-                .collect();
-            let idx = same_row_boxes.iter().position(|cb| cb.id == top_box.id);
-            let current_center = top_box.x + (top_box.width as i32 / 2);
-            
-            if let Some(lbl) = &rel.label {
-                if let Some(i) = idx {
-                    if i + 1 < same_row_boxes.len() {
-                        let next_box = same_row_boxes[i + 1];
-                        let next_center = next_box.x + (next_box.width as i32 / 2);
-                        
-                        // Find the next relationship's label for this next box to estimate next label length
-                        // Use fixed estimate of 10 for worst case (longest labels in tests are ~10 chars)
-                        // Then refine: if we're close to x=0, assume smaller labels since they'll be clipped
-                        
-                        // Current label of length L ends at: start + L - 1 = (C - L/2) + L - 1 = C + L - L/2 - 1
-                        // For L=8, C=2: end = 2 + 8 - 4 - 1 = 5
-                        // For L=7, C=38: end = 38 + 7 - 3 - 1 = 41
-                        
-                        // For labels near x=0: they get left-clipped, so effective right edge matters more
-                        // For labels far from x=0: need to truncate to avoid overlap
-                        
-                        // Use 10 for next label estimate, but if current center < 10, reduce estimate
-                        // since labels near edge don't need as much truncation
-                        let estimated_next_len = if current_center < 10 { 4 } else { 10 };
-                        let next_start = next_center - estimated_next_len / 2;
-                        
-                        // Find max L such that: C + L - L/2 - 1 < next_start
-                        // C + L - L/2 - 1 < next_start
-                        // L - L/2 < next_start - C + 1
-                        // L/2 + L/2 - L/2 < next_start - C + 1 (for even L: L/2)
-                        // L/2 + (L - L/2*2)/2 < next_start - C + 1  (L - L/2*2 is 0 or 1)
-                        // Approximately: L/2 < next_start - C + 1
-                        // L < 2 * (next_start - C + 1)
-                        
-                        let max_right_extent = next_start - 2;  // Must end at least 1 before next_start
-                        // For label of length L: end = C + (L - L/2) - 1 = C + ceil(L/2) - 1
-                        // Need: C + ceil(L/2) - 1 <= max_right_extent
-                        // ceil(L/2) <= max_right_extent - C + 1
-                        // L <= 2 * (max_right_extent - C + 1) (approximately)
-                        
-                        let max_len = (2 * (max_right_extent - current_center + 1)).max(1) as usize;
-                        
-                        if lbl.len() > max_len {
-                            Some(lbl.chars().take(max_len).collect::<String>())
-                        } else {
-                            Some(lbl.clone())
-                        }
-                    } else {
-                        Some(lbl.clone())  // Last box, no truncation
-                    }
-                } else {
-                    Some(lbl.clone())
-                }
-            } else {
-                None
-            }
-        };
-        
         let top_center_x = top_box.x + (top_box.width as i32 / 2);
         let top_bottom_y = top_box.y + top_box.height as i32 - 1;
         let bottom_center_x = bottom_box.x + (bottom_box.width as i32 / 2);
         let bottom_top_y = bottom_box.y;
-        
-        // Draw vertical line with marker and label
         let mid_y = (top_bottom_y + 1 + bottom_top_y) / 2;
         
-        // Get marker character  
-        let marker_char = get_marker_shape(&rel.rel_type, is_hierarchical, use_ascii);
+        let marker_char = get_marker_shape(&rel.rel_type, false, use_ascii);
+        let marker_at_source = matches!(rel.rel_type, RelationshipType::Composition | RelationshipType::Aggregation);
         
-        // Determine if marker is at source (top) or target (bottom)
-        let marker_at_source = matches!(rel.rel_type, 
-            RelationshipType::Inheritance | RelationshipType::Realization | 
-            RelationshipType::Composition | RelationshipType::Aggregation);
-        
-        if is_hierarchical {
-            // For inheritance/realization: draw ^ at position after parent (top box)
-            let arrow_y = top_bottom_y + 1;
-            set_char(&mut canvas, top_center_x, arrow_y, marker_char);
-            
-            if truncated_label.is_some() {
-                // Draw label centered on marker, clipping chars that would be at x < 0
-                if let Some(ref lbl) = truncated_label {
-                    let label_start = top_center_x - (lbl.len() as i32 / 2);
-                    for (i, ch) in lbl.chars().enumerate() {
-                        let x = label_start + i as i32;
-                        if x >= 0 {
-                            set_char(&mut canvas, x, mid_y, ch);
-                        }
-                    }
-                }
-                // Vertical line from label to child
-                for y in (mid_y + 1)..bottom_top_y {
-                    set_char(&mut canvas, top_center_x, y, line_v);
-                }
-            } else if top_center_x != bottom_center_x {
-                // No label but centers don't align: draw horizontal connector with corners
-                // The corner at top_center goes down then horizontal
-                // The corner at bottom_center goes horizontal then down
-                let line_y = arrow_y + 1;
-                
-                if top_center_x > bottom_center_x {
-                    // Top is to the right of bottom: ┌┘ style
-                    //    △   <- top_center_x
-                    //   ┌┘   <- corner_bl at bottom_center_x, corner_tr at top_center_x
-                    //   │    <- vertical from bottom_center_x
-                    set_char(&mut canvas, bottom_center_x, line_y, corner_bl);  // ┌
-                    set_char(&mut canvas, top_center_x, line_y, corner_tr);      // ┘
-                    // Draw horizontal line between corners (if any space)
-                    for x in (bottom_center_x + 1)..top_center_x {
-                        set_char(&mut canvas, x, line_y, solid_h);
-                    }
-                } else {
-                    // Top is to the left of bottom: ┐└ style (mirror)
-                    let corner_tl = if use_ascii { '-' } else { '┐' };
-                    let corner_br = if use_ascii { '-' } else { '└' };
-                    set_char(&mut canvas, top_center_x, line_y, corner_tl);
-                    set_char(&mut canvas, bottom_center_x, line_y, corner_br);
-                    for x in (top_center_x + 1)..bottom_center_x {
-                        set_char(&mut canvas, x, line_y, solid_h);
-                    }
-                }
-                // Draw vertical connector from child's center down
-                for y in (line_y + 1)..bottom_top_y {
-                    set_char(&mut canvas, bottom_center_x, y, line_v);
-                }
-            } else {
-                // No label and centers align: just draw vertical connector
-                for y in (arrow_y + 1)..bottom_top_y {
-                    set_char(&mut canvas, top_center_x, y, line_v);
-                }
-            }
-        } else if marker_at_source {
-            // For composition/aggregation: marker at source (top), label in middle, line to target
+        if marker_at_source {
+            // Marker at source (top)
             let marker_y = top_bottom_y + 1;
             set_char(&mut canvas, top_center_x, marker_y, marker_char);
             
-            // Draw label centered on marker, clipping chars that would be at x < 0
-            if let Some(ref lbl) = truncated_label {
-                let label_start = top_center_x - (lbl.len() as i32 / 2);
-                for (i, ch) in lbl.chars().enumerate() {
+            // Draw label if present (with space padding)
+            if let Some(ref lbl) = rel.label {
+                let padded = format!(" {} ", lbl);
+                let label_start = top_center_x - (padded.len() as i32 / 2);
+                for (i, ch) in padded.chars().enumerate() {
                     let x = label_start + i as i32;
                     if x >= 0 {
                         set_char(&mut canvas, x, mid_y, ch);
@@ -364,16 +395,17 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
                 set_char(&mut canvas, top_center_x, y, line_v);
             }
         } else {
-            // For association/dependency: line from source (top), label in middle, arrow at target (bottom)
-            // Vertical line from source bottom
+            // Arrow at target (bottom)
+            // Vertical line from source
             for y in (top_bottom_y + 1)..mid_y {
                 set_char(&mut canvas, top_center_x, y, line_v);
             }
             
-            // Draw label centered on marker, clipping chars that would be at x < 0
-            if let Some(ref lbl) = truncated_label {
-                let label_start = top_center_x - (lbl.len() as i32 / 2);
-                for (i, ch) in lbl.chars().enumerate() {
+            // Draw label if present (with space padding)
+            if let Some(ref lbl) = rel.label {
+                let padded = format!(" {} ", lbl);
+                let label_start = top_center_x - (padded.len() as i32 / 2);
+                for (i, ch) in padded.chars().enumerate() {
                     let x = label_start + i as i32;
                     if x >= 0 {
                         set_char(&mut canvas, x, mid_y, ch);
@@ -388,6 +420,46 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
             
             // Arrow head pointing down
             set_char(&mut canvas, bottom_center_x, bottom_top_y - 1, marker_char);
+        }
+    }
+    
+    // Second pass: Draw all relationship labels in INPUT order
+    // This ensures later labels overwrite earlier ones correctly (like TypeScript does)
+    for rel in &diagram.relationships {
+        if rel.label.is_none() { continue; }
+        let label = rel.label.as_ref().unwrap();
+        
+        let from_box = class_boxes.get(&rel.from);
+        let to_box = class_boxes.get(&rel.to);
+        if from_box.is_none() || to_box.is_none() { continue; }
+        
+        let from_box = from_box.unwrap();
+        let to_box = to_box.unwrap();
+        
+        let (top_box, _bottom_box) = if from_box.y < to_box.y {
+            (from_box, to_box)
+        } else {
+            (to_box, from_box)
+        };
+        
+        // Calculate midpoint for label
+        let (parent_bottom_y, child_top_y) = if from_box.y < to_box.y {
+            (from_box.y + from_box.height as i32 - 1, to_box.y)
+        } else {
+            (to_box.y + to_box.height as i32 - 1, from_box.y)
+        };
+        let mid_y = (parent_bottom_y + 1 + child_top_y) / 2;
+        
+        let center_x = top_box.x + (top_box.width as i32 / 2);
+        
+        // Draw padded label
+        let padded = format!(" {} ", label);
+        let label_start = center_x - (padded.len() as i32 / 2);
+        for (i, ch) in padded.chars().enumerate() {
+            let x = label_start + i as i32;
+            if x >= 0 {
+                set_char(&mut canvas, x, mid_y, ch);
+            }
         }
     }
     
@@ -412,7 +484,7 @@ fn get_marker_shape(rel_type: &RelationshipType, _is_hierarchical: bool, use_asc
 }
 
 struct ClassBox {
-    id: String,
+    _id: String,
     label: String,
     annotation: Option<String>,
     attr_lines: Vec<String>,
