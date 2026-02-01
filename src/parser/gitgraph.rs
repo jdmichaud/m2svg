@@ -90,6 +90,7 @@ fn parse_commit(line: &str, graph: &mut GitGraph, counter: &mut u8) -> Result<()
         is_merge: false,
         is_cherry_pick: false,
         cherry_pick_source: None,
+        cherry_pick_parent: None,
     };
 
     graph.commits.push(commit);
@@ -200,6 +201,7 @@ fn parse_merge(line: &str, graph: &mut GitGraph, counter: &mut u8) -> Result<(),
         is_merge: true,
         is_cherry_pick: false,
         cherry_pick_source: None,
+        cherry_pick_parent: None,
     };
 
     graph.commits.push(commit);
@@ -218,6 +220,9 @@ fn parse_cherry_pick(line: &str, graph: &mut GitGraph, counter: &mut u8) -> Resu
     let source_id = extract_quoted_value(line, "id:")
         .ok_or_else(|| "cherry-pick requires id: parameter".to_string())?;
 
+    // Parse optional parent: parameter
+    let cherry_pick_parent = extract_quoted_value(line, "parent:");
+
     // Generate new commit id
     let commit_id = format!("{}'", source_id);
 
@@ -235,6 +240,7 @@ fn parse_cherry_pick(line: &str, graph: &mut GitGraph, counter: &mut u8) -> Resu
         is_merge: false,
         is_cherry_pick: true,
         cherry_pick_source: Some(source_id),
+        cherry_pick_parent,
     };
 
     // We used counter logic elsewhere, but not here - increment anyway to stay consistent

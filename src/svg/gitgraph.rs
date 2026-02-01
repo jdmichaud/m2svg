@@ -57,7 +57,7 @@ fn render_horizontal_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, t
     
     let num_rows = row.max(1);
     
-    // Calculate commit positions
+    // Calculate commit positions (skip cherry-picks in x advancement)
     let mut commit_positions: HashMap<String, (f64, f64)> = HashMap::new();
     let mut x = padding;
     
@@ -169,11 +169,126 @@ fn render_horizontal_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, t
         }
     }
     
+    // Draw cherry-pick connections (bent line from source commit to cherry-pick position)
+    for commit in &graph.commits {
+        if commit.is_cherry_pick {
+            if let Some(ref source_id) = commit.cherry_pick_source {
+                if let Some(&(sx, sy)) = commit_positions.get(source_id) {
+                    let (cx, cy) = commit_positions[&commit.id];
+                    let source_branch = graph.commits.iter()
+                        .find(|c| c.id == *source_id)
+                        .map(|c| &c.branch);
+                    let color = if let Some(sb) = source_branch {
+                        get_branch_color(*branch_rows.get(sb).unwrap_or(&0))
+                    } else {
+                        get_branch_color(*branch_rows.get(&commit.branch).unwrap_or(&0))
+                    };
+
+                    if (cy - sy).abs() > 1.0 {
+                        let arc_radius = 20.0;
+                        if cy > sy {
+                            // Source is above, cherry-pick is below: vertical down, arc, horizontal
+                            svg.push_str(&format!(
+                                r#"<path d="M {} {} L {} {} A {} {} 0 0 0 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
+                                sx, sy,
+                                sx, cy - arc_radius,
+                                arc_radius, arc_radius,
+                                sx + arc_radius, cy,
+                                cx, cy,
+                                color
+                            ));
+                        } else {
+                            // Source is below, cherry-pick is above: horizontal, arc, vertical up
+                            svg.push_str(&format!(
+                                r#"<path d="M {} {} L {} {} A {} {} 0 0 0 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
+                                sx, sy,
+                                cx - arc_radius, sy,
+                                arc_radius, arc_radius,
+                                cx, sy - arc_radius,
+                                cx, cy,
+                                color
+                            ));
+                        }
+                        svg.push('\n');
+                    }
+                }
+            }
+        }
+    }
+    
     // Draw commits
     for commit in &graph.commits {
         let (cx, cy) = commit_positions[&commit.id];
         let branch_row = *branch_rows.get(&commit.branch).unwrap_or(&0);
         let color = get_branch_color(branch_row);
+        
+        if commit.is_cherry_pick {
+            // Cherry-pick icon: circle with two small dots and V-lines (cherry stems)
+            svg.push_str(&format!(
+                r#"<circle cx="{}" cy="{}" r="{}" fill="{}" stroke="{}" stroke-width="0"/>"#,
+                cx, cy, commit_radius, color, color
+            ));
+            // Two small white circles (cherries)
+            svg.push_str(&format!(
+                r##"<circle cx="{}" cy="{}" r="2.75" fill="#fff"/>"##,
+                cx - 3.0, cy + 2.0
+            ));
+            svg.push_str(&format!(
+                r##"<circle cx="{}" cy="{}" r="2.75" fill="#fff"/>"##,
+                cx + 3.0, cy + 2.0
+            ));
+            // V-shaped stems
+            svg.push_str(&format!(
+                r##"<line x1="{}" y1="{}" x2="{}" y2="{}" stroke="#fff"/>"##,
+                cx + 3.0, cy + 1.0, cx, cy - 5.0
+            ));
+            svg.push_str(&format!(
+                r##"<line x1="{}" y1="{}" x2="{}" y2="{}" stroke="#fff"/>"##,
+                cx - 3.0, cy + 1.0, cx, cy - 5.0
+            ));
+            svg.push('\n');
+            
+            // Cherry-pick tag label
+            let source_id = commit.cherry_pick_source.as_deref().unwrap_or("");
+            let parent_id = commit.cherry_pick_parent.as_deref().unwrap_or("");
+            let tag_text = if !parent_id.is_empty() {
+                format!("cherry-pick:{}|parent:{}", source_id, parent_id)
+            } else {
+                format!("cherry-pick:{}", source_id)
+            };
+            let tag_width = (tag_text.len() as f64) * 5.2 + 10.0;
+            let tag_x = cx - tag_width / 2.0 + 8.0;
+            let tag_y = cy - commit_radius - 15.0;
+            // Tag polygon (arrow shape pointing left like mermaid)
+            let poly_left = tag_x;
+            let poly_top = tag_y - 8.5;
+            let poly_bottom = tag_y + 8.5;
+            let poly_right = tag_x + tag_width;
+            let poly_arrow_x = poly_left + 8.0;
+            let poly_arrow_y = tag_y;
+            svg.push_str(&format!(
+                r##"<polygon points="{},{} {},{} {},{} {},{} {},{} {},{}" fill="#FFFFDE" stroke="#333" stroke-width="1"/>"##,
+                poly_left, poly_arrow_y,
+                poly_arrow_x, poly_top,
+                poly_right, poly_top,
+                poly_right, poly_bottom,
+                poly_arrow_x, poly_bottom,
+                poly_left, poly_arrow_y
+            ));
+            // Tag hole (small circle)
+            svg.push_str(&format!(
+                r##"<circle cx="{}" cy="{}" r="1.5" fill="#333"/>"##,
+                poly_left + 4.0, poly_arrow_y
+            ));
+            // Tag text
+            svg.push_str(&format!(
+                r#"<text x="{}" y="{}" class="tag-text">{}</text>"#,
+                poly_arrow_x + 4.0, tag_y + 3.5, tag_text
+            ));
+            svg.push('\n');
+            
+            continue;
+        }
         
         // Draw commit circle
         let (fill, stroke, stroke_width): (&str, &str, f64) = match commit.commit_type {

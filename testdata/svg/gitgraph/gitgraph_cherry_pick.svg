@@ -14,6 +14,7 @@
 <path d="M 40 40 L 40 120 A 20 20 0 0 0 60 140 L 90 140" stroke="#0000ED" stroke-width="2" fill="none"/>
 <path d="M 40 40 L 40 70 A 20 20 0 0 0 60 90 L 190 90" stroke="#0000ED" stroke-width="2" fill="none"/>
 <path d="M 190 90 L 220 90 A 20 20 0 0 0 240 70 L 240 40" stroke="#DEDC00" stroke-width="2" fill="none"/>
+<path d="M 240 40 L 240 120 A 20 20 0 0 0 260 140 L 340 140" stroke="#0000ED" stroke-width="2" fill="none"/>
 <circle cx="40" cy="40" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
 <text x="40" y="70" class="commit-text">ZERO</text>
 <circle cx="90" cy="140" r="10" fill="#00DE00" stroke="#00DE00" stroke-width="0"/>
@@ -26,8 +27,8 @@
 <text x="240" y="70" class="commit-text">MERGE</text>
 <circle cx="290" cy="40" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
 <text x="290" y="70" class="commit-text">TWO</text>
-<circle cx="340" cy="140" r="10" fill="#00DE00" stroke="#00DE00" stroke-width="0"/>
-<text x="340" y="170" class="commit-text">MERGE'</text>
+<circle cx="340" cy="140" r="10" fill="#00DE00" stroke="#00DE00" stroke-width="0"/><circle cx="337" cy="142" r="2.75" fill="#fff"/><circle cx="343" cy="142" r="2.75" fill="#fff"/><line x1="343" y1="141" x2="340" y2="135" stroke="#fff"/><line x1="337" y1="141" x2="340" y2="135" stroke="#fff"/>
+<polygon points="275.4,115 283.4,106.5 420.6,106.5 420.6,123.5 283.4,123.5 275.4,115" fill="#FFFFDE" stroke="#333" stroke-width="1"/><circle cx="279.4" cy="115" r="1.5" fill="#333"/><text x="287.4" y="118.5" class="tag-text">cherry-pick:MERGE|parent:B</text>
 <circle cx="390" cy="140" r="10" fill="#00DE00" stroke="#00DE00" stroke-width="0"/>
 <text x="390" y="170" class="commit-text">THREE</text>
 <circle cx="440" cy="90" r="10" fill="#DEDC00" stroke="#DEDC00" stroke-width="0"/>

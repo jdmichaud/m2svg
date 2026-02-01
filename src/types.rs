@@ -418,6 +418,7 @@ pub struct GitCommit {
     pub is_merge: bool,
     pub is_cherry_pick: bool,
     pub cherry_pick_source: Option<String>,
+    pub cherry_pick_parent: Option<String>,
 }
 
 /// A branch in the git graph
@@ -465,4 +466,5 @@ pub enum DiagramType {
     Class(ClassDiagram),
     Er(ErDiagram),
     GitGraph(GitGraph),
+    Mindmap(crate::parser::mindmap::Mindmap),
 }
