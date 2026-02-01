@@ -94,14 +94,17 @@ fn render_horizontal_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, t
         bg_color
     ));
     
-    // Draw branch lines
-    for (branch_name, &branch_row) in &branch_rows {
-        let y = padding + (branch_row as f64) * branch_spacing_y;
-        let color = get_branch_color(branch_row);
+    // Draw branch lines (sorted by row for deterministic output)
+    let mut sorted_branches: Vec<_> = branch_rows.iter().collect();
+    sorted_branches.sort_by_key(|(_, &row)| row);
+    
+    for (branch_name, branch_row) in &sorted_branches {
+        let y = padding + (**branch_row as f64) * branch_spacing_y;
+        let color = get_branch_color(**branch_row);
         
         // Find first and last commit on this branch
         let commits_on_branch: Vec<_> = graph.commits.iter()
-            .filter(|c| &c.branch == branch_name)
+            .filter(|c| &c.branch == *branch_name)
             .collect();
         
         if let (Some(first), Some(last)) = (commits_on_branch.first(), commits_on_branch.last()) {
@@ -133,16 +136,33 @@ fn render_horizontal_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, t
                 };
                 
                 if (cy - py).abs() > 1.0 {
-                    // Different branches - draw curved line
-                    let mid_x = (px + cx) / 2.0;
-                    svg.push_str(&format!(
-                        r#"<path d="M {} {} C {} {} {} {} {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
-                        px, py,
-                        mid_x, py,
-                        mid_x, cy,
-                        cx, cy,
-                        color
-                    ));
+                    // Different branches - draw line-arc-line path like mermaid.js
+                    // Goes along source branch first, then arcs to target branch
+                    let arc_radius = 20.0;
+                    
+                    if cy > py {
+                        // Going down (branching): vertical down first, arc, then horizontal
+                        svg.push_str(&format!(
+                            r#"<path d="M {} {} L {} {} A {} {} 0 0 0 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
+                            px, py,
+                            px, cy - arc_radius,
+                            arc_radius, arc_radius,
+                            px + arc_radius, cy,
+                            cx, cy,
+                            color
+                        ));
+                    } else {
+                        // Going up (merging): horizontal first, arc, then vertical up
+                        svg.push_str(&format!(
+                            r#"<path d="M {} {} L {} {} A {} {} 0 0 0 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
+                            px, py,
+                            cx - arc_radius, py,
+                            arc_radius, arc_radius,
+                            cx, py - arc_radius,
+                            cx, cy,
+                            color
+                        ));
+                    }
                     svg.push('\n');
                 }
             }
@@ -203,13 +223,13 @@ fn render_horizontal_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, t
         }
     }
     
-    // Draw branch labels
-    for (branch_name, &branch_row) in &branch_rows {
-        let y = padding + (branch_row as f64) * branch_spacing_y;
+    // Draw branch labels (sorted by row for deterministic output)
+    for (branch_name, branch_row) in &sorted_branches {
+        let y = padding + (**branch_row as f64) * branch_spacing_y;
         
         // Find last commit on this branch
         if let Some(last_commit) = graph.commits.iter()
-            .filter(|c| &c.branch == branch_name)
+            .filter(|c| &c.branch == *branch_name)
             .last() 
         {
             let (x, _) = commit_positions[&last_commit.id];
@@ -280,13 +300,16 @@ fn render_vertical_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, tra
         bg_color
     ));
     
-    // Draw branch lines
-    for (branch_name, &branch_col) in &branch_cols {
-        let x = padding + (branch_col as f64) * branch_spacing_x;
-        let color = get_branch_color(branch_col);
+    // Draw branch lines (sorted by col for deterministic output)
+    let mut sorted_branches: Vec<_> = branch_cols.iter().collect();
+    sorted_branches.sort_by_key(|(_, &col)| col);
+    
+    for (branch_name, branch_col) in &sorted_branches {
+        let x = padding + (**branch_col as f64) * branch_spacing_x;
+        let color = get_branch_color(**branch_col);
         
         let commits_on_branch: Vec<_> = graph.commits.iter()
-            .filter(|c| &c.branch == branch_name)
+            .filter(|c| &c.branch == *branch_name)
             .collect();
         
         if let (Some(first), Some(last)) = (commits_on_branch.first(), commits_on_branch.last()) {
@@ -310,17 +333,62 @@ fn render_vertical_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, tra
         for parent_id in &commit.parent_ids {
             if let Some(&(px, py)) = commit_positions.get(parent_id) {
                 if (cx - px).abs() > 1.0 {
-                    // Different branches - draw curved line
-                    let mid_y = (py + cy) / 2.0;
+                    // Different branches - draw line-arc-line path like mermaid.js
+                    // Always go along source branch (vertical) first, then arc, then horizontal to target
+                    let arc_radius = 20.0;
                     let color = get_branch_color(*branch_cols.get(&commit.branch).unwrap_or(&0));
-                    svg.push_str(&format!(
-                        r#"<path d="M {} {} C {} {} {} {} {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
-                        px, py,
-                        px, mid_y,
-                        cx, mid_y,
-                        cx, cy,
-                        color
-                    ));
+                    
+                    if reverse {
+                        // Bottom-to-top: flow goes upward (py > cy, i.e., parent Y is greater)
+                        if cx > px {
+                            // Branching right: horizontal RIGHT from parent first, arc up (counter-clockwise to bulge bottom-right), then vertical UP to child
+                            svg.push_str(&format!(
+                                r#"<path d="M {} {} L {} {} A {} {} 0 0 0 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
+                                px, py,
+                                cx - arc_radius, py,
+                                arc_radius, arc_radius,
+                                cx, py - arc_radius,
+                                cx, cy,
+                                color
+                            ));
+                        } else {
+                            // Merging left: vertical UP from parent first, arc left (counter-clockwise), then horizontal to child
+                            svg.push_str(&format!(
+                                r#"<path d="M {} {} L {} {} A {} {} 0 0 0 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
+                                px, py,
+                                px, cy + arc_radius,
+                                arc_radius, arc_radius,
+                                px - arc_radius, cy,
+                                cx, cy,
+                                color
+                            ));
+                        }
+                    } else {
+                        // Top-to-bottom: flow goes downward (cy > py, i.e., child Y is greater)
+                        if cx > px {
+                            // Branching right: horizontal RIGHT from parent first, arc down, then vertical DOWN to child (entering from top)
+                            svg.push_str(&format!(
+                                r#"<path d="M {} {} L {} {} A {} {} 0 0 1 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
+                                px, py,
+                                cx - arc_radius, py,
+                                arc_radius, arc_radius,
+                                cx, py + arc_radius,
+                                cx, cy,
+                                color
+                            ));
+                        } else {
+                            // Merging left: vertical DOWN from parent first, arc left (clockwise to bulge bottom-left), then horizontal to child
+                            svg.push_str(&format!(
+                                r#"<path d="M {} {} L {} {} A {} {} 0 0 1 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
+                                px, py,
+                                px, cy - arc_radius,
+                                arc_radius, arc_radius,
+                                px - arc_radius, cy,
+                                cx, cy,
+                                color
+                            ));
+                        }
+                    }
                     svg.push('\n');
                 }
             }
@@ -364,10 +432,10 @@ fn render_vertical_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, tra
         svg.push('\n');
     }
     
-    // Draw branch labels
-    for (branch_name, _branch_col) in &branch_cols {
+    // Draw branch labels (sorted by col for deterministic output)
+    for (branch_name, _branch_col) in &sorted_branches {
         if let Some(first_commit) = graph.commits.iter()
-            .filter(|c| &c.branch == branch_name)
+            .filter(|c| &c.branch == *branch_name)
             .next() 
         {
             let (x, y) = commit_positions[&first_commit.id];
