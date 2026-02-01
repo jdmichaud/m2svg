@@ -36,15 +36,15 @@ fn normalize_output(s: &str) -> String {
         .to_string()
 }
 
-/// Run a test from the ASCII directory
-fn run_ascii_test(test_name: &str) {
-    let test_file = get_ascii_dir().join(format!("{}.txt", test_name));
+/// Run a test from the ASCII directory with subdirectory
+fn run_ascii_test(subdir: &str, test_name: &str) {
+    let test_file = get_ascii_dir().join(subdir).join(format!("{}.txt", test_name));
     run_test_file(&test_file, test_name, true);
 }
 
-/// Run a test from the Unicode directory
-fn run_unicode_test(test_name: &str) {
-    let test_file = get_unicode_dir().join(format!("{}.txt", test_name));
+/// Run a test from the Unicode directory with subdirectory
+fn run_unicode_test(subdir: &str, test_name: &str) {
+    let test_file = get_unicode_dir().join(subdir).join(format!("{}.txt", test_name));
     run_test_file(&test_file, test_name, false);
 }
 
@@ -95,134 +95,181 @@ fn run_test_file(test_file: &PathBuf, test_name: &str, use_ascii: bool) {
 
 /// Macro to generate ASCII test functions
 macro_rules! ascii_test {
-    ($name:ident) => {
-        #[test]
-        fn $name() {
-            run_ascii_test(stringify!($name));
+    ($subdir:ident, $name:ident) => {
+        paste::paste! {
+            #[test]
+            fn [<ascii_ $name>]() {
+                run_ascii_test(stringify!($subdir), stringify!($name));
+            }
         }
     };
 }
 
-/// Macro to generate Unicode test functions  
+/// Macro to generate Unicode test functions
 macro_rules! unicode_test {
-    ($name:ident) => {
+    ($subdir:ident, $name:ident) => {
         paste::paste! {
             #[test]
             fn [<unicode_ $name>]() {
-                run_unicode_test(stringify!($name));
+                run_unicode_test(stringify!($subdir), stringify!($name));
             }
         }
     };
 }
 
 // =============================================================================
-// ASCII tests (61 files)
+// ASCII Flowchart tests
 // =============================================================================
 
-ascii_test!(ampersand_lhs);
-ascii_test!(ampersand_lhs_and_rhs);
-ascii_test!(ampersand_rhs);
-ascii_test!(ampersand_without_edge);
-ascii_test!(back_reference_from_child);
-ascii_test!(backlink_from_bottom);
-ascii_test!(backlink_from_top);
-ascii_test!(backlink_with_short_y_padding);
-ascii_test!(cls_all_relationships);
-ascii_test!(cls_annotation);
-ascii_test!(cls_association);
-ascii_test!(cls_basic);
-ascii_test!(cls_dependency);
-ascii_test!(cls_inheritance);
-ascii_test!(cls_inheritance_fanout);
-ascii_test!(cls_methods);
-ascii_test!(comments);
-ascii_test!(custom_padding);
-ascii_test!(duplicate_labels);
-ascii_test!(er_attributes);
-ascii_test!(er_basic);
-ascii_test!(er_identifying);
-ascii_test!(flowchart_tb_simple);
-ascii_test!(graph_bt_direction);
-ascii_test!(graph_tb_direction);
-ascii_test!(nested_subgraphs_with_labels);
-ascii_test!(preserve_order_of_definition);
-ascii_test!(self_reference);
-ascii_test!(self_reference_with_edge);
-ascii_test!(seq_basic);
-ascii_test!(seq_multiple_messages);
-ascii_test!(seq_self_message);
-ascii_test!(single_node);
-ascii_test!(single_node_longer_name);
-ascii_test!(subgraph_complex_mixed);
-ascii_test!(subgraph_complex_nested);
-ascii_test!(subgraph_empty);
-ascii_test!(subgraph_mixed_nodes);
-ascii_test!(subgraph_mixed_nodes_td);
-ascii_test!(subgraph_multiple_edges);
-ascii_test!(subgraph_multiple_nodes);
-ascii_test!(subgraph_nested);
-ascii_test!(subgraph_nested_with_external);
-ascii_test!(subgraph_node_outside_lr);
-ascii_test!(subgraph_single_node);
-ascii_test!(subgraph_td_direction);
-ascii_test!(subgraph_td_multiple);
-ascii_test!(subgraph_td_multiple_paddingy);
-ascii_test!(subgraph_three_levels_nested);
-ascii_test!(subgraph_three_separate);
-ascii_test!(subgraph_two_separate);
-ascii_test!(subgraph_with_labels);
-ascii_test!(three_nodes);
-ascii_test!(three_nodes_single_line);
-ascii_test!(two_layer_single_graph);
-ascii_test!(two_layer_single_graph_longer_names);
-ascii_test!(two_nodes_linked);
-ascii_test!(two_nodes_longer_names);
-ascii_test!(two_root_nodes);
-ascii_test!(two_root_nodes_longer_names);
-ascii_test!(two_single_root_nodes);
+ascii_test!(flowchart, ampersand_lhs);
+ascii_test!(flowchart, ampersand_lhs_and_rhs);
+ascii_test!(flowchart, ampersand_rhs);
+ascii_test!(flowchart, ampersand_without_edge);
+ascii_test!(flowchart, back_reference_from_child);
+ascii_test!(flowchart, backlink_from_bottom);
+ascii_test!(flowchart, backlink_from_top);
+ascii_test!(flowchart, backlink_with_short_y_padding);
+ascii_test!(flowchart, comments);
+ascii_test!(flowchart, custom_padding);
+ascii_test!(flowchart, duplicate_labels);
+ascii_test!(flowchart, flowchart_tb_simple);
+ascii_test!(flowchart, graph_bt_direction);
+ascii_test!(flowchart, graph_tb_direction);
+ascii_test!(flowchart, nested_subgraphs_with_labels);
+ascii_test!(flowchart, preserve_order_of_definition);
+ascii_test!(flowchart, self_reference);
+ascii_test!(flowchart, self_reference_with_edge);
+ascii_test!(flowchart, single_node);
+ascii_test!(flowchart, single_node_longer_name);
+ascii_test!(flowchart, subgraph_complex_mixed);
+ascii_test!(flowchart, subgraph_complex_nested);
+ascii_test!(flowchart, subgraph_empty);
+ascii_test!(flowchart, subgraph_mixed_nodes);
+ascii_test!(flowchart, subgraph_mixed_nodes_td);
+ascii_test!(flowchart, subgraph_multiple_edges);
+ascii_test!(flowchart, subgraph_multiple_nodes);
+ascii_test!(flowchart, subgraph_nested);
+ascii_test!(flowchart, subgraph_nested_with_external);
+ascii_test!(flowchart, subgraph_node_outside_lr);
+ascii_test!(flowchart, subgraph_single_node);
+ascii_test!(flowchart, subgraph_td_direction);
+ascii_test!(flowchart, subgraph_td_multiple);
+ascii_test!(flowchart, subgraph_td_multiple_paddingy);
+ascii_test!(flowchart, subgraph_three_levels_nested);
+ascii_test!(flowchart, subgraph_three_separate);
+ascii_test!(flowchart, subgraph_two_separate);
+ascii_test!(flowchart, subgraph_with_labels);
+ascii_test!(flowchart, three_nodes);
+ascii_test!(flowchart, three_nodes_single_line);
+ascii_test!(flowchart, two_layer_single_graph);
+ascii_test!(flowchart, two_layer_single_graph_longer_names);
+ascii_test!(flowchart, two_nodes_linked);
+ascii_test!(flowchart, two_nodes_longer_names);
+ascii_test!(flowchart, two_root_nodes);
+ascii_test!(flowchart, two_root_nodes_longer_names);
+ascii_test!(flowchart, two_single_root_nodes);
 
 // =============================================================================
-// Unicode tests (38 files)
+// ASCII Class diagram tests
 // =============================================================================
 
-unicode_test!(ampersand_lhs);
-unicode_test!(ampersand_lhs_and_rhs);
-unicode_test!(ampersand_rhs);
-unicode_test!(ampersand_without_edge);
-unicode_test!(back_reference_from_child);
-unicode_test!(backlink_from_bottom);
-unicode_test!(backlink_from_top);
-unicode_test!(cls_all_relationships);
-unicode_test!(cls_annotation);
-unicode_test!(cls_association);
-unicode_test!(cls_basic);
-unicode_test!(cls_dependency);
-unicode_test!(cls_inheritance);
-unicode_test!(cls_inheritance_fanout);
-unicode_test!(cls_methods);
-unicode_test!(comments);
-unicode_test!(duplicate_labels);
-unicode_test!(er_attributes);
-unicode_test!(er_basic);
-unicode_test!(er_identifying);
-unicode_test!(graph_bt_direction);
-unicode_test!(preserve_order_of_definition);
-unicode_test!(self_reference);
-unicode_test!(self_reference_with_edge);
-unicode_test!(seq_basic);
-unicode_test!(seq_multiple_messages);
-unicode_test!(seq_self_message);
-unicode_test!(single_node);
-unicode_test!(single_node_longer_name);
-unicode_test!(three_nodes);
-unicode_test!(three_nodes_single_line);
-unicode_test!(two_layer_single_graph);
-unicode_test!(two_layer_single_graph_longer_names);
-unicode_test!(two_nodes_linked);
-unicode_test!(two_nodes_longer_names);
-unicode_test!(two_root_nodes);
-unicode_test!(two_root_nodes_longer_names);
-unicode_test!(two_single_root_nodes);
+ascii_test!(class, cls_all_relationships);
+ascii_test!(class, cls_annotation);
+ascii_test!(class, cls_association);
+ascii_test!(class, cls_basic);
+ascii_test!(class, cls_dependency);
+ascii_test!(class, cls_inheritance);
+ascii_test!(class, cls_inheritance_fanout);
+ascii_test!(class, cls_methods);
+
+// =============================================================================
+// ASCII ER diagram tests
+// =============================================================================
+
+ascii_test!(er, er_attributes);
+ascii_test!(er, er_basic);
+ascii_test!(er, er_identifying);
+
+// =============================================================================
+// ASCII Sequence diagram tests
+// =============================================================================
+
+ascii_test!(sequence, seq_basic);
+ascii_test!(sequence, seq_multiple_messages);
+ascii_test!(sequence, seq_self_message);
+
+// =============================================================================
+// ASCII GitGraph tests
+// =============================================================================
+
+ascii_test!(gitgraph, gitgraph_basic);
+ascii_test!(gitgraph, gitgraph_bottom_to_top);
+ascii_test!(gitgraph, gitgraph_branch_order);
+ascii_test!(gitgraph, gitgraph_branches);
+ascii_test!(gitgraph, gitgraph_cherry_pick);
+ascii_test!(gitgraph, gitgraph_commit_types);
+ascii_test!(gitgraph, gitgraph_custom_ids);
+ascii_test!(gitgraph, gitgraph_merge_complex);
+ascii_test!(gitgraph, gitgraph_tags);
+ascii_test!(gitgraph, gitgraph_vertical);
+
+// =============================================================================
+// Unicode Flowchart tests
+// =============================================================================
+
+unicode_test!(flowchart, ampersand_lhs);
+unicode_test!(flowchart, ampersand_lhs_and_rhs);
+unicode_test!(flowchart, ampersand_rhs);
+unicode_test!(flowchart, ampersand_without_edge);
+unicode_test!(flowchart, back_reference_from_child);
+unicode_test!(flowchart, backlink_from_bottom);
+unicode_test!(flowchart, backlink_from_top);
+unicode_test!(flowchart, comments);
+unicode_test!(flowchart, duplicate_labels);
+unicode_test!(flowchart, graph_bt_direction);
+unicode_test!(flowchart, preserve_order_of_definition);
+unicode_test!(flowchart, self_reference);
+unicode_test!(flowchart, self_reference_with_edge);
+unicode_test!(flowchart, single_node);
+unicode_test!(flowchart, single_node_longer_name);
+unicode_test!(flowchart, three_nodes);
+unicode_test!(flowchart, three_nodes_single_line);
+unicode_test!(flowchart, two_layer_single_graph);
+unicode_test!(flowchart, two_layer_single_graph_longer_names);
+unicode_test!(flowchart, two_nodes_linked);
+unicode_test!(flowchart, two_nodes_longer_names);
+unicode_test!(flowchart, two_root_nodes);
+unicode_test!(flowchart, two_root_nodes_longer_names);
+unicode_test!(flowchart, two_single_root_nodes);
+
+// =============================================================================
+// Unicode Class diagram tests
+// =============================================================================
+
+unicode_test!(class, cls_all_relationships);
+unicode_test!(class, cls_annotation);
+unicode_test!(class, cls_association);
+unicode_test!(class, cls_basic);
+unicode_test!(class, cls_dependency);
+unicode_test!(class, cls_inheritance);
+unicode_test!(class, cls_inheritance_fanout);
+unicode_test!(class, cls_methods);
+
+// =============================================================================
+// Unicode ER diagram tests
+// =============================================================================
+
+unicode_test!(er, er_attributes);
+unicode_test!(er, er_basic);
+unicode_test!(er, er_identifying);
+
+// =============================================================================
+// Unicode Sequence diagram tests
+// =============================================================================
+
+unicode_test!(sequence, seq_basic);
+unicode_test!(sequence, seq_multiple_messages);
+unicode_test!(sequence, seq_self_message);
 
 // =============================================================================
 // SVG tests
