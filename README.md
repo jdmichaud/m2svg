@@ -9,6 +9,34 @@ A Rust library and CLI for rendering Mermaid diagrams as ASCII art or SVG.
 - **Render to SVG** with CSS variable theming
 - **Zero runtime dependencies** for the core library
 
+## Diagram Support
+
+| Diagram Type | Supported |
+|--------------|-----------|
+| Flowchart | ✅ |
+| Sequence Diagram | ✅ |
+| Class Diagram | ✅ |
+| State Diagram | ✅ |
+| Entity Relationship Diagram | ✅ |
+| User Journey | ❌ |
+| Gantt | ❌ |
+| Pie Chart | ❌ |
+| Quadrant Chart | ❌ |
+| Requirement Diagram | ❌ |
+| GitGraph Diagram | ❌ |
+| C4 Diagram | ❌ |
+| Mindmap | ❌ |
+| Timeline | ❌ |
+| ZenUML | ❌ |
+| Sankey | ❌ |
+| XY Chart | ❌ |
+| Block Diagram | ❌ |
+| Packet | ❌ |
+| Kanban | ❌ |
+| Architecture | ❌ |
+| Radar | ❌ |
+| Treemap | ❌ |
+
 ## Installation
 
 Add to your `Cargo.toml`:
