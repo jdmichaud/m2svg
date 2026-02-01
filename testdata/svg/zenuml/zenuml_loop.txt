@@ -1,0 +1,7 @@
+zenuml
+    Alice->John: Hello John, how are you?
+    while(true) {
+      John->Alice: Great!
+    }
+---
+<!-- ZenUML requires external library, SVG generation via mermaid.ink may not be supported -->
