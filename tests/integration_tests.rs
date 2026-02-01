@@ -233,8 +233,8 @@ fn get_svg_dir() -> std::path::PathBuf {
 }
 
 /// Run an SVG test from the svg directory (exact match like ASCII tests)
-fn run_svg_test(test_name: &str) {
-    let test_file = get_svg_dir().join(format!("{}.txt", test_name));
+fn run_svg_test(subdir: &str, test_name: &str) {
+    let test_file = get_svg_dir().join(subdir).join(format!("{}.txt", test_name));
     let content = fs::read_to_string(&test_file)
         .unwrap_or_else(|e| panic!("Failed to read {:?}: {}", test_file, e));
     
@@ -267,66 +267,66 @@ fn run_svg_test(test_name: &str) {
 
 /// Macro to generate SVG test functions
 macro_rules! svg_test {
-    ($name:ident) => {
+    ($subdir:ident, $name:ident) => {
         paste::paste! {
             #[test]
             fn [<svg_ $name>]() {
-                run_svg_test(stringify!($name));
+                run_svg_test(stringify!($subdir), stringify!($name));
             }
         }
     };
 }
 
 // SVG tests from mermaid.js.org examples
-svg_test!(class_annotation);
-svg_test!(class_bankaccount);
-svg_test!(class_basic);
-svg_test!(class_cardinality);
-svg_test!(class_generics);
-svg_test!(class_inheritance);
-svg_test!(class_namespace);
-svg_test!(class_relationships);
-svg_test!(er_attributes);
-svg_test!(er_basic);
-svg_test!(er_order_system);
-svg_test!(er_zero_or_one);
-svg_test!(flowchart_arrow_link);
-svg_test!(flowchart_basic_node);
-svg_test!(flowchart_chaining);
-svg_test!(flowchart_circle);
-svg_test!(flowchart_comprehensive);
-svg_test!(flowchart_cylinder);
-svg_test!(flowchart_decision_tree);
-svg_test!(flowchart_diamond);
-svg_test!(flowchart_dotted_link);
-svg_test!(flowchart_double_circle);
-svg_test!(flowchart_flag);
-svg_test!(flowchart_hexagon);
-svg_test!(flowchart_link_with_text);
-svg_test!(flowchart_loop_back);
-svg_test!(flowchart_lr_direction);
-svg_test!(flowchart_node_with_text);
-svg_test!(flowchart_parallel_links);
-svg_test!(flowchart_round_edges);
-svg_test!(flowchart_stadium);
-svg_test!(flowchart_styling);
-svg_test!(flowchart_subgraphs);
-svg_test!(flowchart_subroutine);
-svg_test!(flowchart_td_direction);
-svg_test!(flowchart_thick_link);
-svg_test!(flowchart_trapezoid);
-svg_test!(sequence_activation);
-svg_test!(sequence_actors);
-svg_test!(sequence_aliases);
-svg_test!(sequence_alt);
-svg_test!(sequence_basic);
-svg_test!(sequence_break);
-svg_test!(sequence_critical);
-svg_test!(sequence_loop);
-svg_test!(sequence_notes);
-svg_test!(sequence_parallel);
-svg_test!(sequence_participants);
-svg_test!(sequence_rect);
-svg_test!(sequence_stacked_activation);
+svg_test!(class, class_annotation);
+svg_test!(class, class_bankaccount);
+svg_test!(class, class_basic);
+svg_test!(class, class_cardinality);
+svg_test!(class, class_generics);
+svg_test!(class, class_inheritance);
+svg_test!(class, class_namespace);
+svg_test!(class, class_relationships);
+svg_test!(er, er_attributes);
+svg_test!(er, er_basic);
+svg_test!(er, er_order_system);
+svg_test!(er, er_zero_or_one);
+svg_test!(flowchart, flowchart_arrow_link);
+svg_test!(flowchart, flowchart_basic_node);
+svg_test!(flowchart, flowchart_chaining);
+svg_test!(flowchart, flowchart_circle);
+svg_test!(flowchart, flowchart_comprehensive);
+svg_test!(flowchart, flowchart_cylinder);
+svg_test!(flowchart, flowchart_decision_tree);
+svg_test!(flowchart, flowchart_diamond);
+svg_test!(flowchart, flowchart_dotted_link);
+svg_test!(flowchart, flowchart_double_circle);
+svg_test!(flowchart, flowchart_flag);
+svg_test!(flowchart, flowchart_hexagon);
+svg_test!(flowchart, flowchart_link_with_text);
+svg_test!(flowchart, flowchart_loop_back);
+svg_test!(flowchart, flowchart_lr_direction);
+svg_test!(flowchart, flowchart_node_with_text);
+svg_test!(flowchart, flowchart_parallel_links);
+svg_test!(flowchart, flowchart_round_edges);
+svg_test!(flowchart, flowchart_stadium);
+svg_test!(flowchart, flowchart_styling);
+svg_test!(flowchart, flowchart_subgraphs);
+svg_test!(flowchart, flowchart_subroutine);
+svg_test!(flowchart, flowchart_td_direction);
+svg_test!(flowchart, flowchart_thick_link);
+svg_test!(flowchart, flowchart_trapezoid);
+svg_test!(sequence, sequence_activation);
+svg_test!(sequence, sequence_actors);
+svg_test!(sequence, sequence_aliases);
+svg_test!(sequence, sequence_alt);
+svg_test!(sequence, sequence_basic);
+svg_test!(sequence, sequence_break);
+svg_test!(sequence, sequence_critical);
+svg_test!(sequence, sequence_loop);
+svg_test!(sequence, sequence_notes);
+svg_test!(sequence, sequence_parallel);
+svg_test!(sequence, sequence_participants);
+svg_test!(sequence, sequence_rect);
+svg_test!(sequence, sequence_stacked_activation);
 
 // Legacy SVG tests (kept for backwards compatibility)
