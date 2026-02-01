@@ -1,0 +1,19 @@
+---
+config:
+  gitGraph:
+    showBranches: false
+---
+gitGraph
+   commit
+   commit
+   branch develop
+   checkout develop
+   commit
+   commit
+   checkout main
+   merge develop
+   commit
+---
+A---B-------[E]---F
+     \     /
+      C---D

@@ -1,9 +1,206 @@
 //! Parser for Mermaid GitGraph diagrams
 
-use crate::types::{CommitType, GitBranch, GitCommit, GitGraph, GitGraphDirection};
+use crate::types::{CommitType, GitBranch, GitCommit, GitGraph, GitGraphConfig, GitGraphDirection};
 
-/// Parse a gitGraph diagram from mermaid text
+/// Parse YAML frontmatter configuration from the raw text (before line splitting)
+/// Returns the config and the remaining text with frontmatter stripped.
+fn parse_frontmatter(text: &str) -> (GitGraphConfig, String) {
+    let mut config = GitGraphConfig::default();
+    let lines: Vec<&str> = text.lines().collect();
+
+    // Look for opening --- (must be at start after trimming whitespace lines)
+    let mut start = None;
+    for (i, line) in lines.iter().enumerate() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        if trimmed == "---" {
+            start = Some(i);
+        }
+        break; // only check the first non-empty line
+    }
+
+    let start = match start {
+        Some(s) => s,
+        None => return (config, text.to_string()),
+    };
+
+    // Find closing ---
+    let mut end = None;
+    for (i, line) in lines.iter().enumerate().skip(start + 1) {
+        if line.trim() == "---" {
+            end = Some(i);
+            break;
+        }
+    }
+
+    let end = match end {
+        Some(e) => e,
+        None => return (config, text.to_string()),
+    };
+
+    // Parse the frontmatter content (simple key: value parsing)
+    let fm_lines = &lines[start + 1..end];
+    let fm_text = fm_lines.join("\n");
+
+    // Extract gitGraph config options
+    parse_config_values(&fm_text, &mut config);
+
+    // Reconstruct text without frontmatter
+    let remaining_lines: Vec<&str> = lines[end + 1..].to_vec();
+    let remaining = remaining_lines.join("\n");
+
+    (config, remaining)
+}
+
+/// Parse configuration values from frontmatter YAML text
+fn parse_config_values(text: &str, config: &mut GitGraphConfig) {
+    for line in text.lines() {
+        let trimmed = line.trim().trim_start_matches("- ");
+
+        // gitGraph config options
+        if let Some(val) = extract_yaml_value(trimmed, "showBranches:") {
+            config.show_branches = val.trim() != "false";
+        }
+        if let Some(val) = extract_yaml_value(trimmed, "showCommitLabel:") {
+            config.show_commit_label = val.trim() != "false";
+        }
+        if let Some(val) = extract_yaml_value(trimmed, "mainBranchName:") {
+            let name = val.trim().trim_matches('\'').trim_matches('"').to_string();
+            if !name.is_empty() {
+                config.main_branch_name = name;
+            }
+        }
+        if let Some(val) = extract_yaml_value(trimmed, "mainBranchOrder:") {
+            if let Ok(order) = val.trim().parse::<i32>() {
+                config.main_branch_order = Some(order);
+            }
+        }
+        if let Some(val) = extract_yaml_value(trimmed, "rotateCommitLabel:") {
+            config.rotate_commit_label = val.trim() != "false";
+        }
+        if let Some(val) = extract_yaml_value(trimmed, "parallelCommits:") {
+            if val.trim() == "true" {
+                eprintln!("Warning: parallelCommits is not yet supported and will be ignored");
+            }
+        }
+
+        // Theme
+        if let Some(val) = extract_yaml_value(trimmed, "theme:") {
+            config.theme = val.trim().trim_matches('\'').trim_matches('"').to_string();
+        }
+
+        // Theme variables - branch colors (git0..git7)
+        for i in 0..8 {
+            let key = format!("git{}:", i);
+            // Match 'gitN' but NOT 'gitBranchLabelN' or 'gitInvN'
+            if let Some(val) = extract_yaml_value(trimmed, &key) {
+                let lower_trimmed = trimmed.to_lowercase();
+                if !lower_trimmed.starts_with("gitbranchlabel")
+                    && !lower_trimmed.starts_with("gitinv")
+                {
+                    config.branch_colors[i] =
+                        Some(val.trim().trim_matches('\'').trim_matches('"').to_string());
+                }
+            }
+        }
+
+        // Theme variables - branch label colors (gitBranchLabel0..gitBranchLabel7)
+        for i in 0..8 {
+            let key = format!("gitBranchLabel{}:", i);
+            if let Some(val) = extract_yaml_value(trimmed, &key) {
+                config.branch_label_colors[i] =
+                    Some(val.trim().trim_matches('\'').trim_matches('"').to_string());
+            }
+        }
+
+        // Theme variables - highlight commit colors (gitInv0..gitInv7)
+        for i in 0..8 {
+            let key = format!("gitInv{}:", i);
+            if let Some(val) = extract_yaml_value(trimmed, &key) {
+                config.highlight_colors[i] =
+                    Some(val.trim().trim_matches('\'').trim_matches('"').to_string());
+            }
+        }
+
+        // Commit label styling
+        if let Some(val) = extract_yaml_value(trimmed, "commitLabelColor:") {
+            config.commit_label_color =
+                Some(val.trim().trim_matches('\'').trim_matches('"').to_string());
+        }
+        if let Some(val) = extract_yaml_value(trimmed, "commitLabelBackground:") {
+            config.commit_label_background =
+                Some(val.trim().trim_matches('\'').trim_matches('"').to_string());
+        }
+        if let Some(val) = extract_yaml_value(trimmed, "commitLabelFontSize:") {
+            config.commit_label_font_size =
+                Some(val.trim().trim_matches('\'').trim_matches('"').to_string());
+        }
+
+        // Tag label styling
+        if let Some(val) = extract_yaml_value(trimmed, "tagLabelColor:") {
+            config.tag_label_color =
+                Some(val.trim().trim_matches('\'').trim_matches('"').to_string());
+        }
+        if let Some(val) = extract_yaml_value(trimmed, "tagLabelBackground:") {
+            config.tag_label_background =
+                Some(val.trim().trim_matches('\'').trim_matches('"').to_string());
+        }
+        if let Some(val) = extract_yaml_value(trimmed, "tagLabelBorder:") {
+            config.tag_label_border =
+                Some(val.trim().trim_matches('\'').trim_matches('"').to_string());
+        }
+        if let Some(val) = extract_yaml_value(trimmed, "tagLabelFontSize:") {
+            config.tag_label_font_size =
+                Some(val.trim().trim_matches('\'').trim_matches('"').to_string());
+        }
+    }
+}
+
+/// Extract value after a YAML key (case-insensitive key match)
+fn extract_yaml_value<'a>(line: &'a str, key: &str) -> Option<&'a str> {
+    let lower = line.to_lowercase();
+    let key_lower = key.to_lowercase();
+    if let Some(pos) = lower.find(&key_lower) {
+        // Make sure we're matching the key at the start (after optional whitespace/quotes)
+        let before = &lower[..pos];
+        if before
+            .chars()
+            .all(|c| c.is_whitespace() || c == '\'' || c == '"')
+        {
+            let after = &line[pos + key.len()..];
+            return Some(after.trim());
+        }
+    }
+    None
+}
+
+/// Parse a gitGraph diagram from mermaid text.
+/// This function accepts the raw input text (possibly with YAML frontmatter).
+pub fn parse_gitgraph_from_text(text: &str) -> Result<GitGraph, String> {
+    let (config, remaining) = parse_frontmatter(text);
+
+    let lines: Vec<&str> = remaining
+        .lines()
+        .map(|l| l.trim())
+        .filter(|l| !l.is_empty() && !l.starts_with("%%"))
+        .collect();
+
+    if lines.is_empty() {
+        return Err("Empty gitGraph diagram".to_string());
+    }
+
+    parse_gitgraph_with_config(&lines, config)
+}
+
+/// Parse a gitGraph diagram from pre-filtered lines (called from parse_mermaid)
 pub fn parse_gitgraph(lines: &[&str]) -> Result<GitGraph, String> {
+    parse_gitgraph_with_config(lines, GitGraphConfig::default())
+}
+
+/// Core parser with explicit config
+fn parse_gitgraph_with_config(lines: &[&str], config: GitGraphConfig) -> Result<GitGraph, String> {
     // Parse direction from header line
     let header = lines[0].to_lowercase();
     let direction = if header.contains("tb:") || header.contains("tb ") {
@@ -14,7 +211,7 @@ pub fn parse_gitgraph(lines: &[&str]) -> Result<GitGraph, String> {
         GitGraphDirection::LR
     };
 
-    let mut graph = GitGraph::new(direction);
+    let mut graph = GitGraph::with_config(direction, config);
     let mut commit_counter: u8 = b'A';
 
     for line in lines.iter().skip(1) {
@@ -73,7 +270,7 @@ fn parse_commit(line: &str, graph: &mut GitGraph, counter: &mut u8) -> Result<()
     // Always advance counter (custom ID consumes a slot too)
     *counter += 1;
 
-    // Get parent commit: 
+    // Get parent commit:
     // 1. First try last commit on current branch
     // 2. If branch has no commits yet, get parent from the branch's source (stored when branch was created)
     let parent_ids = get_last_commit_on_branch(graph, &graph.current_branch.clone())
@@ -96,7 +293,11 @@ fn parse_commit(line: &str, graph: &mut GitGraph, counter: &mut u8) -> Result<()
     graph.commits.push(commit);
 
     // Add to current branch
-    if let Some(branch) = graph.branches.iter_mut().find(|b| b.name == graph.current_branch) {
+    if let Some(branch) = graph
+        .branches
+        .iter_mut()
+        .find(|b| b.name == graph.current_branch)
+    {
         branch.commit_ids.push(id);
     }
 
@@ -164,11 +365,10 @@ fn parse_merge(line: &str, graph: &mut GitGraph, counter: &mut u8) -> Result<(),
     let source_branch = parts[1].to_string();
 
     // Merge commits get a unique auto-generated ID from the counter (like regular commits)
-    let commit_id = extract_quoted_value(line, "id:")
-        .unwrap_or_else(|| {
-            let id = (*counter as char).to_string();
-            id
-        });
+    let commit_id = extract_quoted_value(line, "id:").unwrap_or_else(|| {
+        let id = (*counter as char).to_string();
+        id
+    });
     // Always advance counter
     *counter += 1;
 
@@ -208,7 +408,11 @@ fn parse_merge(line: &str, graph: &mut GitGraph, counter: &mut u8) -> Result<(),
     graph.commits.push(commit);
 
     // Add to current branch
-    if let Some(branch) = graph.branches.iter_mut().find(|b| b.name == graph.current_branch) {
+    if let Some(branch) = graph
+        .branches
+        .iter_mut()
+        .find(|b| b.name == graph.current_branch)
+    {
         branch.commit_ids.push(commit_id);
     }
 
@@ -250,7 +454,11 @@ fn parse_cherry_pick(line: &str, graph: &mut GitGraph, counter: &mut u8) -> Resu
     graph.commits.push(commit);
 
     // Add to current branch
-    if let Some(branch) = graph.branches.iter_mut().find(|b| b.name == graph.current_branch) {
+    if let Some(branch) = graph
+        .branches
+        .iter_mut()
+        .find(|b| b.name == graph.current_branch)
+    {
         branch.commit_ids.push(commit_id);
     }
 
@@ -261,7 +469,7 @@ fn parse_cherry_pick(line: &str, graph: &mut GitGraph, counter: &mut u8) -> Resu
 fn extract_quoted_value(line: &str, key: &str) -> Option<String> {
     let lower = line.to_lowercase();
     let key_lower = key.to_lowercase();
-    
+
     if let Some(pos) = lower.find(&key_lower) {
         let after_key = &line[pos + key.len()..];
         // Find quoted string
@@ -274,10 +482,7 @@ fn extract_quoted_value(line: &str, key: &str) -> Option<String> {
         // Also try unquoted single word
         let trimmed = after_key.trim();
         if !trimmed.is_empty() && !trimmed.starts_with('"') {
-            let word: String = trimmed
-                .chars()
-                .take_while(|c| !c.is_whitespace())
-                .collect();
+            let word: String = trimmed.chars().take_while(|c| !c.is_whitespace()).collect();
             if !word.is_empty() {
                 return Some(word);
             }
@@ -290,14 +495,11 @@ fn extract_quoted_value(line: &str, key: &str) -> Option<String> {
 fn extract_value(line: &str, key: &str) -> Option<String> {
     let lower = line.to_lowercase();
     let key_lower = key.to_lowercase();
-    
+
     if let Some(pos) = lower.find(&key_lower) {
         let after_key = &line[pos + key.len()..];
         let trimmed = after_key.trim();
-        let word: String = trimmed
-            .chars()
-            .take_while(|c| !c.is_whitespace())
-            .collect();
+        let word: String = trimmed.chars().take_while(|c| !c.is_whitespace()).collect();
         if !word.is_empty() {
             return Some(word);
         }
@@ -307,7 +509,8 @@ fn extract_value(line: &str, key: &str) -> Option<String> {
 
 /// Get the last commit ID on a branch
 fn get_last_commit_on_branch(graph: &GitGraph, branch_name: &str) -> Option<String> {
-    graph.branches
+    graph
+        .branches
         .iter()
         .find(|b| b.name == branch_name)
         .and_then(|b| b.commit_ids.last().cloned())
@@ -316,12 +519,12 @@ fn get_last_commit_on_branch(graph: &GitGraph, branch_name: &str) -> Option<Stri
 /// Get the source commit for a branch (the commit it was branched from)
 fn get_branch_source(graph: &GitGraph, branch_name: &str) -> Option<String> {
     let branch = graph.branches.iter().find(|b| b.name == branch_name)?;
-    
+
     // If this branch has a source commit, return it
     if let Some(ref source) = branch.source_commit {
         return Some(source.clone());
     }
-    
+
     // Otherwise, recursively check the source branch's source
     // (handles case where we branch from a branch that has no commits)
     None
@@ -334,12 +537,12 @@ fn get_effective_branch_source(graph: &GitGraph, branch_name: &str) -> Option<St
     if let Some(commit) = get_last_commit_on_branch(graph, branch_name) {
         return Some(commit);
     }
-    
+
     // Second try: the branch's source commit
     let branch = graph.branches.iter().find(|b| b.name == branch_name)?;
     if let Some(ref source) = branch.source_commit {
         return Some(source.clone());
     }
-    
+
     None
 }

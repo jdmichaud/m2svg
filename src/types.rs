@@ -430,6 +430,66 @@ pub struct GitBranch {
     pub source_commit: Option<String>, // The commit this branch was created from
 }
 
+/// Configuration options parsed from YAML frontmatter
+#[derive(Debug, Clone)]
+pub struct GitGraphConfig {
+    /// Whether to show branch name labels. Default: true
+    pub show_branches: bool,
+    /// Whether to show commit ID labels. Default: true
+    pub show_commit_label: bool,
+    /// Name of the default/root branch. Default: "main"
+    pub main_branch_name: String,
+    /// Position of the main branch in the list of branches. Default: 0
+    pub main_branch_order: Option<i32>,
+    /// Whether commit labels are rotated 45° (SVG only). Default: true
+    pub rotate_commit_label: bool,
+    /// Theme name (base, forest, dark, default, neutral). Default: "default"
+    pub theme: String,
+    /// Branch colors (git0..git7)
+    pub branch_colors: Vec<Option<String>>,
+    /// Branch label colors (gitBranchLabel0..gitBranchLabel7)
+    pub branch_label_colors: Vec<Option<String>>,
+    /// Highlight commit colors (gitInv0..gitInv7)
+    pub highlight_colors: Vec<Option<String>>,
+    /// Commit label color
+    pub commit_label_color: Option<String>,
+    /// Commit label background color
+    pub commit_label_background: Option<String>,
+    /// Commit label font size
+    pub commit_label_font_size: Option<String>,
+    /// Tag label color
+    pub tag_label_color: Option<String>,
+    /// Tag label background color
+    pub tag_label_background: Option<String>,
+    /// Tag label border color
+    pub tag_label_border: Option<String>,
+    /// Tag label font size
+    pub tag_label_font_size: Option<String>,
+}
+
+impl Default for GitGraphConfig {
+    fn default() -> Self {
+        Self {
+            show_branches: true,
+            show_commit_label: true,
+            main_branch_name: "main".to_string(),
+            main_branch_order: None,
+            rotate_commit_label: true,
+            theme: "default".to_string(),
+            branch_colors: vec![None; 8],
+            branch_label_colors: vec![None; 8],
+            highlight_colors: vec![None; 8],
+            commit_label_color: None,
+            commit_label_background: None,
+            commit_label_font_size: None,
+            tag_label_color: None,
+            tag_label_background: None,
+            tag_label_border: None,
+            tag_label_font_size: None,
+        }
+    }
+}
+
 /// The complete parsed GitGraph
 #[derive(Debug, Clone)]
 pub struct GitGraph {
@@ -437,20 +497,28 @@ pub struct GitGraph {
     pub commits: Vec<GitCommit>,
     pub branches: Vec<GitBranch>,
     pub current_branch: String,
+    pub config: GitGraphConfig,
 }
 
 impl GitGraph {
     pub fn new(direction: GitGraphDirection) -> Self {
+        Self::with_config(direction, GitGraphConfig::default())
+    }
+
+    pub fn with_config(direction: GitGraphDirection, config: GitGraphConfig) -> Self {
+        let main_name = config.main_branch_name.clone();
+        let main_order = config.main_branch_order;
         Self {
             direction,
             commits: Vec::new(),
             branches: vec![GitBranch {
-                name: "main".to_string(),
-                order: None,
+                name: main_name.clone(),
+                order: main_order,
                 commit_ids: Vec::new(),
                 source_commit: None,
             }],
-            current_branch: "main".to_string(),
+            current_branch: main_name,
+            config,
         }
     }
 }
@@ -466,5 +534,4 @@ pub enum DiagramType {
     Class(ClassDiagram),
     Er(ErDiagram),
     GitGraph(GitGraph),
-    Mindmap(crate::parser::mindmap::Mindmap),
 }

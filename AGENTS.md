@@ -140,6 +140,7 @@ testdata/
 
 ### Testing
 - Each test fixture in `testdata/ascii/` and `testdata/svg/` contains input and expected output separated by `\n---\n`
+- The test parser uses `rfind` to split on the **last** `---` separator, so YAML frontmatter `---` delimiters in the input section won't cause issues
 - ASCII/Unicode tests compare rendered text output exactly
 - SVG tests compare complete SVG output exactly (requires deterministic rendering)
 - Tests auto-detect ASCII vs Unicode mode based on expected output characters
@@ -274,3 +275,28 @@ SVG output must be deterministic for exact-match testing. Key considerations:
 
 ### Edge Routing
 Edges use A* pathfinding to avoid nodes. The pathfinder in `src/ascii/pathfinder.rs` treats node bounding boxes as obstacles. Complex layouts may route edges around multiple nodes.
+
+### YAML Frontmatter Configuration
+GitGraph diagrams support Mermaid-compatible YAML frontmatter for configuration:
+
+```
+---
+config:
+  gitGraph:
+    showBranches: false
+    showCommitLabel: false
+    mainBranchName: trunk
+---
+gitGraph
+   commit
+   ...
+```
+
+Key implementation details:
+- **Parser**: `parse_frontmatter()` in `src/parser/gitgraph.rs` extracts YAML before diagram content
+- **Config struct**: `GitGraphConfig` in `src/types.rs` holds all config fields with sensible defaults
+- **Frontmatter stripping**: `strip_frontmatter()` in `src/parser/mod.rs` removes `---`-delimited blocks before diagram type detection
+- **Structural options**: `showBranches`, `showCommitLabel`, `mainBranchName`, `mainBranchOrder` affect layout in both ASCII and SVG
+- **Visual theming**: `git0`-`git7`, `commitLabelColor`, `tagLabelColor` etc. affect SVG colors only
+- **`parallelCommits`**: Detected and warned via `eprintln!` but not implemented
+- **Test fixtures with frontmatter**: Work correctly because `parse_test_file` uses `rfind` for the last `---` separator

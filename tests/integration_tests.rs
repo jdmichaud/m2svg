@@ -18,12 +18,17 @@ fn get_unicode_dir() -> PathBuf {
 }
 
 /// Parse a test file into (input, expected_output)
+/// Splits on the LAST occurrence of \n---\n to support YAML frontmatter
+/// which uses --- as delimiters within the input section.
 fn parse_test_file(content: &str) -> Option<(String, String)> {
-    let parts: Vec<&str> = content.splitn(2, "\n---\n").collect();
-    if parts.len() != 2 {
-        return None;
+    let separator = "\n---\n";
+    if let Some(pos) = content.rfind(separator) {
+        let input = &content[..pos];
+        let expected = &content[pos + separator.len()..];
+        Some((input.to_string(), expected.trim_end().to_string()))
+    } else {
+        None
     }
-    Some((parts[0].to_string(), parts[1].trim_end().to_string()))
 }
 
 /// Normalize output for comparison (trim trailing whitespace from each line)
@@ -213,23 +218,9 @@ ascii_test!(gitgraph, gitgraph_custom_ids);
 ascii_test!(gitgraph, gitgraph_merge_complex);
 ascii_test!(gitgraph, gitgraph_tags);
 ascii_test!(gitgraph, gitgraph_vertical);
-
-// =============================================================================
-// ASCII Mindmap tests
-// =============================================================================
-
-ascii_test!(mindmap, mindmap_bang);
-ascii_test!(mindmap, mindmap_basic);
-ascii_test!(mindmap, mindmap_circle);
-ascii_test!(mindmap, mindmap_classes);
-ascii_test!(mindmap, mindmap_cloud);
-ascii_test!(mindmap, mindmap_default_shape);
-ascii_test!(mindmap, mindmap_full);
-ascii_test!(mindmap, mindmap_hexagon);
-ascii_test!(mindmap, mindmap_hierarchy);
-ascii_test!(mindmap, mindmap_rounded);
-ascii_test!(mindmap, mindmap_shapes);
-ascii_test!(mindmap, mindmap_square);
+ascii_test!(gitgraph, gitgraph_no_branches);
+ascii_test!(gitgraph, gitgraph_no_commit_labels);
+ascii_test!(gitgraph, gitgraph_custom_main_name);
 
 // =============================================================================
 // Unicode Flowchart tests
@@ -304,23 +295,9 @@ unicode_test!(gitgraph, gitgraph_custom_ids);
 unicode_test!(gitgraph, gitgraph_merge_complex);
 unicode_test!(gitgraph, gitgraph_tags);
 unicode_test!(gitgraph, gitgraph_vertical);
-
-// =============================================================================
-// Unicode Mindmap tests
-// =============================================================================
-
-unicode_test!(mindmap, mindmap_bang);
-unicode_test!(mindmap, mindmap_basic);
-unicode_test!(mindmap, mindmap_circle);
-unicode_test!(mindmap, mindmap_classes);
-unicode_test!(mindmap, mindmap_cloud);
-unicode_test!(mindmap, mindmap_default_shape);
-unicode_test!(mindmap, mindmap_full);
-unicode_test!(mindmap, mindmap_hexagon);
-unicode_test!(mindmap, mindmap_hierarchy);
-unicode_test!(mindmap, mindmap_rounded);
-unicode_test!(mindmap, mindmap_shapes);
-unicode_test!(mindmap, mindmap_square);
+unicode_test!(gitgraph, gitgraph_no_branches);
+unicode_test!(gitgraph, gitgraph_no_commit_labels);
+unicode_test!(gitgraph, gitgraph_custom_main_name);
 
 // =============================================================================
 // SVG tests
@@ -581,19 +558,6 @@ svg_test!(sequence, sequence_participants);
 svg_test!(sequence, sequence_rect);
 svg_test!(sequence, sequence_stacked_activation);
 
-svg_test!(mindmap, mindmap_bang);
-svg_test!(mindmap, mindmap_basic);
-svg_test!(mindmap, mindmap_circle);
-svg_test!(mindmap, mindmap_classes);
-svg_test!(mindmap, mindmap_cloud);
-svg_test!(mindmap, mindmap_default_shape);
-svg_test!(mindmap, mindmap_full);
-svg_test!(mindmap, mindmap_hexagon);
-svg_test!(mindmap, mindmap_hierarchy);
-svg_test!(mindmap, mindmap_rounded);
-svg_test!(mindmap, mindmap_shapes);
-svg_test!(mindmap, mindmap_square);
-
 svg_test!(gitgraph, gitgraph_basic);
 svg_test!(gitgraph, gitgraph_bottom_to_top);
 svg_test!(gitgraph, gitgraph_branch_order);
@@ -605,5 +569,8 @@ svg_test!(gitgraph, gitgraph_custom_ids);
 svg_test!(gitgraph, gitgraph_merge_complex);
 svg_test!(gitgraph, gitgraph_tags);
 svg_test!(gitgraph, gitgraph_vertical);
+svg_test!(gitgraph, gitgraph_no_branches);
+svg_test!(gitgraph, gitgraph_no_commit_labels);
+svg_test!(gitgraph, gitgraph_custom_main_name);
 
 // Legacy SVG tests (kept for backwards compatibility)

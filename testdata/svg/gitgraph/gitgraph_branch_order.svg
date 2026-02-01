@@ -10,7 +10,7 @@
 <line x1="110" y1="40" x2="120" y2="40" stroke="lightgrey" stroke-width="1" stroke-dasharray="2"/>
 <line x1="120" y1="40" x2="170" y2="40" stroke="lightgrey" stroke-width="1" stroke-dasharray="2"/>
 <circle cx="120" cy="40" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
-<text x="120" y="70" class="commit-text">A</text>
+<text x="120" y="70" class="commit-text" fill="#27272A" font-size="12px">A</text>
 <text x="105" y="44" class="branch-text" text-anchor="end" fill="#0000ED">main</text>
 <text x="105" y="94" class="branch-text" text-anchor="end" fill="#DEDC00">test1</text>
 <text x="105" y="144" class="branch-text" text-anchor="end" fill="#00DE00">test2</text>
