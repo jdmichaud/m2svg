@@ -1,0 +1,13 @@
+C4Container
+    title Container diagram for Internet Banking System
+    
+    Person(customer, Customer, "A customer of the bank")
+    
+    Container_Boundary(c1, "Internet Banking") {
+        Container(spa, "Single-Page App", "JavaScript, Angular", "Banking UI")
+        Container(web_app, "Web Application", "Java, Spring MVC", "Static content")
+        ContainerDb(database, "Database", "SQL Database", "Stores user data")
+    }
+    
+    Rel(customer, spa, "Uses", "HTTPS")
+    Rel(spa, web_app, "Delivers")

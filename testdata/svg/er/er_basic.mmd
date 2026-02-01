@@ -1,0 +1,6 @@
+# ER: Basic
+# Source: https://mermaid.js.org/syntax/entityRelationshipDiagram.html
+erDiagram
+    CUSTOMER ||--o{ ORDER : places
+    ORDER ||--|{ LINE-ITEM : contains
+    CUSTOMER }|..|{ DELIVERY-ADDRESS : uses

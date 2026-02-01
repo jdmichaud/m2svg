@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="mermaid-svg" width="100%" style="max-width: 700px;" viewBox="0 0 700 500" role="graphics-document document" aria-roledescription="xychart">
+  <style xmlns="http://www.w3.org/1999/xhtml">@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css");</style>
+  <style>#mermaid-svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#mermaid-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#mermaid-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#mermaid-svg .error-icon{fill:#552222;}#mermaid-svg .error-text{fill:#552222;stroke:#552222;}#mermaid-svg .edge-thickness-normal{stroke-width:1px;}#mermaid-svg .edge-thickness-thick{stroke-width:3.5px;}#mermaid-svg .edge-pattern-solid{stroke-dasharray:0;}#mermaid-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#mermaid-svg .edge-pattern-dashed{stroke-dasharray:3;}#mermaid-svg .edge-pattern-dotted{stroke-dasharray:2;}#mermaid-svg .marker{fill:#333333;stroke:#333333;}#mermaid-svg .marker.cross{stroke:#333333;}#mermaid-svg svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#mermaid-svg p{margin:0;}#mermaid-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style>
+  <g/>
+  <g class="main">
+    <rect width="700" height="500" class="background" fill="white"/>
+    <g class="chart-title">
+      <text x="0" y="0" fill="#131300" font-size="20" dominant-baseline="middle" text-anchor="middle" transform="translate(350, 21) rotate(0)">Quarterly Sales</text>
+    </g>
+    <g class="plot">
+      <g class="bar-plot-0">
+        <rect x="35.8896484375" y="103.65000190734864" width="173.8671875" height="62.699999999999996" fill="#ECECFF" stroke="#ECECFF" stroke-width="0"/>
+        <rect x="35.8896484375" y="214.31666793823243" width="332.05517578125" height="62.699999999999996" fill="#ECECFF" stroke="#ECECFF" stroke-width="0"/>
+        <rect x="35.8896484375" y="324.9833339691162" width="490.2431640625" height="62.699999999999996" fill="#ECECFF" stroke="#ECECFF" stroke-width="0"/>
+        <rect x="35.8896484375" y="435.65" width="585.1559570312501" height="62.699999999999996" fill="#ECECFF" stroke="#ECECFF" stroke-width="0"/>
+      </g>
+    </g>
+    <g class="left-axis">
+      <g class="axisl-line">
+        <path d="M 34.8896484375,102.00000190734863 L 34.8896484375,500 " fill="none" stroke="#131300" stroke-width="2"/>
+      </g>
+      <g class="label">
+        <text x="0" y="0" fill="#131300" font-size="14" dominant-baseline="middle" text-anchor="end" transform="translate(23.8896484375, 135.00000190734863) rotate(0)">Q1</text>
+        <text x="0" y="0" fill="#131300" font-size="14" dominant-baseline="middle" text-anchor="end" transform="translate(23.8896484375, 245.66666793823242) rotate(0)">Q2</text>
+        <text x="0" y="0" fill="#131300" font-size="14" dominant-baseline="middle" text-anchor="end" transform="translate(23.8896484375, 356.3333339691162) rotate(0)">Q3</text>
+        <text x="0" y="0" fill="#131300" font-size="14" dominant-baseline="middle" text-anchor="end" transform="translate(23.8896484375, 467) rotate(0)">Q4</text>
+      </g>
+      <g class="ticks">
+        <path d="M 33.8896484375,135.00000190734863 L 28.8896484375,135.00000190734863" fill="none" stroke="#131300" stroke-width="2"/>
+        <path d="M 33.8896484375,245.66666793823242 L 28.8896484375,245.66666793823242" fill="none" stroke="#131300" stroke-width="2"/>
+        <path d="M 33.8896484375,356.3333339691162 L 28.8896484375,356.3333339691162" fill="none" stroke="#131300" stroke-width="2"/>
+        <path d="M 33.8896484375,467 L 28.8896484375,467" fill="none" stroke="#131300" stroke-width="2"/>
+      </g>
+    </g>
+    <g class="top-axis">
+      <g class="axis-line">
+        <path d="M 35.8896484375,101.00000190734863 L 700,101.00000190734863" fill="none" stroke="#131300" stroke-width="2"/>
+      </g>
+      <g class="label">
+        <text x="0" y="0" fill="#131300" font-size="14" dominant-baseline="text-before-edge" text-anchor="middle" transform="translate(51.56884765625, 74.00000190734863) rotate(0)">0</text>
+        <text x="0" y="0" fill="#131300" font-size="14" dominant-baseline="text-before-edge" text-anchor="middle" transform="translate(114.84404296874999, 74.00000190734863) rotate(0)">100</text>
+        <text x="0" y="0" fill="#131300" font-size="14" dominant-baseline="text-before-edge" text-anchor="middle" transform="translate(178.11923828125, 74.00000190734863) rotate(0)">200</text>
+        <text x="0" y="0" fill="#131300" font-size="14" dominant-baseline="text-before-edge" text-anchor="middle" transform="translate(241.39443359375, 74.00000190734863) rotate(0)">300</text>
+        <text x="0" y="0" fill="#131300" font-size="14" dominant-baseline="text-before-edge" text-anchor="middle" transform="translate(304.66962890625, 74.00000190734863) rotate(0)">400</text>
+        <text x="0" y="0" fill="#131300" font-size="14" dominant-baseline="text-before-edge" text-anchor="middle" transform="translate(367.94482421875, 74.00000190734863) rotate(0)">500</text>
+        <text x="0" y="0" fill="#131300" font-size="14" dominant-baseline="text-before-edge" text-anchor="middle" transform="translate(431.22001953125, 74.00000190734863) rotate(0)">600</text>
+        <text x="0" y="0" fill="#131300" font-size="14" dominant-baseline="text-before-edge" text-anchor="middle" transform="translate(494.49521484375, 74.00000190734863) rotate(0)">700</text>
+        <text x="0" y="0" fill="#131300" font-size="14" dominant-baseline="text-before-edge" text-anchor="middle" transform="translate(557.77041015625, 74.00000190734863) rotate(0)">800</text>
+        <text x="0" y="0" fill="#131300" font-size="14" dominant-baseline="text-before-edge" text-anchor="middle" transform="translate(621.0456054687501, 74.00000190734863) rotate(0)">900</text>
+        <text x="0" y="0" fill="#131300" font-size="14" dominant-baseline="text-before-edge" text-anchor="middle" transform="translate(684.32080078125, 74.00000190734863) rotate(0)">1000</text>
+      </g>
+      <g class="ticks">
+        <path d="M 51.56884765625,100.00000190734863 L 51.56884765625,95.00000190734863" fill="none" stroke="#131300" stroke-width="2"/>
+        <path d="M 114.84404296874999,100.00000190734863 L 114.84404296874999,95.00000190734863" fill="none" stroke="#131300" stroke-width="2"/>
+        <path d="M 178.11923828125,100.00000190734863 L 178.11923828125,95.00000190734863" fill="none" stroke="#131300" stroke-width="2"/>
+        <path d="M 241.39443359375,100.00000190734863 L 241.39443359375,95.00000190734863" fill="none" stroke="#131300" stroke-width="2"/>
+        <path d="M 304.66962890625,100.00000190734863 L 304.66962890625,95.00000190734863" fill="none" stroke="#131300" stroke-width="2"/>
+        <path d="M 367.94482421875,100.00000190734863 L 367.94482421875,95.00000190734863" fill="none" stroke="#131300" stroke-width="2"/>
+        <path d="M 431.22001953125,100.00000190734863 L 431.22001953125,95.00000190734863" fill="none" stroke="#131300" stroke-width="2"/>
+        <path d="M 494.49521484375,100.00000190734863 L 494.49521484375,95.00000190734863" fill="none" stroke="#131300" stroke-width="2"/>
+        <path d="M 557.77041015625,100.00000190734863 L 557.77041015625,95.00000190734863" fill="none" stroke="#131300" stroke-width="2"/>
+        <path d="M 621.0456054687501,100.00000190734863 L 621.0456054687501,95.00000190734863" fill="none" stroke="#131300" stroke-width="2"/>
+        <path d="M 684.32080078125,100.00000190734863 L 684.32080078125,95.00000190734863" fill="none" stroke="#131300" stroke-width="2"/>
+      </g>
+      <g class="title">
+        <text x="0" y="0" fill="#131300" font-size="16" dominant-baseline="text-before-edge" text-anchor="middle" transform="translate(367.94482421875, 47) rotate(0)">Revenue</text>
+      </g>
+    </g>
+  </g>
+  <g class="mermaid-tmp-group"/>
+</svg>

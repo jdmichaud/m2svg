@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 656 304" width="656" height="304" style="--bg:#FFFFFF;--fg:#27272A;background:var(--bg)">
+  <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 30%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+  <line x1="72.0" y1="220.0" x2="72.0" y2="64.0" class="rel-line"/>
+  <polygon points="72.0,64.0 66.0,76.0 78.0,76.0" class="marker-hollow"/>
+  <line x1="236.0" y1="64.0" x2="236.0" y2="220.0" class="rel-line"/>
+  <polygon points="236.0,220.0 240.0,214.0 236.0,208.0 232.0,214.0" class="marker-filled"/>
+  <line x1="400.0" y1="64.0" x2="400.0" y2="220.0" class="rel-line"/>
+  <polygon points="400.0,220.0 404.0,214.0 400.0,208.0 396.0,214.0" class="marker-hollow"/>
+  <line x1="564.0" y1="64.0" x2="564.0" y2="220.0" class="rel-line"/>
+  <polygon points="564.0,220.0 570.0,208.0 558.0,208.0" class="marker-filled"/>
+  <rect x="20.0" y="220.0" width="104.0" height="44.0" class="node"/>
+  <text x="72.0" y="246.0" class="class-name" text-anchor="middle">classA</text>
+  <rect x="20.0" y="20.0" width="104.0" height="44.0" class="node"/>
+  <text x="72.0" y="46.0" class="class-name" text-anchor="middle">classB</text>
+  <rect x="184.0" y="20.0" width="104.0" height="44.0" class="node"/>
+  <text x="236.0" y="46.0" class="class-name" text-anchor="middle">classC</text>
+  <rect x="184.0" y="220.0" width="104.0" height="44.0" class="node"/>
+  <text x="236.0" y="246.0" class="class-name" text-anchor="middle">classD</text>
+  <rect x="348.0" y="20.0" width="104.0" height="44.0" class="node"/>
+  <text x="400.0" y="46.0" class="class-name" text-anchor="middle">classE</text>
+  <rect x="348.0" y="220.0" width="104.0" height="44.0" class="node"/>
+  <text x="400.0" y="246.0" class="class-name" text-anchor="middle">classF</text>
+  <rect x="512.0" y="20.0" width="104.0" height="44.0" class="node"/>
+  <text x="564.0" y="46.0" class="class-name" text-anchor="middle">classG</text>
+  <rect x="512.0" y="220.0" width="104.0" height="44.0" class="node"/>
+  <text x="564.0" y="246.0" class="class-name" text-anchor="middle">classH</text>
+</svg>

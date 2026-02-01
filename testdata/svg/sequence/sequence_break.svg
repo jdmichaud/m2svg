@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 729 370" width="729" height="370" style="--bg:#FFFFFF;--fg:#27272A;background:var(--bg)">
+  <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 30%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+  <line x1="72.0" y1="40.0" x2="72.0" y2="310.0" class="lifeline"/>
+  <rect x="20.0" y="0.0" width="104.0" height="40.0" class="node"/>
+  <text x="72.0" y="20.0" class="node-label" text-anchor="middle" dominant-baseline="middle">Consumer</text>
+  <rect x="20.0" y="310.0" width="104.0" height="40.0" class="node"/>
+  <text x="72.0" y="330.0" class="node-label" text-anchor="middle" dominant-baseline="middle">Consumer</text>
+  <line x1="224.0" y1="40.0" x2="224.0" y2="310.0" class="lifeline"/>
+  <rect x="178.0" y="0.0" width="92.0" height="40.0" class="node"/>
+  <text x="224.0" y="20.0" class="node-label" text-anchor="middle" dominant-baseline="middle">API</text>
+  <rect x="178.0" y="310.0" width="92.0" height="40.0" class="node"/>
+  <text x="224.0" y="330.0" class="node-label" text-anchor="middle" dominant-baseline="middle">API</text>
+  <line x1="432.0" y1="40.0" x2="432.0" y2="310.0" class="lifeline"/>
+  <rect x="353.0" y="0.0" width="158.0" height="40.0" class="node"/>
+  <text x="432.0" y="20.0" class="node-label" text-anchor="middle" dominant-baseline="middle">BookingService</text>
+  <rect x="353.0" y="310.0" width="158.0" height="40.0" class="node"/>
+  <text x="432.0" y="330.0" class="node-label" text-anchor="middle" dominant-baseline="middle">BookingService</text>
+  <line x1="610.0" y1="40.0" x2="610.0" y2="310.0" class="lifeline"/>
+  <rect x="531.0" y="0.0" width="158.0" height="40.0" class="node"/>
+  <text x="610.0" y="20.0" class="node-label" text-anchor="middle" dominant-baseline="middle">BillingService</text>
+  <rect x="531.0" y="310.0" width="158.0" height="40.0" class="node"/>
+  <text x="610.0" y="330.0" class="node-label" text-anchor="middle" dominant-baseline="middle">BillingService</text>
+  <line x1="72.0" y1="110.0" x2="224.0" y2="110.0" class="message-dashed"/>
+  <polygon points="224.0,110.0 214.0,105.0 214.0,115.0" class="arrow"/>
+  <text x="148.0" y="102.0" class="message-label" text-anchor="middle">Book something</text>
+  <line x1="224.0" y1="160.0" x2="432.0" y2="160.0" class="message-dashed"/>
+  <polygon points="432.0,160.0 422.0,155.0 422.0,165.0" class="arrow"/>
+  <text x="328.0" y="152.0" class="message-label" text-anchor="middle">Start booking process</text>
+  <line x1="224.0" y1="210.0" x2="72.0" y2="210.0" class="message-dashed"/>
+  <polygon points="72.0,210.0 82.0,205.0 82.0,215.0" class="arrow"/>
+  <text x="148.0" y="202.0" class="message-label" text-anchor="middle">show failure</text>
+  <line x1="224.0" y1="260.0" x2="610.0" y2="260.0" class="message-dashed"/>
+  <polygon points="610.0,260.0 600.0,255.0 600.0,265.0" class="arrow"/>
+  <text x="417.0" y="252.0" class="message-label" text-anchor="middle">Start billing process</text>
+</svg>

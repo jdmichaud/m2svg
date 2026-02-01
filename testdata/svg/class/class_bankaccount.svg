@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 252 224" width="252" height="224" style="--bg:#FFFFFF;--fg:#27272A;background:var(--bg)">
+  <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 30%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+  <rect x="20.0" y="20.0" width="192.0" height="164.0" class="node"/>
+  <text x="116.0" y="46.0" class="class-name" text-anchor="middle">BankAccount</text>
+  <line x1="20.0" y1="66.0" x2="212.0" y2="66.0" class="divider"/>
+  <text x="32.0" y="72.0" class="member">+owner : String</text>
+  <text x="32.0" y="92.0" class="member">+balance : Bigdecimal</text>
+  <line x1="20.0" y1="112.0" x2="212.0" y2="112.0" class="divider"/>
+  <text x="32.0" y="118.0" class="member">+deposit</text>
+  <text x="32.0" y="138.0" class="member">+withdrawal</text>
+</svg>

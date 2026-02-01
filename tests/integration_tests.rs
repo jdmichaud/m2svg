@@ -234,12 +234,13 @@ fn get_svg_dir() -> std::path::PathBuf {
 
 /// Run an SVG test from the svg directory (exact match like ASCII tests)
 fn run_svg_test(subdir: &str, test_name: &str) {
-    let test_file = get_svg_dir().join(subdir).join(format!("{}.txt", test_name));
-    let content = fs::read_to_string(&test_file)
-        .unwrap_or_else(|e| panic!("Failed to read {:?}: {}", test_file, e));
+    let mmd_file = get_svg_dir().join(subdir).join(format!("{}.mmd", test_name));
+    let svg_file = get_svg_dir().join(subdir).join(format!("{}.svg", test_name));
     
-    let (input, expected) = parse_test_file(&content)
-        .unwrap_or_else(|| panic!("Failed to parse SVG test file: {:?}", test_file));
+    let input = fs::read_to_string(&mmd_file)
+        .unwrap_or_else(|e| panic!("Failed to read {:?}: {}", mmd_file, e));
+    let expected = fs::read_to_string(&svg_file)
+        .unwrap_or_else(|e| panic!("Failed to read {:?}: {}", svg_file, e));
     
     // Filter out comment lines from input
     let input: String = input

@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="mermaid-svg" width="100%" style="max-width: 600px;" viewBox="0 0 600 400" role="graphics-document document" aria-roledescription="sankey">
+  <style xmlns="http://www.w3.org/1999/xhtml">@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css");</style>
+  <style>#mermaid-svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#mermaid-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#mermaid-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#mermaid-svg .error-icon{fill:#552222;}#mermaid-svg .error-text{fill:#552222;stroke:#552222;}#mermaid-svg .edge-thickness-normal{stroke-width:1px;}#mermaid-svg .edge-thickness-thick{stroke-width:3.5px;}#mermaid-svg .edge-pattern-solid{stroke-dasharray:0;}#mermaid-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#mermaid-svg .edge-pattern-dashed{stroke-dasharray:3;}#mermaid-svg .edge-pattern-dotted{stroke-dasharray:2;}#mermaid-svg .marker{fill:#333333;stroke:#333333;}#mermaid-svg .marker.cross{stroke:#333333;}#mermaid-svg svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#mermaid-svg p{margin:0;}#mermaid-svg .label{font-family:"trebuchet ms",verdana,arial,sans-serif;}#mermaid-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style>
+  <g/>
+  <g class="nodes">
+    <g class="node" id="node-1" transform="translate(0,0)" x="0" y="0">
+      <rect height="216.34615384615384" width="10" fill="#4e79a7"/>
+    </g>
+    <g class="node" id="node-2" transform="translate(295,0)" x="295" y="0">
+      <rect height="259.61538461538464" width="10" fill="#f28e2c"/>
+    </g>
+    <g class="node" id="node-3" transform="translate(295,284.61538461538464)" x="295" y="284.61538461538464">
+      <rect height="115.38461538461547" width="10" fill="#e15759"/>
+    </g>
+    <g class="node" id="node-4" transform="translate(0,241.34615384615384)" x="0" y="241.34615384615384">
+      <rect height="158.65384615384616" width="10" fill="#76b7b2"/>
+    </g>
+    <g class="node" id="node-5" transform="translate(590,0)" x="590" y="0">
+      <rect height="230.76923076923077" width="10" fill="#59a14f"/>
+    </g>
+    <g class="node" id="node-6" transform="translate(590,255.76923076923077)" x="590" y="255.76923076923077">
+      <rect height="144.23076923076934" width="10" fill="#edc949"/>
+    </g>
+  </g>
+  <g class="node-labels" font-size="14">
+    <text x="16" y="108.17307692307692" dy="0em" text-anchor="start">Coal
+150</text>
+    <text x="311" y="129.80769230769232" dy="0em" text-anchor="start">Electricity
+180</text>
+    <text x="311" y="342.3076923076924" dy="0em" text-anchor="start">Heat
+80</text>
+    <text x="16" y="320.6730769230769" dy="0em" text-anchor="start">Gas
+110</text>
+    <text x="584" y="115.38461538461539" dy="0em" text-anchor="end">Industry
+160</text>
+    <text x="584" y="327.8846153846155" dy="0em" text-anchor="end">Homes
+100</text>
+  </g>
+  <g class="links" fill="none" stroke-opacity="0.5">
+    <g class="link" style="mix-blend-mode: multiply;">
+      <linearGradient id="linearGradient-7" gradientUnits="userSpaceOnUse" x1="10" x2="295">
+        <stop offset="0%" stop-color="#4e79a7"/>
+        <stop offset="100%" stop-color="#f28e2c"/>
+      </linearGradient>
+      <path d="M10,72.11538461538461C152.5,72.11538461538461,152.5,72.11538461538461,295,72.11538461538461" stroke="url(#linearGradient-7)" stroke-width="144.23076923076923"/>
+    </g>
+    <g class="link" style="mix-blend-mode: multiply;">
+      <linearGradient id="linearGradient-8" gradientUnits="userSpaceOnUse" x1="10" x2="295">
+        <stop offset="0%" stop-color="#4e79a7"/>
+        <stop offset="100%" stop-color="#e15759"/>
+      </linearGradient>
+      <path d="M10,180.28846153846155C152.5,180.28846153846155,152.5,320.67307692307696,295,320.67307692307696" stroke="url(#linearGradient-8)" stroke-width="72.11538461538461"/>
+    </g>
+    <g class="link" style="mix-blend-mode: multiply;">
+      <linearGradient id="linearGradient-9" gradientUnits="userSpaceOnUse" x1="10" x2="295">
+        <stop offset="0%" stop-color="#76b7b2"/>
+        <stop offset="100%" stop-color="#f28e2c"/>
+      </linearGradient>
+      <path d="M10,299.03846153846155C152.5,299.03846153846155,152.5,201.9230769230769,295,201.9230769230769" stroke="url(#linearGradient-9)" stroke-width="115.38461538461539"/>
+    </g>
+    <g class="link" style="mix-blend-mode: multiply;">
+      <linearGradient id="linearGradient-10" gradientUnits="userSpaceOnUse" x1="10" x2="295">
+        <stop offset="0%" stop-color="#76b7b2"/>
+        <stop offset="100%" stop-color="#e15759"/>
+      </linearGradient>
+      <path d="M10,378.3653846153846C152.5,378.3653846153846,152.5,378.36538461538464,295,378.36538461538464" stroke="url(#linearGradient-10)" stroke-width="43.26923076923077"/>
+    </g>
+    <g class="link" style="mix-blend-mode: multiply;">
+      <linearGradient id="linearGradient-11" gradientUnits="userSpaceOnUse" x1="305" x2="590">
+        <stop offset="0%" stop-color="#f28e2c"/>
+        <stop offset="100%" stop-color="#59a14f"/>
+      </linearGradient>
+      <path d="M305,86.53846153846153C447.5,86.53846153846153,447.5,86.53846153846153,590,86.53846153846153" stroke="url(#linearGradient-11)" stroke-width="173.07692307692307"/>
+    </g>
+    <g class="link" style="mix-blend-mode: multiply;">
+      <linearGradient id="linearGradient-12" gradientUnits="userSpaceOnUse" x1="305" x2="590">
+        <stop offset="0%" stop-color="#f28e2c"/>
+        <stop offset="100%" stop-color="#edc949"/>
+      </linearGradient>
+      <path d="M305,216.34615384615384C447.5,216.34615384615384,447.5,299.03846153846155,590,299.03846153846155" stroke="url(#linearGradient-12)" stroke-width="86.53846153846153"/>
+    </g>
+    <g class="link" style="mix-blend-mode: multiply;">
+      <linearGradient id="linearGradient-13" gradientUnits="userSpaceOnUse" x1="305" x2="590">
+        <stop offset="0%" stop-color="#e15759"/>
+        <stop offset="100%" stop-color="#59a14f"/>
+      </linearGradient>
+      <path d="M305,313.4615384615385C447.5,313.4615384615385,447.5,201.9230769230769,590,201.9230769230769" stroke="url(#linearGradient-13)" stroke-width="57.69230769230769"/>
+    </g>
+    <g class="link" style="mix-blend-mode: multiply;">
+      <linearGradient id="linearGradient-14" gradientUnits="userSpaceOnUse" x1="305" x2="590">
+        <stop offset="0%" stop-color="#e15759"/>
+        <stop offset="100%" stop-color="#edc949"/>
+      </linearGradient>
+      <path d="M305,371.1538461538462C447.5,371.1538461538462,447.5,371.1538461538462,590,371.1538461538462" stroke="url(#linearGradient-14)" stroke-width="57.69230769230769"/>
+    </g>
+  </g>
+</svg>
