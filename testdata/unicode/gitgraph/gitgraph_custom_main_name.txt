@@ -12,6 +12,6 @@ gitGraph
    checkout trunk
    commit
 ---
-A───B───D  (trunk)
-     ╲
-      C  (feature)
+A───B───D  (trunk)                     
+    │                                 
+    ╰─C    (feature)                     

@@ -14,6 +14,6 @@ gitGraph
    merge develop
    commit
 ---
-A───B───────[E]───F
-     ╲     ╱
-      C───D
+A───B───────[E]───F                              
+    │        │                                    
+    ╰─C───D──╯                                    

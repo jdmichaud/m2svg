@@ -10,8 +10,12 @@ use std::collections::{HashMap, HashSet};
 struct GitChars {
     h_line: char,
     v_line: char,
-    fork_down: char, // \
-    merge_up: char,  // /
+    fork_down: char,    // \ (ASCII) or corner chars (Unicode)
+    merge_up: char,     // / (ASCII) or corner chars (Unicode)
+    corner_tl: char,    // ╭ top-left (connects right and down)
+    corner_tr: char,    // ╮ top-right (connects left and down)
+    corner_bl: char,    // ╰ bottom-left (connects right and up)
+    corner_br: char,    // ╯ bottom-right (connects left and up)
 }
 
 impl GitChars {
@@ -21,6 +25,10 @@ impl GitChars {
             v_line: '|',
             fork_down: '\\',
             merge_up: '/',
+            corner_tl: ',',
+            corner_tr: '.',
+            corner_bl: '`',
+            corner_br: '\'',
         }
     }
 
@@ -30,6 +38,10 @@ impl GitChars {
             v_line: '│',
             fork_down: '╲',
             merge_up: '╱',
+            corner_tl: '╭',
+            corner_tr: '╮',
+            corner_bl: '╰',
+            corner_br: '╯',
         }
     }
 }
@@ -63,6 +75,7 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
     } else {
         GitChars::unicode()
     };
+    let use_l_shapes = !use_ascii;
 
     // Step 1: Assign branches to rows, respecting order attribute
     // Branches with order are sorted by order value
@@ -245,7 +258,7 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
         // Start with branch's current column
         let mut col = branch_next_col.get(&commit.branch).copied().unwrap_or(0);
 
-        // If forking from another branch, position based on diagonal distance
+        // If forking from another branch, position based on distance
         if let Some(parent_id) = fork_info.get(&commit.id) {
             if let Some(&parent_col) = commit_cols.get(parent_id) {
                 if let Some(parent) = graph.commits.iter().find(|c| &c.id == parent_id) {
@@ -266,7 +279,18 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
                         parent_row - child_row
                     };
 
-                    let fork_col = if has_ordered_branches {
+                    let fork_col = if use_l_shapes {
+                        // L-shape: vertical at parent_end, corner, then horizontal to child
+                        // Child starts 1 column past parent end (the corner column)
+                        if has_ordered_branches {
+                            parent_col + parent_len + 1
+                        } else if siblings > 1 {
+                            // Cascading fork: all children start at same column (past corner)
+                            parent_col + parent_len + 1
+                        } else {
+                            parent_col + parent_len + 1
+                        }
+                    } else if has_ordered_branches {
                         // For ordered branches: column = parent_end + diagonal distance
                         parent_col + parent_len + row_diff.saturating_sub(1)
                     } else if siblings > 1 {
@@ -304,7 +328,7 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
             }
         }
 
-        // If this is a merge, position after source branch end + merge diagonal
+        // If this is a merge, position after source branch end + connection
         if let Some(source_id) = merge_info.get(&commit.id) {
             if let Some(&source_col) = commit_cols.get(source_id) {
                 if let Some(source) = graph.commits.iter().find(|c| &c.id == source_id) {
@@ -320,14 +344,20 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
                     } else {
                         commit_row - source_row
                     };
-                    // Diagonal spans row_diff-1 intermediate rows, landing at the target
-                    let merge_col = source_col + source_len + row_diff.max(1) - 1;
+                    let merge_col = if use_l_shapes {
+                        // L-shape: horizontal from source end, corner, vertical to target
+                        // Merge commit starts 1 col past source end (corner column)
+                        source_col + source_len + 1
+                    } else {
+                        // Diagonal spans row_diff-1 intermediate rows, landing at the target
+                        source_col + source_len + row_diff.max(1) - 1
+                    };
                     col = col.max(merge_col);
                 }
             }
         }
 
-        // For cherry-picks: position at the source commit's column + offset for diagonal
+        // For cherry-picks: position at the source commit's column + offset
         if let Some(source_id) = cherry_pick_info.get(&commit.id) {
             if let Some(&source_col) = commit_cols.get(source_id) {
                 if let Some(source) = graph.commits.iter().find(|c| &c.id == source_id) {
@@ -339,14 +369,18 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
                         source.id.len()
                     };
 
-                    // Position after source + diagonal distance
-                    // Diagonal advances (row_diff - 1) columns (last step lands on target row)
                     let row_diff = if cherry_row > source_row {
                         cherry_row - source_row
                     } else {
                         source_row - cherry_row
                     };
-                    let cherry_col = source_col + source_len + row_diff - 1;
+                    let cherry_col = if use_l_shapes {
+                        // L-shape: vertical + corner, child at parent_end + 1
+                        source_col + source_len + 1
+                    } else {
+                        // Diagonal advances (row_diff - 1) columns
+                        source_col + source_len + row_diff - 1
+                    };
                     col = col.max(cherry_col);
                 }
             }
@@ -510,7 +544,11 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
                             } else {
                                 commit_row - source_row
                             };
-                            let merge_col_needed = source_col + source_len + row_diff.max(1) - 1;
+                            let merge_col_needed = if use_l_shapes {
+                                source_col + source_len + 1
+                            } else {
+                                source_col + source_len + row_diff.max(1) - 1
+                            };
                             col = col.max(merge_col_needed);
                         }
                     }
@@ -553,7 +591,11 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
                             } else {
                                 merge_row - source_row
                             };
-                            let needed_col = source_col + source_len + row_diff.max(1) - 1;
+                            let needed_col = if use_l_shapes {
+                                source_col + source_len + 1
+                            } else {
+                                source_col + source_len + row_diff.max(1) - 1
+                            };
 
                             if needed_col > current_merge_col {
                                 let delta = needed_col - current_merge_col;
@@ -617,13 +659,21 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
                             }
 
                             // Where would the pure diagonal arrive?
-                            let diag_arrival = source_col + source_len + row_diff.max(1) - 1;
+                            let diag_arrival = if use_l_shapes {
+                                source_col + source_len + 1
+                            } else {
+                                source_col + source_len + row_diff.max(1) - 1
+                            };
 
                             // If the merge commit is much further right, push the source right
                             // Only do this for significant gaps (more than a few columns of horizontal dashes)
                             if merge_col > diag_arrival + 3 {
-                                // How far right should the source be for the diagonal to arrive at merge_col?
-                                let needed_source_end = merge_col + 1 - row_diff.max(1);
+                                // How far right should the source be for the connection to arrive at merge_col?
+                                let needed_source_end = if use_l_shapes {
+                                    merge_col // L-shape: source end = merge_col - 1
+                                } else {
+                                    merge_col + 1 - row_diff.max(1)
+                                };
                                 let needed_source_col =
                                     needed_source_end.saturating_sub(source_len);
 
@@ -718,14 +768,18 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
                     parent.id.len()
                 };
 
-                // Find the furthest child row (for the continuous diagonal)
+                // Find the furthest child row (for the continuous line)
                 // Include all children, even those with cherry-picks
                 let mut max_child_row = parent_row;
+                let mut child_rows_set: Vec<usize> = Vec::new();
                 for child_id in children {
                     if let Some(child) = graph.commits.iter().find(|c| &c.id == child_id) {
                         let child_row = branch_rows[&child.branch];
                         if child_row > max_child_row {
                             max_child_row = child_row;
+                        }
+                        if child_row > parent_row {
+                            child_rows_set.push(child_row);
                         }
                     }
                 }
@@ -734,43 +788,65 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
                     continue; // No valid children to draw
                 }
 
-                // Draw the continuous diagonal from parent to furthest child
-                // For cascading forks, draw on ALL rows (including branch rows) to reach lower branches
-                let mut x = parent_col + parent_len;
-                for row in (parent_row + 1)..=max_child_row {
-                    // Don't draw diagonal on the final row - that's where the child commit is
-                    if row == max_child_row {
-                        break;
+                if use_l_shapes {
+                    // L-shape: vertical line at parent_end col, corners at each child row
+                    let vert_col = parent_col + parent_len;
+
+                    // Draw vertical line from parent row+1 down to max_child_row-1
+                    for row in (parent_row + 1)..max_child_row {
+                        // If this row is a child branch row, draw corner instead
+                        if child_rows_set.contains(&row) {
+                            set_char(&mut canvas, vert_col as i32, row as i32, chars.corner_bl);
+                        } else {
+                            set_char(&mut canvas, vert_col as i32, row as i32, chars.v_line);
+                        }
                     }
-                    set_char(&mut canvas, x as i32, row as i32, chars.fork_down);
-                    x += 1;
-                }
 
-                // For each child (except those with cherry-picks), draw horizontal connection
-                for child_id in children {
-                    if let Some(&child_col) = commit_cols.get(child_id) {
-                        if let Some(child) = graph.commits.iter().find(|c| &c.id == child_id) {
-                            // Skip horizontal connection for branches with cherry-picks
-                            // (they get their connection from the cherry-pick source)
-                            if branches_with_cherry_picks.contains(&child.branch) {
-                                continue;
+                    // Draw corner at furthest child row
+                    set_char(&mut canvas, vert_col as i32, max_child_row as i32, chars.corner_bl);
+
+                    // For each child, draw horizontal dashes from corner to child commit
+                    for child_id in children {
+                        if let Some(&child_col) = commit_cols.get(child_id) {
+                            if let Some(child) = graph.commits.iter().find(|c| &c.id == child_id) {
+                                if branches_with_cherry_picks.contains(&child.branch) {
+                                    continue;
+                                }
+                                let child_row = branch_rows[&child.branch];
+                                if child_row > parent_row {
+                                    // Horizontal from corner+1 to child
+                                    for dx in (vert_col + 1)..child_col {
+                                        set_char(&mut canvas, dx as i32, child_row as i32, chars.h_line);
+                                    }
+                                }
                             }
+                        }
+                    }
+                } else {
+                    // ASCII mode: diagonal from parent to furthest child
+                    let mut x = parent_col + parent_len;
+                    for row in (parent_row + 1)..=max_child_row {
+                        if row == max_child_row {
+                            break;
+                        }
+                        set_char(&mut canvas, x as i32, row as i32, chars.fork_down);
+                        x += 1;
+                    }
 
-                            let child_row = branch_rows[&child.branch];
-                            if child_row > parent_row {
-                                // Calculate where diagonal is at this child's row
-                                // Diagonal advances once per row from parent to child
-                                let diag_x = parent_col + parent_len + (child_row - parent_row - 1);
-
-                                // Draw horizontal dashes from diagonal to child
-                                let dash_start = diag_x + 1;
-                                for dx in dash_start..child_col {
-                                    set_char(
-                                        &mut canvas,
-                                        dx as i32,
-                                        child_row as i32,
-                                        chars.h_line,
-                                    );
+                    // For each child, draw horizontal connection
+                    for child_id in children {
+                        if let Some(&child_col) = commit_cols.get(child_id) {
+                            if let Some(child) = graph.commits.iter().find(|c| &c.id == child_id) {
+                                if branches_with_cherry_picks.contains(&child.branch) {
+                                    continue;
+                                }
+                                let child_row = branch_rows[&child.branch];
+                                if child_row > parent_row {
+                                    let diag_x = parent_col + parent_len + (child_row - parent_row - 1);
+                                    let dash_start = diag_x + 1;
+                                    for dx in dash_start..child_col {
+                                        set_char(&mut canvas, dx as i32, child_row as i32, chars.h_line);
+                                    }
                                 }
                             }
                         }
@@ -799,11 +875,29 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
                             } else {
                                 parent.id.len()
                             };
-                            // Draw / from parent upward to child
-                            let mut x = parent_col + parent_len;
-                            for row in (child_row + 1..parent_row).rev() {
-                                set_char(&mut canvas, x as i32, row as i32, chars.merge_up);
-                                x += 1;
+
+                            if use_l_shapes {
+                                // L-shape: vertical line going up from parent, corner at child row
+                                let vert_col = parent_col + parent_len;
+                                // Draw vertical line upward
+                                for row in (child_row + 1)..parent_row {
+                                    set_char(&mut canvas, vert_col as i32, row as i32, chars.v_line);
+                                }
+                                // Draw corner at child row
+                                set_char(&mut canvas, vert_col as i32, child_row as i32, chars.corner_tl);
+                                // Horizontal from corner to child
+                                if let Some(&child_col) = commit_cols.get(child_id) {
+                                    for dx in (vert_col + 1)..child_col {
+                                        set_char(&mut canvas, dx as i32, child_row as i32, chars.h_line);
+                                    }
+                                }
+                            } else {
+                                // Draw / from parent upward to child
+                                let mut x = parent_col + parent_len;
+                                for row in (child_row + 1..parent_row).rev() {
+                                    set_char(&mut canvas, x as i32, row as i32, chars.merge_up);
+                                    x += 1;
+                                }
                             }
                         }
                     }
@@ -856,97 +950,110 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
                             source.id.len()
                         };
 
-                        if source_row > merge_row {
-                            // Source is below target: draw / upward from source toward merge
-                            let mut x = source_col + source_len;
-                            for row in (merge_row + 1..source_row).rev() {
-                                set_char(&mut canvas, x as i32, row as i32, chars.merge_up);
-                                x += 1;
-                            }
-                        } else if source_row < merge_row {
-                            // Source is above target: draw \ downward from source toward merge
-                            // Check if the diagonal would cross any tag area
-                            let mut tag_collision_row: Option<usize> = None;
-                            {
-                                let mut check_x = source_col + source_len;
+                        if use_l_shapes {
+                            // L-shape merge connections
+                            if source_row > merge_row {
+                                // Source is below target: L-shape going up
+                                // Path: horizontal right on source row → corner ╯ → vertical up → merge commit
+                                // The turn column is at merge_col (merge commit overwrites the arrival)
+                                let turn_col = merge_col;
+                                // Horizontal dashes from source end to turn col on source row
+                                let h_start = source_col + source_len;
+                                for dx in h_start..turn_col {
+                                    set_char(&mut canvas, dx as i32, source_row as i32, chars.h_line);
+                                }
+                                // Corner at turn point
+                                set_char(&mut canvas, turn_col as i32, source_row as i32, chars.corner_br);
+                                // Vertical up from source_row-1 to merge_row+1
+                                for row in (merge_row + 1)..source_row {
+                                    set_char(&mut canvas, turn_col as i32, row as i32, chars.v_line);
+                                }
+                            } else if source_row < merge_row {
+                                // Source is above target: L-shape going down
+                                // Vertical from source end column going down, corner at merge row
+                                let vert_col = source_col + source_len;
+                                // Vertical from source_row+1 to merge_row-1
                                 for row in (source_row + 1)..merge_row {
-                                    for &(tag_row, tag_start, tag_end) in &tag_areas {
-                                        if row == tag_row
-                                            && check_x >= tag_start
-                                            && check_x < tag_end
-                                        {
-                                            if tag_collision_row.is_none() {
-                                                tag_collision_row = Some(row);
+                                    set_char(&mut canvas, vert_col as i32, row as i32, chars.v_line);
+                                }
+                                // Corner at merge row (vertical ends, goes right)
+                                set_char(&mut canvas, vert_col as i32, merge_row as i32, chars.corner_bl);
+                                // Horizontal dashes from corner to merge commit
+                                for dx in (vert_col + 1)..merge_col {
+                                    set_char(&mut canvas, dx as i32, merge_row as i32, chars.h_line);
+                                }
+                            }
+                        } else {
+                            // ASCII mode: diagonal connections
+                            if source_row > merge_row {
+                                // Source is below target: draw / upward from source toward merge
+                                let mut x = source_col + source_len;
+                                for row in (merge_row + 1..source_row).rev() {
+                                    set_char(&mut canvas, x as i32, row as i32, chars.merge_up);
+                                    x += 1;
+                                }
+                            } else if source_row < merge_row {
+                                // Source is above target: draw \ downward from source toward merge
+                                // Check if the diagonal would cross any tag area
+                                let mut tag_collision_row: Option<usize> = None;
+                                {
+                                    let mut check_x = source_col + source_len;
+                                    for row in (source_row + 1)..merge_row {
+                                        for &(tag_row, tag_start, tag_end) in &tag_areas {
+                                            if row == tag_row
+                                                && check_x >= tag_start
+                                                && check_x < tag_end
+                                            {
+                                                if tag_collision_row.is_none() {
+                                                    tag_collision_row = Some(row);
+                                                }
                                             }
                                         }
+                                        check_x += 1;
                                     }
-                                    check_x += 1;
-                                }
-                            }
-
-                            if let Some(collision_row) = tag_collision_row {
-                                // Use horizontal bridge to route around the tag
-                                // The bridge is drawn on the row before the tag collision, with horizontal dashes.
-                                // 1. Draw diagonal from source down, stopping before the bridge row
-                                let bridge_row = collision_row - 1;
-                                let mut x = source_col + source_len;
-                                for row in (source_row + 1)..bridge_row {
-                                    set_char(&mut canvas, x as i32, row as i32, chars.fork_down);
-                                    x += 1;
                                 }
 
-                                // 2. Calculate where the diagonal needs to resume after the tag
-                                // The diagonal needs enough columns to reach merge_col by merge_row
-                                let remaining_rows = merge_row - bridge_row; // rows from bridge to merge (exclusive)
-                                let resume_col = if merge_col >= remaining_rows {
-                                    merge_col - remaining_rows
+                                if let Some(collision_row) = tag_collision_row {
+                                    // Use horizontal bridge to route around the tag
+                                    let bridge_row = collision_row - 1;
+                                    let mut x = source_col + source_len;
+                                    for row in (source_row + 1)..bridge_row {
+                                        set_char(&mut canvas, x as i32, row as i32, chars.fork_down);
+                                        x += 1;
+                                    }
+
+                                    let remaining_rows = merge_row - bridge_row;
+                                    let resume_col = if merge_col >= remaining_rows {
+                                        merge_col - remaining_rows
+                                    } else {
+                                        merge_col
+                                    };
+
+                                    for dx in x..=resume_col {
+                                        set_char(&mut canvas, dx as i32, bridge_row as i32, chars.h_line);
+                                    }
+
+                                    let mut x = resume_col + 1;
+                                    for row in (bridge_row + 1)..merge_row {
+                                        set_char(&mut canvas, x as i32, row as i32, chars.fork_down);
+                                        x += 1;
+                                    }
+
+                                    let diag_end_x = x;
+                                    for dx in diag_end_x..merge_col {
+                                        set_char(&mut canvas, dx as i32, merge_row as i32, chars.h_line);
+                                    }
                                 } else {
-                                    merge_col
-                                };
-
-                                // 3. Draw horizontal bridge from current x to resume_col on bridge_row
-                                for dx in x..=resume_col {
-                                    set_char(
-                                        &mut canvas,
-                                        dx as i32,
-                                        bridge_row as i32,
-                                        chars.h_line,
-                                    );
-                                }
-
-                                // 4. Draw remaining diagonal from resume_col+1 down toward merge row
-                                let mut x = resume_col + 1;
-                                for row in (bridge_row + 1)..merge_row {
-                                    set_char(&mut canvas, x as i32, row as i32, chars.fork_down);
-                                    x += 1;
-                                }
-
-                                // 5. Draw horizontal dashes from diagonal end to merge commit (if needed)
-                                let diag_end_x = x;
-                                for dx in diag_end_x..merge_col {
-                                    set_char(
-                                        &mut canvas,
-                                        dx as i32,
-                                        merge_row as i32,
-                                        chars.h_line,
-                                    );
-                                }
-                            } else {
-                                // No tag collision: draw pure diagonal + horizontal on target row
-                                let mut x = source_col + source_len;
-                                for row in (source_row + 1)..merge_row {
-                                    set_char(&mut canvas, x as i32, row as i32, chars.fork_down);
-                                    x += 1;
-                                }
-                                // Draw horizontal dashes from diagonal end to merge commit
-                                let diag_end_x = x;
-                                for dx in diag_end_x..merge_col {
-                                    set_char(
-                                        &mut canvas,
-                                        dx as i32,
-                                        merge_row as i32,
-                                        chars.h_line,
-                                    );
+                                    // No tag collision: draw pure diagonal + horizontal on target row
+                                    let mut x = source_col + source_len;
+                                    for row in (source_row + 1)..merge_row {
+                                        set_char(&mut canvas, x as i32, row as i32, chars.fork_down);
+                                        x += 1;
+                                    }
+                                    let diag_end_x = x;
+                                    for dx in diag_end_x..merge_col {
+                                        set_char(&mut canvas, dx as i32, merge_row as i32, chars.h_line);
+                                    }
                                 }
                             }
                         }
@@ -973,11 +1080,27 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
                         };
 
                         if cherry_row > source_row {
-                            // Cherry-pick target is below source: draw \ diagonal on all rows
-                            let mut x = source_col + source_len;
-                            for row in (source_row + 1)..cherry_row {
-                                set_char(&mut canvas, x as i32, row as i32, chars.fork_down);
-                                x += 1;
+                            if use_l_shapes {
+                                // L-shape: vertical down from source, corner at cherry row
+                                let vert_col = source_col + source_len;
+                                for row in (source_row + 1)..cherry_row {
+                                    set_char(&mut canvas, vert_col as i32, row as i32, chars.v_line);
+                                }
+                                // Corner at cherry row
+                                set_char(&mut canvas, vert_col as i32, cherry_row as i32, chars.corner_bl);
+                                // Horizontal to cherry commit
+                                if let Some(&cherry_col) = commit_cols.get(cherry_id) {
+                                    for dx in (vert_col + 1)..cherry_col {
+                                        set_char(&mut canvas, dx as i32, cherry_row as i32, chars.h_line);
+                                    }
+                                }
+                            } else {
+                                // ASCII: diagonal \ on all rows
+                                let mut x = source_col + source_len;
+                                for row in (source_row + 1)..cherry_row {
+                                    set_char(&mut canvas, x as i32, row as i32, chars.fork_down);
+                                    x += 1;
+                                }
                             }
                         }
                     }
@@ -1016,7 +1139,44 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
 
             let mut label_pos = *end;
 
-            // Check if any cherry-pick diagonal passes through this row
+            // For L-shape merges: if a merge connection exits this branch going up,
+            // the horizontal + corner extends past the branch span
+            if use_l_shapes {
+                for (merge_id, source_id) in &merge_order {
+                    if let Some(source) = graph.commits.iter().find(|c| &c.id == source_id) {
+                        if source.branch == *branch_name {
+                            if let Some(&m_col) = commit_cols.get(merge_id) {
+                                let source_row = branch_rows[&source.branch];
+                                if let Some(merge) = graph.commits.iter().find(|c| &c.id == merge_id) {
+                                    let merge_row = branch_rows[&merge.branch];
+                                    if source_row > merge_row {
+                                        // Upward merge: corner at m_col on source row
+                                        label_pos = label_pos.max(m_col + 1);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                // Also check if fork connection exits downward from this branch
+                for (child_id, parent_id) in &fork_info {
+                    if let Some(parent) = graph.commits.iter().find(|c| &c.id == parent_id) {
+                        if parent.branch == *branch_name {
+                            let parent_len = if parent.is_merge {
+                                parent.id.len() + 2
+                            } else {
+                                parent.id.len()
+                            };
+                            let vert_col = commit_cols[parent_id] + parent_len;
+                            if vert_col >= label_pos {
+                                label_pos = vert_col + 1;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Check if any cherry-pick connection passes through this row
             // Iterate in commit order for deterministic output
             for commit_iter in &graph.commits {
                 let cherry_id = &commit_iter.id;
@@ -1033,11 +1193,16 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
                                     source.id.len()
                                 };
 
-                                // Check if this cherry-pick diagonal passes through our row
+                                // Check if this cherry-pick connection passes through our row
                                 if source_row < row && row < cherry_row {
-                                    let diag_col = source_col + source_len + (row - source_row - 1);
-                                    if diag_col >= label_pos {
-                                        label_pos = label_pos.max(diag_col + 5);
+                                    let conn_col = if use_l_shapes {
+                                        // L-shape: vertical at fixed column
+                                        source_col + source_len
+                                    } else {
+                                        source_col + source_len + (row - source_row - 1)
+                                    };
+                                    if conn_col >= label_pos {
+                                        label_pos = label_pos.max(conn_col + 5);
                                     }
                                 }
                             }
@@ -1046,9 +1211,10 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
                 }
             }
 
-            // Check if any merge diagonal passes through this row
+            // Check if any merge connection passes through this row
             for (merge_id, source_id) in &merge_order {
                 if let Some(&source_col) = commit_cols.get(source_id) {
+                    if let Some(&m_col) = commit_cols.get(merge_id) {
                     if let Some(source) = graph.commits.iter().find(|c| &c.id == source_id) {
                         if let Some(merge) = graph.commits.iter().find(|c| &c.id == merge_id) {
                             let source_row = branch_rows[&source.branch];
@@ -1059,22 +1225,38 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
                                 source.id.len()
                             };
 
-                            // Downward merge diagonal (\): source above, merge below
-                            if source_row < merge_row && source_row < row && row < merge_row {
-                                let diag_col = source_col + source_len + (row - source_row - 1);
-                                // Only push label if diagonal would overlap with the label text
-                                if diag_col >= label_pos && diag_col < label_pos + label.len() {
-                                    label_pos = diag_col + 3;
+                            if use_l_shapes {
+                                // L-shape: vertical at source_end (downward) or merge_col-1 (upward)
+                                if source_row < merge_row && source_row < row && row < merge_row {
+                                    let vert_col = source_col + source_len;
+                                    if vert_col >= label_pos && vert_col < label_pos + label.len() {
+                                        label_pos = vert_col + 3;
+                                    }
                                 }
-                            }
-                            // Upward merge diagonal (/): source below, merge above
-                            if source_row > merge_row && merge_row < row && row < source_row {
-                                let diag_col = source_col + source_len + (source_row - row - 1);
-                                if diag_col >= label_pos && diag_col < label_pos + label.len() {
-                                    label_pos = diag_col + 3;
+                                if source_row > merge_row && merge_row < row && row < source_row {
+                                    let vert_col = m_col.saturating_sub(1);
+                                    if vert_col >= label_pos && vert_col < label_pos + label.len() {
+                                        label_pos = vert_col + 3;
+                                    }
+                                }
+                            } else {
+                                // Downward merge diagonal (\): source above, merge below
+                                if source_row < merge_row && source_row < row && row < merge_row {
+                                    let diag_col = source_col + source_len + (row - source_row - 1);
+                                    if diag_col >= label_pos && diag_col < label_pos + label.len() {
+                                        label_pos = diag_col + 3;
+                                    }
+                                }
+                                // Upward merge diagonal (/): source below, merge above
+                                if source_row > merge_row && merge_row < row && row < source_row {
+                                    let diag_col = source_col + source_len + (source_row - row - 1);
+                                    if diag_col >= label_pos && diag_col < label_pos + label.len() {
+                                        label_pos = diag_col + 3;
+                                    }
                                 }
                             }
                         }
+                    }
                     }
                 }
             }

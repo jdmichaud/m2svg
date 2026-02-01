@@ -41,18 +41,17 @@ gitGraph
    checkout develop
    merge release
 ---
-A───────[H]─────────────────P  (main)                                           
- ╲     ╱                     ╲                                                  
-  B───E  (hotfix)             ╲                                                 
-   ╲   ╲                       ╲                                                
-    ╲   ───────                 ╲                                               
-     ╲[abc]    ╲                 ╲                                              
-      ╲ │       ╲                 ╲                                             
-       ash───F───[K]───────[N]─────╲─────────────[R]  (develop)                 
-          ╲   ╲           ╱   ╲     ╲           ╱                               
-           D───G───I───M ╱     ╲     ╲         ╱    (featureB)                  
-                ╲       ╱       ╲     ╲       ╱                                 
-                 J─────L  (featureA)   ╲     ╱                                  
-                                  ╲     ╲   ╱                                   
-                                 O───────[Q]  (release)                         
-
+A───────[H]──────────────────P╮       (main)                           
+ │      │                     │                                  
+ ╰B───E─╯  (hotfix)           │                                  
+  │   │                       │                                  
+  │   ╰────────╮              │                                  
+  │[abc]       │              │                                  
+  │            │              │                                  
+  ╰─ash───F───[K]────[N]──────│──[R]  (develop)                 
+       │  │           │ │     │  │                              
+       ╰D─│─G───I───M │ │     │  │    (featureB)                 
+          │           │ │     │  │                              
+          ╰─J─────L── ╯ │     │  │    (featureA)                 
+                        │     │  │                              
+                        ╰O───[Q]─╯    (release)                   

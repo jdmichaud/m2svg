@@ -21,10 +21,10 @@ gitGraph
    checkout main
    commit id: "9"
 ---
-                [customTag]
-                     │
+                [customTag]                                 
+                     │                                      
 1───2───4───6───[customID]───9  (main)                      
-     ╲         ╱                                            
-      3───────7  (nice_feature)                             
-       ╲                                                    
-        5───8  (very_nice_feature)                          
+    │                │                                           
+    ╰─3───────7──────╯          (nice_feature)                           
+      │                                                    
+      ╰─5───8                   (very_nice_feature)                          

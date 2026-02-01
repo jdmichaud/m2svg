@@ -10,9 +10,9 @@ gitGraph
   checkout test3
   commit
 ---
-A  (main)
- ╲       D  (test3)
-  ╲     ╱
-   ╲   C  (test2)
-    ╲ ╱
-     B  (test1)
+A╮       (main)                           
+ │    D  (test3)                     
+ │    │                               
+ │  C─╯   (test2)                      
+ │  │                                 
+ ╰B─╯     (test1)                        

@@ -13,5 +13,5 @@ gitGraph
    commit
 ---
 A───B───F───G───[H]───I───J  (main)                      
-     ╲         ╱                                         
-      C───D───E  (develop)                               
+    │            │                                        
+    ╰─C───D───E──╯           (develop)                             
