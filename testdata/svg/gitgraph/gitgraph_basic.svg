@@ -1,32 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="530" height="180" viewBox="0 0 530 180">
+<svg xmlns="http://www.w3.org/2000/svg" width="510" height="180" viewBox="0 0 510 180">
 <style>
   .commit { fill: #FFFFFF; }
   .commit-text { font-family: 'Inter', sans-serif; font-size: 12px; fill: #27272A; text-anchor: middle; }
   .branch-text { font-family: 'Inter', sans-serif; font-size: 12px; fill: #27272A; }
   .tag-text { font-family: 'Inter', sans-serif; font-size: 10px; fill: #333; }
-  .tag-bg { fill: #FFFFDE; stroke: #333; stroke-width: 1; }
 </style>
 <rect width="100%" height="100%" fill="#FFFFFF"/>
-<line x1="40" y1="40" x2="340" y2="40" stroke="#0000ED" stroke-width="2"/>
-<line x1="140" y1="90" x2="190" y2="90" stroke="#DEDC00" stroke-width="2"/>
-<path d="M 90 40 L 90 70 A 20 20 0 0 0 110 90 L 140 90" stroke="#0000ED" stroke-width="2" fill="none"/>
-<path d="M 190 90 L 220 90 A 20 20 0 0 0 240 70 L 240 40" stroke="#DEDC00" stroke-width="2" fill="none"/>
-<circle cx="40" cy="40" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
-<text x="40" y="70" class="commit-text">A</text>
-<circle cx="90" cy="40" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
-<text x="90" y="70" class="commit-text">B</text>
-<circle cx="140" cy="90" r="10" fill="#DEDC00" stroke="#DEDC00" stroke-width="0"/>
-<text x="140" y="120" class="commit-text">C</text>
-<circle cx="190" cy="90" r="10" fill="#DEDC00" stroke="#DEDC00" stroke-width="0"/>
-<text x="190" y="120" class="commit-text">D</text>
-<polygon points="240,30 250,40 240,50 230,40" fill="#0000ED" stroke="#0000ED" stroke-width="1"/>
-<text x="240" y="70" class="commit-text">M</text>
-<circle cx="290" cy="40" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
-<text x="290" y="70" class="commit-text">F</text>
-<circle cx="340" cy="40" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
-<text x="340" y="70" class="commit-text">G</text>
-<text x="360" y="44" class="branch-text">(main)</text>
-<text x="210" y="94" class="branch-text">(develop)</text>
+<line x1="110" y1="40" x2="120" y2="40" stroke="lightgrey" stroke-width="1" stroke-dasharray="2"/>
+<line x1="120" y1="40" x2="420" y2="40" stroke="#0000ED" stroke-width="2"/>
+<line x1="420" y1="40" x2="470" y2="40" stroke="lightgrey" stroke-width="1" stroke-dasharray="2"/>
+<line x1="110" y1="90" x2="220" y2="90" stroke="lightgrey" stroke-width="1" stroke-dasharray="2"/>
+<line x1="220" y1="90" x2="270" y2="90" stroke="#DEDC00" stroke-width="2"/>
+<line x1="270" y1="90" x2="470" y2="90" stroke="lightgrey" stroke-width="1" stroke-dasharray="2"/>
+<path d="M 170 40 L 170 70 A 20 20 0 0 0 190 90 L 220 90" stroke="#0000ED" stroke-width="2" fill="none"/>
+<path d="M 270 90 L 300 90 A 20 20 0 0 0 320 70 L 320 40" stroke="#DEDC00" stroke-width="2" fill="none"/>
+<circle cx="120" cy="40" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
+<text x="120" y="70" class="commit-text">A</text>
+<circle cx="170" cy="40" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
+<text x="170" y="70" class="commit-text">B</text>
+<circle cx="220" cy="90" r="10" fill="#DEDC00" stroke="#DEDC00" stroke-width="0"/>
+<text x="220" y="120" class="commit-text">C</text>
+<circle cx="270" cy="90" r="10" fill="#DEDC00" stroke="#DEDC00" stroke-width="0"/>
+<text x="270" y="120" class="commit-text">D</text>
+<polygon points="320,30 330,40 320,50 310,40" fill="#0000ED" stroke="#0000ED" stroke-width="1"/>
+<text x="320" y="70" class="commit-text">M</text>
+<circle cx="370" cy="40" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
+<text x="370" y="70" class="commit-text">F</text>
+<circle cx="420" cy="40" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
+<text x="420" y="70" class="commit-text">G</text>
+<text x="105" y="44" class="branch-text" text-anchor="end" fill="#0000ED">main</text>
+<text x="105" y="94" class="branch-text" text-anchor="end" fill="#DEDC00">develop</text>
 </svg>
 

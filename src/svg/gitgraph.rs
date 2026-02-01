@@ -29,12 +29,34 @@ fn get_branch_color(branch_index: usize) -> &'static str {
     BRANCH_COLORS[branch_index % BRANCH_COLORS.len()]
 }
 
+/// Draw a tag label centered above a commit as a rectangle badge.
+/// Uses a simple rect + text. Width is estimated from character count.
+fn draw_tag_label(svg: &mut String, cx: f64, tag_y: f64, tag_text: &str) {
+    let char_w = 6.0_f64;
+    let pad_x = 6.0_f64;
+    let pad_y = 4.0_f64;
+    let h = 16.0_f64;
+    let w = (tag_text.len() as f64) * char_w + pad_x * 2.0;
+    let rx = cx - w / 2.0;
+    let ry = tag_y - h / 2.0;
+    svg.push_str(&format!(
+        r##"<rect x="{}" y="{}" width="{}" height="{}" rx="2" fill="#FFFFDE" stroke="#333" stroke-width="1"/>"##,
+        rx, ry, w, h
+    ));
+    svg.push_str(&format!(
+        r#"<text x="{}" y="{}" class="tag-text" text-anchor="middle">{}</text>"#,
+        cx, tag_y + pad_y, tag_text
+    ));
+}
+
 /// Render horizontal (LR) git graph to SVG
 fn render_horizontal_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, transparent: bool) -> String {
     let commit_radius = 10.0;
     let commit_spacing_x = 50.0;
     let branch_spacing_y = 50.0;
+    let label_margin = 80.0;
     let padding = 40.0;
+    let left_offset = label_margin + padding;
     let label_offset = 20.0;
     
     // Assign branches to rows
@@ -59,7 +81,7 @@ fn render_horizontal_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, t
     
     // Calculate commit positions (skip cherry-picks in x advancement)
     let mut commit_positions: HashMap<String, (f64, f64)> = HashMap::new();
-    let mut x = padding;
+    let mut x = left_offset;
     
     for commit in &graph.commits {
         let y = padding + (branch_rows[&commit.branch] as f64) * branch_spacing_y;
@@ -67,7 +89,7 @@ fn render_horizontal_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, t
         x += commit_spacing_x;
     }
     
-    let width = x + padding + 100.0; // Extra space for branch labels
+    let width = x + padding;
     let height = padding * 2.0 + (num_rows as f64) * branch_spacing_y;
     
     let mut svg = String::new();
@@ -82,7 +104,6 @@ fn render_horizontal_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, t
   .commit-text {{ font-family: '{}', sans-serif; font-size: 12px; fill: {}; text-anchor: middle; }}
   .branch-text {{ font-family: '{}', sans-serif; font-size: 12px; fill: {}; }}
   .tag-text {{ font-family: '{}', sans-serif; font-size: 10px; fill: #333; }}
-  .tag-bg {{ fill: #FFFFDE; stroke: #333; stroke-width: 1; }}
 </style>
 <rect width="100%" height="100%" fill="{}"/>
 "#,
@@ -110,12 +131,33 @@ fn render_horizontal_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, t
         if let (Some(first), Some(last)) = (commits_on_branch.first(), commits_on_branch.last()) {
             let (x1, _) = commit_positions[&first.id];
             let (x2, _) = commit_positions[&last.id];
+            let line_start = left_offset - 10.0;
+            let line_end = width - padding;
             
-            svg.push_str(&format!(
-                r#"<line x1="{}" y1="{}" x2="{}" y2="{}" stroke="{}" stroke-width="2"/>"#,
-                x1, y, x2, y, color
-            ));
-            svg.push('\n');
+            // Dashed grey line before first commit
+            if x1 > line_start {
+                svg.push_str(&format!(
+                    r#"<line x1="{}" y1="{}" x2="{}" y2="{}" stroke="lightgrey" stroke-width="1" stroke-dasharray="2"/>"#,
+                    line_start, y, x1, y
+                ));
+                svg.push('\n');
+            }
+            // Solid colored line between first and last commit
+            if x2 > x1 {
+                svg.push_str(&format!(
+                    r#"<line x1="{}" y1="{}" x2="{}" y2="{}" stroke="{}" stroke-width="2"/>"#,
+                    x1, y, x2, y, color
+                ));
+                svg.push('\n');
+            }
+            // Dashed grey line after last commit
+            if line_end > x2 {
+                svg.push_str(&format!(
+                    r#"<line x1="{}" y1="{}" x2="{}" y2="{}" stroke="lightgrey" stroke-width="1" stroke-dasharray="2"/>"#,
+                    x2, y, line_end, y
+                ));
+                svg.push('\n');
+            }
         }
     }
     
@@ -256,35 +298,7 @@ fn render_horizontal_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, t
             } else {
                 format!("cherry-pick:{}", source_id)
             };
-            let tag_width = (tag_text.len() as f64) * 5.2 + 10.0;
-            let tag_x = cx - tag_width / 2.0 + 8.0;
-            let tag_y = cy - commit_radius - 15.0;
-            // Tag polygon (arrow shape pointing left like mermaid)
-            let poly_left = tag_x;
-            let poly_top = tag_y - 8.5;
-            let poly_bottom = tag_y + 8.5;
-            let poly_right = tag_x + tag_width;
-            let poly_arrow_x = poly_left + 8.0;
-            let poly_arrow_y = tag_y;
-            svg.push_str(&format!(
-                r##"<polygon points="{},{} {},{} {},{} {},{} {},{} {},{}" fill="#FFFFDE" stroke="#333" stroke-width="1"/>"##,
-                poly_left, poly_arrow_y,
-                poly_arrow_x, poly_top,
-                poly_right, poly_top,
-                poly_right, poly_bottom,
-                poly_arrow_x, poly_bottom,
-                poly_left, poly_arrow_y
-            ));
-            // Tag hole (small circle)
-            svg.push_str(&format!(
-                r##"<circle cx="{}" cy="{}" r="1.5" fill="#333"/>"##,
-                poly_left + 4.0, poly_arrow_y
-            ));
-            // Tag text
-            svg.push_str(&format!(
-                r#"<text x="{}" y="{}" class="tag-text">{}</text>"#,
-                poly_arrow_x + 4.0, tag_y + 3.5, tag_text
-            ));
+            draw_tag_label(&mut svg, cx, cy - commit_radius - 15.0, &tag_text);
             svg.push('\n');
             
             continue;
@@ -325,35 +339,21 @@ fn render_horizontal_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, t
         // Draw tag if present
         if let Some(ref tag) = commit.tag {
             let tag_y = cy - commit_radius - 15.0;
-            let tag_width = (tag.len() as f64) * 7.0 + 10.0;
-            svg.push_str(&format!(
-                r#"<rect x="{}" y="{}" width="{}" height="18" rx="3" class="tag-bg"/>"#,
-                cx - tag_width / 2.0, tag_y - 12.0, tag_width
-            ));
-            svg.push_str(&format!(
-                r#"<text x="{}" y="{}" class="tag-text" text-anchor="middle">{}</text>"#,
-                cx, tag_y, tag
-            ));
+            draw_tag_label(&mut svg, cx, tag_y, tag);
             svg.push('\n');
         }
     }
     
-    // Draw branch labels (sorted by row for deterministic output)
+    // Draw branch labels on the left (sorted by row for deterministic output)
     for (branch_name, branch_row) in &sorted_branches {
         let y = padding + (**branch_row as f64) * branch_spacing_y;
+        let color = get_branch_color(**branch_row);
         
-        // Find last commit on this branch
-        if let Some(last_commit) = graph.commits.iter()
-            .filter(|c| &c.branch == *branch_name)
-            .last() 
-        {
-            let (x, _) = commit_positions[&last_commit.id];
-            svg.push_str(&format!(
-                r#"<text x="{}" y="{}" class="branch-text">({})</text>"#,
-                x + commit_radius + 10.0, y + 4.0, branch_name
-            ));
-            svg.push('\n');
-        }
+        svg.push_str(&format!(
+            r#"<text x="{}" y="{}" class="branch-text" text-anchor="end" fill="{}">{}</text>"#,
+            left_offset - 15.0, y + 4.0, color, branch_name
+        ));
+        svg.push('\n');
     }
     
     svg.push_str("</svg>\n");
@@ -365,7 +365,9 @@ fn render_vertical_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, tra
     let commit_radius = 10.0;
     let commit_spacing_y = 50.0;
     let branch_spacing_x = 50.0;
+    let label_margin = 25.0;
     let padding = 40.0;
+    let top_offset = padding + label_margin;
     
     // Assign branches to columns
     let mut branch_cols: HashMap<String, usize> = HashMap::new();
@@ -388,12 +390,12 @@ fn render_vertical_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, tra
     for (i, commit) in graph.commits.iter().enumerate() {
         let x = padding + (branch_cols[&commit.branch] as f64) * branch_spacing_x;
         let row = if reverse { num_commits - 1 - i } else { i };
-        let y = padding + (row as f64) * commit_spacing_y;
+        let y = top_offset + (row as f64) * commit_spacing_y;
         commit_positions.insert(commit.id.clone(), (x, y));
     }
     
     let width = padding * 2.0 + (num_cols as f64) * branch_spacing_x + 100.0;
-    let height = padding * 2.0 + (num_commits as f64) * commit_spacing_y;
+    let height = top_offset + padding + (num_commits as f64) * commit_spacing_y;
     
     let mut svg = String::new();
     
@@ -405,6 +407,7 @@ fn render_vertical_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, tra
   .commit {{ fill: {}; }}
   .commit-text {{ font-family: '{}', sans-serif; font-size: 12px; fill: {}; }}
   .branch-text {{ font-family: '{}', sans-serif; font-size: 12px; fill: {}; }}
+  .tag-text {{ font-family: '{}', sans-serif; font-size: 10px; fill: #333; }}
 </style>
 <rect width="100%" height="100%" fill="{}"/>
 "#,
@@ -412,6 +415,7 @@ fn render_vertical_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, tra
         colors.surface.as_deref().unwrap_or(&colors.bg),
         font, colors.fg,
         font, colors.fg,
+        font,
         bg_color
     ));
     
@@ -430,14 +434,34 @@ fn render_vertical_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, tra
         if let (Some(first), Some(last)) = (commits_on_branch.first(), commits_on_branch.last()) {
             let (_, y1) = commit_positions[&first.id];
             let (_, y2) = commit_positions[&last.id];
-            
             let (y_start, y_end) = if y1 < y2 { (y1, y2) } else { (y2, y1) };
+            let line_top = top_offset - 10.0;
+            let line_bottom = height - padding;
             
-            svg.push_str(&format!(
-                r#"<line x1="{}" y1="{}" x2="{}" y2="{}" stroke="{}" stroke-width="2"/>"#,
-                x, y_start, x, y_end, color
-            ));
-            svg.push('\n');
+            // Dashed grey line before first commit
+            if y_start > line_top {
+                svg.push_str(&format!(
+                    r#"<line x1="{}" y1="{}" x2="{}" y2="{}" stroke="lightgrey" stroke-width="1" stroke-dasharray="2"/>"#,
+                    x, line_top, x, y_start
+                ));
+                svg.push('\n');
+            }
+            // Solid colored line between first and last commit
+            if y_end > y_start {
+                svg.push_str(&format!(
+                    r#"<line x1="{}" y1="{}" x2="{}" y2="{}" stroke="{}" stroke-width="2"/>"#,
+                    x, y_start, x, y_end, color
+                ));
+                svg.push('\n');
+            }
+            // Dashed grey line after last commit
+            if line_bottom > y_end {
+                svg.push_str(&format!(
+                    r#"<line x1="{}" y1="{}" x2="{}" y2="{}" stroke="lightgrey" stroke-width="1" stroke-dasharray="2"/>"#,
+                    x, y_end, x, line_bottom
+                ));
+                svg.push('\n');
+            }
         }
     }
     
@@ -545,23 +569,34 @@ fn render_vertical_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, tra
             cx + commit_radius + 5.0, cy + 4.0, commit.id
         ));
         svg.push('\n');
-    }
-    
-    // Draw branch labels (sorted by col for deterministic output)
-    for (branch_name, _branch_col) in &sorted_branches {
-        if let Some(first_commit) = graph.commits.iter()
-            .filter(|c| &c.branch == *branch_name)
-            .next() 
-        {
-            let (x, y) = commit_positions[&first_commit.id];
-            svg.push_str(&format!(
-                r#"<text x="{}" y="{}" class="branch-text">({})</text>"#,
-                x + commit_radius + 5.0 + first_commit.id.len() as f64 * 8.0,
-                y + 4.0,
-                branch_name
-            ));
+        
+        // Draw tag if present (to the left of the commit)
+        if let Some(ref tag) = commit.tag {
+            let tag_x = cx - commit_radius - 15.0;
+            draw_tag_label(&mut svg, tag_x, cy, tag);
             svg.push('\n');
         }
+    }
+    
+    // Draw branch labels at top (TB) or bottom (BT), sorted by col for deterministic output
+    for (branch_name, branch_col) in &sorted_branches {
+        let x = padding + (**branch_col as f64) * branch_spacing_x;
+        let color = get_branch_color(**branch_col);
+        
+        if reverse {
+            // BT: labels at the bottom
+            svg.push_str(&format!(
+                r#"<text x="{}" y="{}" class="branch-text" text-anchor="middle" fill="{}">{}</text>"#,
+                x, height - padding + 20.0, color, branch_name
+            ));
+        } else {
+            // TB: labels at the top
+            svg.push_str(&format!(
+                r#"<text x="{}" y="{}" class="branch-text" text-anchor="middle" fill="{}">{}</text>"#,
+                x, padding, color, branch_name
+            ));
+        }
+        svg.push('\n');
     }
     
     svg.push_str("</svg>\n");

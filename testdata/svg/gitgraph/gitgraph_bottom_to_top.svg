@@ -1,34 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="280" height="530" viewBox="0 0 280 530">
+<svg xmlns="http://www.w3.org/2000/svg" width="280" height="555" viewBox="0 0 280 555">
 <style>
   .commit { fill: #FFFFFF; }
   .commit-text { font-family: 'Inter', sans-serif; font-size: 12px; fill: #27272A; }
   .branch-text { font-family: 'Inter', sans-serif; font-size: 12px; fill: #27272A; }
+  .tag-text { font-family: 'Inter', sans-serif; font-size: 10px; fill: #333; }
 </style>
 <rect width="100%" height="100%" fill="#FFFFFF"/>
-<line x1="40" y1="40" x2="40" y2="440" stroke="#0000ED" stroke-width="2"/>
-<line x1="90" y1="290" x2="90" y2="340" stroke="#DEDC00" stroke-width="2"/>
-<path d="M 40 390 L 70 390 A 20 20 0 0 0 90 370 L 90 340" stroke="#DEDC00" stroke-width="2" fill="none"/>
-<path d="M 90 290 L 90 160 A 20 20 0 0 0 70 140 L 40 140" stroke="#0000ED" stroke-width="2" fill="none"/>
-<circle cx="40" cy="440" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
-<text x="55" y="444" class="commit-text">A</text>
-<circle cx="40" cy="390" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
-<text x="55" y="394" class="commit-text">B</text>
-<circle cx="90" cy="340" r="10" fill="#DEDC00" stroke="#DEDC00" stroke-width="0"/>
-<text x="105" y="344" class="commit-text">C</text>
-<circle cx="90" cy="290" r="10" fill="#DEDC00" stroke="#DEDC00" stroke-width="0"/>
-<text x="105" y="294" class="commit-text">D</text>
-<circle cx="40" cy="240" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
-<text x="55" y="244" class="commit-text">E</text>
-<circle cx="40" cy="190" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
-<text x="55" y="194" class="commit-text">F</text>
-<polygon points="40,130 50,140 40,150 30,140" fill="#0000ED" stroke="#0000ED" stroke-width="1"/>
-<text x="55" y="144" class="commit-text">M</text>
-<circle cx="40" cy="90" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
-<text x="55" y="94" class="commit-text">H</text>
-<circle cx="40" cy="40" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
-<text x="55" y="44" class="commit-text">I</text>
-<text x="63" y="444" class="branch-text">(main)</text>
-<text x="113" y="344" class="branch-text">(develop)</text>
+<line x1="40" y1="55" x2="40" y2="65" stroke="lightgrey" stroke-width="1" stroke-dasharray="2"/>
+<line x1="40" y1="65" x2="40" y2="465" stroke="#0000ED" stroke-width="2"/>
+<line x1="40" y1="465" x2="40" y2="515" stroke="lightgrey" stroke-width="1" stroke-dasharray="2"/>
+<line x1="90" y1="55" x2="90" y2="315" stroke="lightgrey" stroke-width="1" stroke-dasharray="2"/>
+<line x1="90" y1="315" x2="90" y2="365" stroke="#DEDC00" stroke-width="2"/>
+<line x1="90" y1="365" x2="90" y2="515" stroke="lightgrey" stroke-width="1" stroke-dasharray="2"/>
+<path d="M 40 415 L 70 415 A 20 20 0 0 0 90 395 L 90 365" stroke="#DEDC00" stroke-width="2" fill="none"/>
+<path d="M 90 315 L 90 185 A 20 20 0 0 0 70 165 L 40 165" stroke="#0000ED" stroke-width="2" fill="none"/>
+<circle cx="40" cy="465" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
+<text x="55" y="469" class="commit-text">A</text>
+<circle cx="40" cy="415" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
+<text x="55" y="419" class="commit-text">B</text>
+<circle cx="90" cy="365" r="10" fill="#DEDC00" stroke="#DEDC00" stroke-width="0"/>
+<text x="105" y="369" class="commit-text">C</text>
+<circle cx="90" cy="315" r="10" fill="#DEDC00" stroke="#DEDC00" stroke-width="0"/>
+<text x="105" y="319" class="commit-text">D</text>
+<circle cx="40" cy="265" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
+<text x="55" y="269" class="commit-text">E</text>
+<circle cx="40" cy="215" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
+<text x="55" y="219" class="commit-text">F</text>
+<polygon points="40,155 50,165 40,175 30,165" fill="#0000ED" stroke="#0000ED" stroke-width="1"/>
+<text x="55" y="169" class="commit-text">M</text>
+<circle cx="40" cy="115" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
+<text x="55" y="119" class="commit-text">H</text>
+<circle cx="40" cy="65" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
+<text x="55" y="69" class="commit-text">I</text>
+<text x="40" y="535" class="branch-text" text-anchor="middle" fill="#0000ED">main</text>
+<text x="90" y="535" class="branch-text" text-anchor="middle" fill="#DEDC00">develop</text>
 </svg>
 
