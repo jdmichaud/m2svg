@@ -1,8 +1,17 @@
 //! ER diagram parser
 
 use crate::types::{Cardinality, ErAttribute, ErDiagram, ErEntity, ErKey, ErRelationship};
+use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::HashMap;
+
+lazy_static! {
+    static ref RE_ENTITY_BLOCK: Regex = Regex::new(r"^(\S+)\s*\{$").unwrap();
+    static ref RE_ATTRIBUTE: Regex = Regex::new(r"^(\S+)\s+(\S+)(?:\s+(.+))?$").unwrap();
+    static ref RE_COMMENT: Regex = Regex::new(r#""([^"]*)""#).unwrap();
+    static ref RE_RELATIONSHIP: Regex = Regex::new(r"^(\S+)\s+([|o}{]+(?:--|\.\.)[|o}{]+)\s+(\S+)\s*:\s*(.+)$").unwrap();
+    static ref RE_LINE_STYLE: Regex = Regex::new(r"^([|o}{]+)(--|\.\.?)([|o}{]+)$").unwrap();
+}
 
 /// Parse a Mermaid ER diagram
 pub fn parse_er_diagram(lines: &[&str]) -> Result<ErDiagram, String> {
@@ -31,8 +40,7 @@ pub fn parse_er_diagram(lines: &[&str]) -> Result<ErDiagram, String> {
         }
         
         // Entity block start: `ENTITY_NAME {`
-        let entity_block_re = Regex::new(r"^(\S+)\s*\{$").unwrap();
-        if let Some(caps) = entity_block_re.captures(line) {
+        if let Some(caps) = RE_ENTITY_BLOCK.captures(line) {
             let id = caps[1].to_string();
             ensure_entity(&mut entity_map, &mut entity_order, &id);
             current_entity = Some(id);
@@ -68,19 +76,17 @@ fn ensure_entity(entity_map: &mut HashMap<String, ErEntity>, entity_order: &mut 
 
 fn parse_attribute(line: &str) -> Option<ErAttribute> {
     // Format: type name [PK|FK|UK [...]] ["comment"]
-    let re = Regex::new(r"^(\S+)\s+(\S+)(?:\s+(.+))?$").unwrap();
-    let caps = re.captures(line)?;
+    let caps = RE_ATTRIBUTE.captures(line)?;
     
     let attr_type = caps[1].to_string();
     let name = caps[2].to_string();
     let rest = caps.get(3).map(|m| m.as_str().trim()).unwrap_or("");
     
     // Extract quoted comment first
-    let comment_re = Regex::new(r#""([^"]*)""#).unwrap();
-    let comment = comment_re.captures(rest).map(|c| c[1].to_string());
+    let comment = RE_COMMENT.captures(rest).map(|c| c[1].to_string());
     
     // Extract key constraints
-    let rest_without_comment = comment_re.replace_all(rest, "");
+    let rest_without_comment = RE_COMMENT.replace_all(rest, "");
     let mut keys = Vec::new();
     for part in rest_without_comment.split_whitespace() {
         let upper = part.to_uppercase();
@@ -102,8 +108,7 @@ fn parse_attribute(line: &str) -> Option<ErAttribute> {
 
 fn parse_relationship_line(line: &str) -> Option<ErRelationship> {
     // Match: ENTITY1 <cardinality_and_line> ENTITY2 : label
-    let re = Regex::new(r"^(\S+)\s+([|o}{]+(?:--|\.\.)[|o}{]+)\s+(\S+)\s*:\s*(.+)$").unwrap();
-    let caps = re.captures(line)?;
+    let caps = RE_RELATIONSHIP.captures(line)?;
     
     let entity1 = caps[1].to_string();
     let cardinality_str = &caps[2];
@@ -111,8 +116,7 @@ fn parse_relationship_line(line: &str) -> Option<ErRelationship> {
     let label = caps[4].trim().to_string();
     
     // Split the cardinality string into left side, line style, right side
-    let line_re = Regex::new(r"^([|o}{]+)(--|\.\.?)([|o}{]+)$").unwrap();
-    let line_caps = line_re.captures(cardinality_str)?;
+    let line_caps = RE_LINE_STYLE.captures(cardinality_str)?;
     
     let left_str = &line_caps[1];
     let line_style = &line_caps[2];

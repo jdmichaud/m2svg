@@ -8,6 +8,9 @@ use super::types::{
 use super::pathfinder::{get_path, merge_path};
 use super::canvas::set_canvas_size_to_grid;
 
+/// Grid step size: node occupies 3x3 cells, plus 1 cell gap = 4
+const GRID_STEP: i32 = 4;
+
 /// Check if a node is in any subgraph
 fn is_node_in_any_subgraph(graph: &AsciiGraph, node_idx: usize) -> bool {
     graph.subgraphs.iter().any(|sg| sg.node_indices.contains(&node_idx))
@@ -140,9 +143,9 @@ pub fn reserve_spot_in_grid(
     if graph.grid.contains_key(&requested.key()) {
         // Collision — shift perpendicular to main flow direction
         let new_pos = if graph.config.graph_direction == GraphDirection::LR {
-            GridCoord::new(requested.x, requested.y + 4)
+            GridCoord::new(requested.x, requested.y + GRID_STEP)
         } else {
-            GridCoord::new(requested.x + 4, requested.y)
+            GridCoord::new(requested.x + GRID_STEP, requested.y)
         };
         return reserve_spot_in_grid(graph, node_idx, new_pos);
     }
@@ -195,7 +198,7 @@ pub fn set_column_width(graph: &mut AsciiGraph, node_idx: usize) {
         let mut base_padding = graph.config.padding_y;
         // Extra vertical padding for nodes with incoming edges from outside their subgraph
         if has_incoming_edge_from_outside_subgraph(graph, node_idx) {
-            let subgraph_overhead = 4;
+            let subgraph_overhead = GRID_STEP as usize;
             base_padding += subgraph_overhead;
         }
         let current = *graph.row_height.get(&(gc.y - 1)).unwrap_or(&0);
@@ -397,7 +400,7 @@ fn get_children(graph: &AsciiGraph, node_idx: usize) -> Vec<usize> {
 /// Create the node-to-grid mapping
 pub fn create_mapping(graph: &mut AsciiGraph) {
     let dir = graph.config.graph_direction;
-    let mut highest_position_per_level: Vec<i32> = vec![0; 100];
+    let mut highest_position_per_level: std::collections::HashMap<i32, i32> = std::collections::HashMap::new();
     
     // Identify root nodes — nodes that aren't seen as children before they appear
     // This preserves the order of first definition
@@ -447,28 +450,28 @@ pub fn create_mapping(graph: &mut AsciiGraph) {
     // Place external root nodes at level 0
     for &root_idx in &external_roots {
         let level = 0;
-        let pos = highest_position_per_level[level as usize];
+        let pos = *highest_position_per_level.get(&level).unwrap_or(&0);
         let requested = if dir == GraphDirection::LR {
             GridCoord::new(level, pos)
         } else {
             GridCoord::new(pos, level)
         };
         reserve_spot_in_grid(graph, root_idx, requested);
-        highest_position_per_level[level as usize] += 4;
+        *highest_position_per_level.entry(level).or_insert(0) += GRID_STEP;
     }
     
-    // Place subgraph root nodes at level 4 (one level in from the edge)
+    // Place subgraph root nodes at GRID_STEP (one level in from the edge)
     if should_separate && !subgraph_roots.is_empty() {
-        let subgraph_level = 4i32;
+        let subgraph_level = GRID_STEP;
         for &root_idx in &subgraph_roots {
-            let pos = highest_position_per_level[subgraph_level as usize];
+            let pos = *highest_position_per_level.get(&subgraph_level).unwrap_or(&0);
             let requested = if dir == GraphDirection::LR {
                 GridCoord::new(subgraph_level, pos)
             } else {
                 GridCoord::new(pos, subgraph_level)
             };
             reserve_spot_in_grid(graph, root_idx, requested);
-            highest_position_per_level[subgraph_level as usize] += 4;
+            *highest_position_per_level.entry(subgraph_level).or_insert(0) += GRID_STEP;
         }
     }
     
@@ -484,7 +487,7 @@ pub fn create_mapping(graph: &mut AsciiGraph) {
             None => continue,
         };
         
-        let child_level = if dir == GraphDirection::LR { gc.x + 4 } else { gc.y + 4 };
+        let child_level = if dir == GraphDirection::LR { gc.x + GRID_STEP } else { gc.y + GRID_STEP };
         
         for child_idx in get_children(graph, current_idx) {
             if visited.contains(&child_idx) {
@@ -495,7 +498,7 @@ pub fn create_mapping(graph: &mut AsciiGraph) {
                 continue; // Already placed
             }
             
-            let highest_position = highest_position_per_level.get(child_level as usize).copied().unwrap_or(0);
+            let highest_position = *highest_position_per_level.get(&child_level).unwrap_or(&0);
             
             let requested = if dir == GraphDirection::LR {
                 GridCoord::new(child_level, highest_position)
@@ -505,9 +508,7 @@ pub fn create_mapping(graph: &mut AsciiGraph) {
             
             reserve_spot_in_grid(graph, child_idx, requested);
             
-            if (child_level as usize) < highest_position_per_level.len() {
-                highest_position_per_level[child_level as usize] = highest_position + 4;
-            }
+            *highest_position_per_level.entry(child_level).or_insert(0) = highest_position + GRID_STEP;
             
             visited.insert(child_idx);
             queue.push(child_idx);
