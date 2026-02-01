@@ -5,6 +5,7 @@
 
 use std::fs;
 use std::path::PathBuf;
+use std::collections::BTreeMap;
 
 /// Get the path to the ASCII test data directory
 fn get_ascii_dir() -> PathBuf {
@@ -232,7 +233,159 @@ fn get_svg_dir() -> std::path::PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("testdata/svg")
 }
 
-/// Run an SVG test from the svg directory (exact match like ASCII tests)
+/// Represents a normalized SVG element for comparison
+#[derive(Debug, PartialEq)]
+struct SvgElement {
+    tag: String,
+    attributes: BTreeMap<String, String>,
+    text: String,
+    children: Vec<SvgElement>,
+}
+
+/// Normalize an attribute value (trim whitespace, normalize numbers)
+fn normalize_attr_value(value: &str) -> String {
+    // Normalize whitespace
+    let normalized: String = value.split_whitespace().collect::<Vec<_>>().join(" ");
+    
+    // Try to normalize numeric values (for things like coordinates)
+    // This handles cases like "100.0" vs "100" or "1.5000" vs "1.5"
+    if let Ok(num) = normalized.parse::<f64>() {
+        // Format with reasonable precision, removing trailing zeros
+        let formatted = format!("{:.6}", num);
+        formatted.trim_end_matches('0').trim_end_matches('.').to_string()
+    } else {
+        normalized
+    }
+}
+
+/// Recursively build a normalized SVG element tree from roxmltree
+fn build_svg_tree(node: roxmltree::Node) -> Option<SvgElement> {
+    if node.is_element() {
+        let tag = node.tag_name().name().to_string();
+        
+        // Collect and sort attributes
+        let mut attributes = BTreeMap::new();
+        for attr in node.attributes() {
+            let name = attr.name().to_string();
+            let value = normalize_attr_value(attr.value());
+            attributes.insert(name, value);
+        }
+        
+        // Get text content (normalized)
+        let text: String = node
+            .children()
+            .filter(|n| n.is_text())
+            .map(|n| n.text().unwrap_or(""))
+            .collect::<Vec<_>>()
+            .join("")
+            .split_whitespace()
+            .collect::<Vec<_>>()
+            .join(" ");
+        
+        // Recursively process children
+        let children: Vec<SvgElement> = node
+            .children()
+            .filter_map(|child| build_svg_tree(child))
+            .collect();
+        
+        Some(SvgElement {
+            tag,
+            attributes,
+            text,
+            children,
+        })
+    } else {
+        None
+    }
+}
+
+/// Compare two SVG strings semantically
+/// Returns Ok(()) if they match, or Err with a description of the difference
+fn compare_svg_semantic(expected: &str, actual: &str) -> Result<(), String> {
+    let expected_doc = roxmltree::Document::parse(expected)
+        .map_err(|e| format!("Failed to parse expected SVG: {}", e))?;
+    let actual_doc = roxmltree::Document::parse(actual)
+        .map_err(|e| format!("Failed to parse actual SVG: {}", e))?;
+    
+    let expected_tree = build_svg_tree(expected_doc.root_element())
+        .ok_or_else(|| "Expected SVG has no root element".to_string())?;
+    let actual_tree = build_svg_tree(actual_doc.root_element())
+        .ok_or_else(|| "Actual SVG has no root element".to_string())?;
+    
+    compare_svg_elements(&expected_tree, &actual_tree, "")
+}
+
+/// Recursively compare two SVG element trees
+fn compare_svg_elements(expected: &SvgElement, actual: &SvgElement, path: &str) -> Result<(), String> {
+    let current_path = if path.is_empty() {
+        expected.tag.clone()
+    } else {
+        format!("{}/{}", path, expected.tag)
+    };
+    
+    // Compare tag names
+    if expected.tag != actual.tag {
+        return Err(format!(
+            "Tag mismatch at {}: expected '{}', got '{}'",
+            path, expected.tag, actual.tag
+        ));
+    }
+    
+    // Compare attributes
+    for (key, exp_val) in &expected.attributes {
+        match actual.attributes.get(key) {
+            Some(act_val) if exp_val != act_val => {
+                return Err(format!(
+                    "Attribute '{}' mismatch at {}: expected '{}', got '{}'",
+                    key, current_path, exp_val, act_val
+                ));
+            }
+            None => {
+                return Err(format!(
+                    "Missing attribute '{}' at {} (expected value: '{}')",
+                    key, current_path, exp_val
+                ));
+            }
+            _ => {}
+        }
+    }
+    
+    // Check for extra attributes in actual
+    for key in actual.attributes.keys() {
+        if !expected.attributes.contains_key(key) {
+            return Err(format!(
+                "Unexpected attribute '{}' at {} (value: '{}')",
+                key, current_path, actual.attributes.get(key).unwrap()
+            ));
+        }
+    }
+    
+    // Compare text content
+    if expected.text != actual.text {
+        return Err(format!(
+            "Text mismatch at {}: expected '{}', got '{}'",
+            current_path, expected.text, actual.text
+        ));
+    }
+    
+    // Compare children count
+    if expected.children.len() != actual.children.len() {
+        return Err(format!(
+            "Children count mismatch at {}: expected {}, got {}",
+            current_path, expected.children.len(), actual.children.len()
+        ));
+    }
+    
+    // Recursively compare children
+    for (i, (exp_child, act_child)) in expected.children.iter().zip(actual.children.iter()).enumerate() {
+        let child_path = format!("{}[{}]", current_path, i);
+        compare_svg_elements(exp_child, act_child, &child_path)?;
+    }
+    
+    Ok(())
+}
+
+/// Run an SVG test from the svg directory (semantic comparison)
 fn run_svg_test(subdir: &str, test_name: &str) {
     let mmd_file = get_svg_dir().join(subdir).join(format!("{}.mmd", test_name));
     let svg_file = get_svg_dir().join(subdir).join(format!("{}.svg", test_name));
@@ -252,16 +405,16 @@ fn run_svg_test(subdir: &str, test_name: &str) {
     let actual = m2svg::render_to_svg(&input)
         .unwrap_or_else(|e| panic!("Failed to render SVG: {}", e));
     
-    let expected_normalized = normalize_output(&expected);
-    let actual_normalized = normalize_output(&actual);
-    
-    if expected_normalized != actual_normalized {
+    // Use semantic comparison instead of literal string comparison
+    if let Err(diff) = compare_svg_semantic(&expected, &actual) {
         eprintln!("=== Test: {} ===", test_name);
         eprintln!("Input:\n{}", input);
-        eprintln!("\n--- Expected ---");
-        eprintln!("{}", expected_normalized);
-        eprintln!("\n--- Actual ---");
-        eprintln!("{}", actual_normalized);
+        eprintln!("\n--- Difference ---");
+        eprintln!("{}", diff);
+        eprintln!("\n--- Expected SVG ---");
+        eprintln!("{}", expected);
+        eprintln!("\n--- Actual SVG ---");
+        eprintln!("{}", actual);
         panic!("SVG output mismatch for test: {}", test_name);
     }
 }
