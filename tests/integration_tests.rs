@@ -272,6 +272,21 @@ unicode_test!(sequence, seq_multiple_messages);
 unicode_test!(sequence, seq_self_message);
 
 // =============================================================================
+// Unicode GitGraph tests
+// =============================================================================
+
+unicode_test!(gitgraph, gitgraph_basic);
+unicode_test!(gitgraph, gitgraph_bottom_to_top);
+unicode_test!(gitgraph, gitgraph_branch_order);
+unicode_test!(gitgraph, gitgraph_branches);
+unicode_test!(gitgraph, gitgraph_cherry_pick);
+unicode_test!(gitgraph, gitgraph_commit_types);
+unicode_test!(gitgraph, gitgraph_custom_ids);
+unicode_test!(gitgraph, gitgraph_merge_complex);
+unicode_test!(gitgraph, gitgraph_tags);
+unicode_test!(gitgraph, gitgraph_vertical);
+
+// =============================================================================
 // SVG tests
 // =============================================================================
 

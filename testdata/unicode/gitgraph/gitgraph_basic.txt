@@ -1,0 +1,15 @@
+gitGraph
+   commit
+   commit
+   branch develop
+   checkout develop
+   commit
+   commit
+   checkout main
+   merge develop
+   commit
+   commit
+---
+A───B────────[M]──F───G  (main)
+     ╲       ╱
+      C─────D  (develop)

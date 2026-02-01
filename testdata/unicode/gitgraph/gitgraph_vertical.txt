@@ -1,0 +1,28 @@
+gitGraph TB:
+   commit
+   commit
+   branch develop
+   commit
+   commit
+   checkout main
+   commit
+   commit
+   merge develop
+   commit
+   commit
+---
+A  (main)
+│
+B
+├──C  (develop)
+│  │
+│  D
+E  │
+│  │
+F  │
+├──╯
+[M]
+│
+H
+│
+I

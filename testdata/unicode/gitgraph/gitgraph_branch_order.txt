@@ -1,0 +1,10 @@
+gitGraph
+  commit
+  branch test1 order: 3
+  branch test2 order: 2
+  branch test3 order: 1
+---
+A  (main)
+  (test3)
+  (test2)
+  (test1)

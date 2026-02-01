@@ -1,0 +1,9 @@
+gitGraph
+   commit id: "Normal"
+   commit
+   commit id: "Reverse" type: REVERSE
+   commit
+   commit id: "Highlight" type: HIGHLIGHT
+   commit
+---
+Normal---B---Reverse---D---Highlight---F  (main)
