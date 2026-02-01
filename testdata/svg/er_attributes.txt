@@ -1,0 +1,56 @@
+# ER: Attributes
+# Source: https://mermaid.js.org/syntax/entityRelationshipDiagram.html
+erDiagram
+    CAR ||--o{ NAMED-DRIVER : allows
+    CAR {
+        string registrationNumber PK
+        string make
+        string model
+        string[] parts
+    }
+    PERSON ||--o{ NAMED-DRIVER : is
+    PERSON {
+        string driversLicense PK "The license #"
+        string(99) firstName "Only 99 characters are allowed"
+        string lastName
+        string phone UK
+        int age
+    }
+    NAMED-DRIVER {
+        string visitorId PK "Created by the system"
+        string visitorId FK "Created by the system"
+    }
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 924 274" width="924" height="274" style="--bg:#FFFFFF;--fg:#27272A;background:var(--bg)"><style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 30%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style><style>
+.er-line { stroke: var(--line); stroke-width: 1.5; }
+.cardinality { font-size: 12px; fill: var(--fg); }
+</style><line x1="276.0" y1="121.0" x2="376.0" y2="99.0" class="er-line"/>
+<line x1="291.0" y1="113.0" x2="291.0" y2="129.0" class="er-line"/><line x1="296.0" y1="113.0" x2="296.0" y2="129.0" class="er-line"/>
+<circle cx="346.0" cy="99.0" r="5" class="marker-hollow"/><line x1="376.0" y1="99.0" x2="361.0" y2="91.0" class="er-line"/><line x1="376.0" y1="99.0" x2="361.0" y2="99.0" class="er-line"/><line x1="376.0" y1="99.0" x2="361.0" y2="107.0" class="er-line"/>
+<text x="326.0" y="100.0" class="edge-label" text-anchor="middle">allows</text>
+<line x1="660.0" y1="132.0" x2="560.0" y2="99.0" class="er-line"/>
+<line x1="645.0" y1="124.0" x2="645.0" y2="140.0" class="er-line"/><line x1="640.0" y1="124.0" x2="640.0" y2="140.0" class="er-line"/>
+<circle cx="590.0" cy="99.0" r="5" class="marker-hollow"/><line x1="560.0" y1="99.0" x2="575.0" y2="91.0" class="er-line"/><line x1="560.0" y1="99.0" x2="575.0" y2="99.0" class="er-line"/><line x1="560.0" y1="99.0" x2="575.0" y2="107.0" class="er-line"/>
+<text x="610.0" y="105.5" class="edge-label" text-anchor="middle">is</text>
+<rect x="20.0" y="50.0" width="256.0" height="142.0" class="node"/>
+<text x="148.0" y="81.4" class="class-name" text-anchor="middle">CAR</text><line x1="20.0" y1="96.8" x2="276.0" y2="96.8" class="divider"/><text x="36.0" y="103.4" class="member">string registrationNumber PK</text><text x="36.0" y="125.4" class="member">string make</text><text x="36.0" y="147.4" class="member">string model</text><text x="36.0" y="169.4" class="member">string[] parts</text><rect x="376.0" y="50.0" width="184.0" height="98.0" class="node"/>
+<text x="468.0" y="81.4" class="class-name" text-anchor="middle">NAMED-DRIVER</text><line x1="376.0" y1="96.8" x2="560.0" y2="96.8" class="divider"/><text x="392.0" y="103.4" class="member">string visitorId PK</text><text x="392.0" y="125.4" class="member">string visitorId FK</text><rect x="660.0" y="50.0" width="224.0" height="164.0" class="node"/>
+<text x="772.0" y="81.4" class="class-name" text-anchor="middle">PERSON</text><line x1="660.0" y1="96.8" x2="884.0" y2="96.8" class="divider"/><text x="676.0" y="103.4" class="member">string driversLicense PK</text><text x="676.0" y="125.4" class="member">string(99) firstName</text><text x="676.0" y="147.4" class="member">string lastName</text><text x="676.0" y="169.4" class="member">string phone UK</text><text x="676.0" y="191.4" class="member">int age</text></svg>

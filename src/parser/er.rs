@@ -8,6 +8,7 @@ use std::collections::HashMap;
 pub fn parse_er_diagram(lines: &[&str]) -> Result<ErDiagram, String> {
     let mut diagram = ErDiagram::new();
     let mut entity_map: HashMap<String, ErEntity> = HashMap::new();
+    let mut entity_order: Vec<String> = Vec::new(); // Track insertion order
     let mut current_entity: Option<String> = None;
     
     for line in lines.iter().skip(1) {
@@ -33,26 +34,30 @@ pub fn parse_er_diagram(lines: &[&str]) -> Result<ErDiagram, String> {
         let entity_block_re = Regex::new(r"^(\S+)\s*\{$").unwrap();
         if let Some(caps) = entity_block_re.captures(line) {
             let id = caps[1].to_string();
-            ensure_entity(&mut entity_map, &id);
+            ensure_entity(&mut entity_map, &mut entity_order, &id);
             current_entity = Some(id);
             continue;
         }
         
         // Relationship: `ENTITY1 cardinality1--cardinality2 ENTITY2 : label`
         if let Some(rel) = parse_relationship_line(line) {
-            ensure_entity(&mut entity_map, &rel.entity1);
-            ensure_entity(&mut entity_map, &rel.entity2);
+            ensure_entity(&mut entity_map, &mut entity_order, &rel.entity1);
+            ensure_entity(&mut entity_map, &mut entity_order, &rel.entity2);
             diagram.relationships.push(rel);
             continue;
         }
     }
     
-    diagram.entities = entity_map.into_values().collect();
+    // Collect entities in insertion order
+    diagram.entities = entity_order.into_iter()
+        .filter_map(|id| entity_map.remove(&id))
+        .collect();
     Ok(diagram)
 }
 
-fn ensure_entity(entity_map: &mut HashMap<String, ErEntity>, id: &str) {
+fn ensure_entity(entity_map: &mut HashMap<String, ErEntity>, entity_order: &mut Vec<String>, id: &str) {
     if !entity_map.contains_key(id) {
+        entity_order.push(id.to_string());
         entity_map.insert(id.to_string(), ErEntity {
             id: id.to_string(),
             label: id.to_string(),
