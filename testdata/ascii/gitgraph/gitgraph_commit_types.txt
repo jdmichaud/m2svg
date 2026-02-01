@@ -6,4 +6,4 @@ gitGraph
    commit id: "Highlight" type: HIGHLIGHT
    commit
 ---
-Normal---B---Reverse---D---Highlight---F  (main)
+Normal---B---Reverse---D---Highlight---F  (main)                      

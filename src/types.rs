@@ -377,6 +377,84 @@ impl ErDiagram {
 }
 
 // ============================================================================
+// GitGraph types
+// ============================================================================
+
+/// Direction of the git graph
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GitGraphDirection {
+    LR, // Left to Right (default, horizontal)
+    TB, // Top to Bottom (vertical)
+    BT, // Bottom to Top (vertical, reversed)
+}
+
+impl GitGraphDirection {
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s.to_uppercase().as_str() {
+            "LR" => Some(GitGraphDirection::LR),
+            "TB" => Some(GitGraphDirection::TB),
+            "BT" => Some(GitGraphDirection::BT),
+            _ => None,
+        }
+    }
+}
+
+/// Type of commit (affects visual styling)
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CommitType {
+    Normal,
+    Reverse,
+    Highlight,
+}
+
+/// A commit in the git graph
+#[derive(Debug, Clone)]
+pub struct GitCommit {
+    pub id: String,           // Auto-generated (A, B, C...) or custom
+    pub commit_type: CommitType,
+    pub tag: Option<String>,
+    pub branch: String,       // Which branch this commit is on
+    pub parent_ids: Vec<String>, // Parent commit IDs (1 for normal, 2 for merge)
+    pub is_merge: bool,
+    pub is_cherry_pick: bool,
+    pub cherry_pick_source: Option<String>,
+}
+
+/// A branch in the git graph
+#[derive(Debug, Clone)]
+pub struct GitBranch {
+    pub name: String,
+    pub order: Option<i32>,    // Custom ordering
+    pub commit_ids: Vec<String>, // Commits on this branch
+    pub source_commit: Option<String>, // The commit this branch was created from
+}
+
+/// The complete parsed GitGraph
+#[derive(Debug, Clone)]
+pub struct GitGraph {
+    pub direction: GitGraphDirection,
+    pub commits: Vec<GitCommit>,
+    pub branches: Vec<GitBranch>,
+    pub current_branch: String,
+}
+
+impl GitGraph {
+    pub fn new(direction: GitGraphDirection) -> Self {
+        Self {
+            direction,
+            commits: Vec::new(),
+            branches: vec![GitBranch {
+                name: "main".to_string(),
+                order: None,
+                commit_ids: Vec::new(),
+                source_commit: None,
+            }],
+            current_branch: "main".to_string(),
+        }
+    }
+}
+
+// ============================================================================
 // Diagram type enum for dispatch
 // ============================================================================
 
@@ -386,4 +464,5 @@ pub enum DiagramType {
     Sequence(SequenceDiagram),
     Class(ClassDiagram),
     Er(ErDiagram),
+    GitGraph(GitGraph),
 }

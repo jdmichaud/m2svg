@@ -20,10 +20,10 @@ H
 F  │
 │  │
 E  │
+│  │
 │  D
 │  │
-│  C  (develop)
-├──╯
+├──C  (develop)
 B
 │
 A  (main)

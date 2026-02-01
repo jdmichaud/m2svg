@@ -78,6 +78,9 @@ pub fn render_to_svg(input: &str) -> Result<String, String> {
         DiagramType::Er(diagram) => {
             Ok(svg::render_er_svg(&diagram, &colors, font, transparent))
         }
+        DiagramType::GitGraph(graph) => {
+            Ok(svg::render_gitgraph_svg(&graph, &colors, font, transparent))
+        }
     }
 }
 

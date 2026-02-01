@@ -4,6 +4,7 @@ pub mod flowchart;
 pub mod sequence;
 pub mod class;
 pub mod er;
+pub mod gitgraph;
 
 use crate::types::DiagramType;
 
@@ -35,6 +36,9 @@ pub fn parse_mermaid(text: &str) -> Result<DiagramType, String> {
     } else if header.starts_with("statediagram") {
         let graph = flowchart::parse_state_diagram(&lines)?;
         Ok(DiagramType::Flowchart(graph))
+    } else if header.starts_with("gitgraph") {
+        let graph = gitgraph::parse_gitgraph(&lines)?;
+        Ok(DiagramType::GitGraph(graph))
     } else {
         let graph = flowchart::parse_flowchart(&lines)?;
         Ok(DiagramType::Flowchart(graph))
@@ -56,6 +60,8 @@ pub fn detect_diagram_type(text: &str) -> &'static str {
         "class"
     } else if first_line.starts_with("erdiagram") {
         "er"
+    } else if first_line.starts_with("gitgraph") {
+        "gitgraph"
     } else {
         "flowchart"
     }

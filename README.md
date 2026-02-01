@@ -18,12 +18,12 @@ A Rust library and CLI for rendering Mermaid diagrams as ASCII art or SVG.
 | Class Diagram | ✅ |
 | State Diagram | ✅ |
 | Entity Relationship Diagram | ✅ |
+| GitGraph Diagram | ✅ |
 | User Journey | ❌ |
 | Gantt | ❌ |
 | Pie Chart | ❌ |
 | Quadrant Chart | ❌ |
 | Requirement Diagram | ❌ |
-| GitGraph Diagram | ❌ |
 | C4 Diagram | ❌ |
 | Mindmap | ❌ |
 | Timeline | ❌ |

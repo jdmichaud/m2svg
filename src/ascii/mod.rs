@@ -9,6 +9,7 @@ pub mod flowchart;
 pub mod sequence;
 pub mod class_diagram;
 pub mod er_diagram;
+pub mod gitgraph;
 
 use crate::parser;
 use crate::types::DiagramType;
@@ -86,6 +87,9 @@ pub fn render_mermaid_ascii(text: &str, options: Option<AsciiRenderOptions>) -> 
         }
         DiagramType::Er(diagram) => {
             er_diagram::render_er_ascii(&diagram, &config)
+        }
+        DiagramType::GitGraph(graph) => {
+            Ok(gitgraph::render_gitgraph(&graph, config.use_ascii))
         }
     }
 }

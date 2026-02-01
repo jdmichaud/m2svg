@@ -16,8 +16,8 @@ gitGraph
     checkout develop
     commit id:"C"
 ---
-ZERO───ONE──[MERGE]──TWO  (main)
-  ╲          ╱
-   ╲    B───C  (develop)
-    ╲
-     A───MERGE'───THREE  (release)
+ZERO───ONE───[MERGE]───TWO  (main)
+    ╲       ╱       ╲
+     ╲─────B───C     ╲      (develop)
+      ╲               ╲
+       A───────────────THREE  (release)

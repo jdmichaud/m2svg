@@ -1,10 +1,18 @@
 gitGraph
   commit
   branch test1 order: 3
+  checkout test1
+  commit
   branch test2 order: 2
+  checkout test2
+  commit
   branch test3 order: 1
+  checkout test3
+  commit
 ---
 A  (main)
-  (test3)
-  (test2)
-  (test1)
+ \       D  (test3)
+  \     /
+   \   C  (test2)
+    \ /
+     B  (test1)

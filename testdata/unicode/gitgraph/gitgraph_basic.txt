@@ -10,6 +10,6 @@ gitGraph
    commit
    commit
 ---
-A───B────────[M]──F───G  (main)
-     ╲       ╱
-      C─────D  (develop)
+A───B───────[M]───F───G  (main)                      
+     ╲     ╱                                         
+      C───D  (develop)                               

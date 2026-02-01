@@ -3,4 +3,4 @@ gitGraph
    commit id: "Beta"
    commit id: "Gamma"
 ---
-Alpha───Beta───Gamma  (main)
+Alpha───Beta───Gamma  (main)                  

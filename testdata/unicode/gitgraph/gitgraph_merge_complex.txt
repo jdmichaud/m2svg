@@ -1,5 +1,4 @@
 gitGraph
-gitGraph
    commit id: "1"
    commit id: "2"
    branch nice_feature
@@ -24,8 +23,8 @@ gitGraph
 ---
                 [customTag]
                      │
-1───2───4───6───[customID]───9  (main)
-     ╲              ╱
-      3────────────7  (nice_feature)
-       ╲
-        5──────────────8  (very_nice_feature)
+1───2───4───6───[customID]───9  (main)                      
+     ╲         ╱                                            
+      3───────7  (nice_feature)                             
+       ╲                                                    
+        5───8  (very_nice_feature)                          

@@ -7,6 +7,6 @@ gitGraph
    commit id: "Highlight" type: HIGHLIGHT tag: "8.8.4"
    commit
 ---
-  [v1.0.0]       [RC_1]         [8.8.4]
-      |             |              |
-A---Normal---C---Reverse---E---Highlight---G  (main)
+   [v1.0.0]      [RC_1]         [8.8.4]
+       |            |              |
+A---Normal---C---Reverse---E---Highlight---G  (main)                      
