@@ -214,6 +214,23 @@ ascii_test!(gitgraph, gitgraph_tags);
 ascii_test!(gitgraph, gitgraph_vertical);
 
 // =============================================================================
+// ASCII Mindmap tests
+// =============================================================================
+
+ascii_test!(mindmap, mindmap_bang);
+ascii_test!(mindmap, mindmap_basic);
+ascii_test!(mindmap, mindmap_circle);
+ascii_test!(mindmap, mindmap_classes);
+ascii_test!(mindmap, mindmap_cloud);
+ascii_test!(mindmap, mindmap_default_shape);
+ascii_test!(mindmap, mindmap_full);
+ascii_test!(mindmap, mindmap_hexagon);
+ascii_test!(mindmap, mindmap_hierarchy);
+ascii_test!(mindmap, mindmap_rounded);
+ascii_test!(mindmap, mindmap_shapes);
+ascii_test!(mindmap, mindmap_square);
+
+// =============================================================================
 // Unicode Flowchart tests
 // =============================================================================
 
@@ -285,6 +302,23 @@ unicode_test!(gitgraph, gitgraph_custom_ids);
 unicode_test!(gitgraph, gitgraph_merge_complex);
 unicode_test!(gitgraph, gitgraph_tags);
 unicode_test!(gitgraph, gitgraph_vertical);
+
+// =============================================================================
+// Unicode Mindmap tests
+// =============================================================================
+
+unicode_test!(mindmap, mindmap_bang);
+unicode_test!(mindmap, mindmap_basic);
+unicode_test!(mindmap, mindmap_circle);
+unicode_test!(mindmap, mindmap_classes);
+unicode_test!(mindmap, mindmap_cloud);
+unicode_test!(mindmap, mindmap_default_shape);
+unicode_test!(mindmap, mindmap_full);
+unicode_test!(mindmap, mindmap_hexagon);
+unicode_test!(mindmap, mindmap_hierarchy);
+unicode_test!(mindmap, mindmap_rounded);
+unicode_test!(mindmap, mindmap_shapes);
+unicode_test!(mindmap, mindmap_square);
 
 // =============================================================================
 // SVG tests
@@ -544,5 +578,30 @@ svg_test!(sequence, sequence_parallel);
 svg_test!(sequence, sequence_participants);
 svg_test!(sequence, sequence_rect);
 svg_test!(sequence, sequence_stacked_activation);
+
+svg_test!(mindmap, mindmap_bang);
+svg_test!(mindmap, mindmap_basic);
+svg_test!(mindmap, mindmap_circle);
+svg_test!(mindmap, mindmap_classes);
+svg_test!(mindmap, mindmap_cloud);
+svg_test!(mindmap, mindmap_default_shape);
+svg_test!(mindmap, mindmap_full);
+svg_test!(mindmap, mindmap_hexagon);
+svg_test!(mindmap, mindmap_hierarchy);
+svg_test!(mindmap, mindmap_rounded);
+svg_test!(mindmap, mindmap_shapes);
+svg_test!(mindmap, mindmap_square);
+
+svg_test!(gitgraph, gitgraph_basic);
+svg_test!(gitgraph, gitgraph_bottom_to_top);
+svg_test!(gitgraph, gitgraph_branch_order);
+svg_test!(gitgraph, gitgraph_branches);
+svg_test!(gitgraph, gitgraph_cherry_pick);
+svg_test!(gitgraph, gitgraph_commit_types);
+svg_test!(gitgraph, gitgraph_complex);
+svg_test!(gitgraph, gitgraph_custom_ids);
+svg_test!(gitgraph, gitgraph_merge_complex);
+svg_test!(gitgraph, gitgraph_tags);
+svg_test!(gitgraph, gitgraph_vertical);
 
 // Legacy SVG tests (kept for backwards compatibility)

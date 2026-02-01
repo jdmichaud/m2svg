@@ -18,8 +18,8 @@
 <line x1="470" y1="140" x2="570" y2="140" stroke="lightgrey" stroke-width="1" stroke-dasharray="2"/>
 <path d="M 120 40 L 120 120 A 20 20 0 0 0 140 140 L 170 140" stroke="#0000ED" stroke-width="2" fill="none"/>
 <path d="M 120 40 L 120 70 A 20 20 0 0 0 140 90 L 270 90" stroke="#0000ED" stroke-width="2" fill="none"/>
-<path d="M 270 90 L 300 90 A 20 20 0 0 0 320 70 L 320 40" stroke="#DEDC00" stroke-width="2" fill="none"/>
-<path d="M 320 40 L 320 120 A 20 20 0 0 0 340 140 L 420 140" stroke="#0000ED" stroke-width="2" fill="none"/>
+<path d="M 270 90 L 270 75 A 10 10 0 0 1 280 65 L 310 65 A 10 10 0 0 0 320 55 L 320 40" stroke="#DEDC00" stroke-width="2" fill="none"/>
+<path d="M 320 40 L 320 80 A 10 10 0 0 0 330 90 L 410 90 A 10 10 0 0 1 420 100 L 420 140" stroke="#0000ED" stroke-width="2" fill="none"/>
 <circle cx="120" cy="40" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
 <text x="120" y="70" class="commit-text">ZERO</text>
 <circle cx="170" cy="140" r="10" fill="#00DE00" stroke="#00DE00" stroke-width="0"/>

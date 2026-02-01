@@ -29,7 +29,7 @@
 <circle cx="40" cy="315" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
 <text x="55" y="319" class="commit-text">F</text>
 <polygon points="40,355 50,365 40,375 30,365" fill="#0000ED" stroke="#0000ED" stroke-width="1"/>
-<text x="55" y="369" class="commit-text">M</text>
+<text x="55" y="369" class="commit-text">G</text>
 <circle cx="40" cy="415" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
 <text x="55" y="419" class="commit-text">H</text>
 <circle cx="40" cy="465" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>

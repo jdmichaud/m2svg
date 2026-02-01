@@ -163,13 +163,14 @@ fn parse_merge(line: &str, graph: &mut GitGraph, counter: &mut u8) -> Result<(),
 
     let source_branch = parts[1].to_string();
 
-    // Merge commits use "M" as display ID but consume a letter from the counter
+    // Merge commits get a unique auto-generated ID from the counter (like regular commits)
     let commit_id = extract_quoted_value(line, "id:")
         .unwrap_or_else(|| {
-            // Consume the counter but use "M" as ID
-            *counter += 1;
-            "M".to_string()
+            let id = (*counter as char).to_string();
+            id
         });
+    // Always advance counter
+    *counter += 1;
 
     // Parse optional tag
     let tag = extract_quoted_value(line, "tag:");

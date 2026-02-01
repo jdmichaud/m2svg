@@ -12,6 +12,6 @@ gitGraph
    commit
    commit
 ---
-A---B---F---G---[M]---I---J  (main)                      
+A---B---F---G---[H]---I---J  (main)                      
      \         /                                         
       C---D---E  (develop)                               

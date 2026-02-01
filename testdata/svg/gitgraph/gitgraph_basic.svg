@@ -24,7 +24,7 @@
 <circle cx="270" cy="90" r="10" fill="#DEDC00" stroke="#DEDC00" stroke-width="0"/>
 <text x="270" y="120" class="commit-text">D</text>
 <polygon points="320,30 330,40 320,50 310,40" fill="#0000ED" stroke="#0000ED" stroke-width="1"/>
-<text x="320" y="70" class="commit-text">M</text>
+<text x="320" y="70" class="commit-text">E</text>
 <circle cx="370" cy="40" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
 <text x="370" y="70" class="commit-text">F</text>
 <circle cx="420" cy="40" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>

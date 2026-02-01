@@ -162,6 +162,8 @@ fn render_horizontal_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, t
     }
     
     // Draw connections (branches and merges)
+    // Track parents that have already used their horizontal exit (only one allowed)
+    let mut used_horizontal_exit: std::collections::HashSet<String> = std::collections::HashSet::new();
     for commit in &graph.commits {
         let (cx, cy) = commit_positions[&commit.id];
         
@@ -178,32 +180,139 @@ fn render_horizontal_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, t
                 };
                 
                 if (cy - py).abs() > 1.0 {
-                    // Different branches - draw line-arc-line path like mermaid.js
-                    // Goes along source branch first, then arcs to target branch
-                    let arc_radius = 20.0;
+                    // Connection shape depends on both ends:
+                    //   Parent last on branch → exit horizontally (right)
+                    //   Parent NOT last → exit vertically
+                    //   Child first on branch → enter from side
+                    //   Child NOT first → enter from top/bottom (S-curve)
+                    let is_child_first = graph.branches.iter()
+                        .find(|b| b.name == commit.branch)
+                        .and_then(|b| b.commit_ids.first())
+                        .map(|first_id| first_id == &commit.id)
+                        .unwrap_or(false);
+                    
+                    let is_parent_last_on_branch = parent_branch
+                        .and_then(|pb| graph.branches.iter().find(|b| &b.name == pb))
+                        .and_then(|b| b.commit_ids.last())
+                        .map(|last_id| last_id == parent_id)
+                        .unwrap_or(false);
+                    
+                    // Only one merge link can exit horizontally from a last commit
+                    let is_parent_last = if is_parent_last_on_branch {
+                        if used_horizontal_exit.contains(parent_id) {
+                            false
+                        } else {
+                            used_horizontal_exit.insert(parent_id.clone());
+                            true
+                        }
+                    } else {
+                        false
+                    };
+                    
+                    let arc_r = if is_child_first || is_parent_last { 20.0 } else { 10.0 };
                     
                     if cy > py {
-                        // Going down (branching): vertical down first, arc, then horizontal
-                        svg.push_str(&format!(
-                            r#"<path d="M {} {} L {} {} A {} {} 0 0 0 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
-                            px, py,
-                            px, cy - arc_radius,
-                            arc_radius, arc_radius,
-                            px + arc_radius, cy,
-                            cx, cy,
-                            color
-                        ));
+                        // Child is below parent
+                        if is_parent_last && is_child_first {
+                            // L-shape: horizontal right from parent, arc down, horizontal to child
+                            svg.push_str(&format!(
+                                r#"<path d="M {} {} L {} {} A {} {} 0 0 0 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
+                                px, py,
+                                px, cy - arc_r,
+                                arc_r, arc_r,
+                                px + arc_r, cy,
+                                cx, cy,
+                                color
+                            ));
+                        } else if is_parent_last {
+                            // Parent exits right, child enters top: L-shape horizontal then down
+                            svg.push_str(&format!(
+                                r#"<path d="M {} {} L {} {} A {} {} 0 0 1 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
+                                px, py,
+                                cx - arc_r, py,
+                                arc_r, arc_r,
+                                cx, py + arc_r,
+                                cx, cy,
+                                color
+                            ));
+                        } else if is_child_first {
+                            // Parent exits vertical, child enters side: L-shape down then right
+                            svg.push_str(&format!(
+                                r#"<path d="M {} {} L {} {} A {} {} 0 0 0 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
+                                px, py,
+                                px, cy - arc_r,
+                                arc_r, arc_r,
+                                px + arc_r, cy,
+                                cx, cy,
+                                color
+                            ));
+                        } else {
+                            // S-curve: vertical to mid, arc, horizontal at mid, arc, vertical into child
+                            let mid_y = (py + cy) / 2.0;
+                            svg.push_str(&format!(
+                                r#"<path d="M {} {} L {} {} A {} {} 0 0 0 {} {} L {} {} A {} {} 0 0 1 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
+                                px, py,
+                                px, mid_y - arc_r,
+                                arc_r, arc_r,
+                                px + arc_r, mid_y,
+                                cx - arc_r, mid_y,
+                                arc_r, arc_r,
+                                cx, mid_y + arc_r,
+                                cx, cy,
+                                color
+                            ));
+                        }
                     } else {
-                        // Going up (merging): horizontal first, arc, then vertical up
-                        svg.push_str(&format!(
-                            r#"<path d="M {} {} L {} {} A {} {} 0 0 0 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
-                            px, py,
-                            cx - arc_radius, py,
-                            arc_radius, arc_radius,
-                            cx, py - arc_radius,
-                            cx, cy,
-                            color
-                        ));
+                        // Child is above parent
+                        if is_parent_last && is_child_first {
+                            // L-shape: horizontal right from parent, arc up to child
+                            svg.push_str(&format!(
+                                r#"<path d="M {} {} L {} {} A {} {} 0 0 0 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
+                                px, py,
+                                cx - arc_r, py,
+                                arc_r, arc_r,
+                                cx, py - arc_r,
+                                cx, cy,
+                                color
+                            ));
+                        } else if is_parent_last {
+                            // Parent exits right, child enters bottom: L-shape horizontal then up
+                            svg.push_str(&format!(
+                                r#"<path d="M {} {} L {} {} A {} {} 0 0 0 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
+                                px, py,
+                                cx - arc_r, py,
+                                arc_r, arc_r,
+                                cx, py - arc_r,
+                                cx, cy,
+                                color
+                            ));
+                        } else if is_child_first {
+                            // Parent exits vertical, child enters side: shouldn't normally happen going up
+                            svg.push_str(&format!(
+                                r#"<path d="M {} {} L {} {} A {} {} 0 0 1 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
+                                px, py,
+                                px, cy + arc_r,
+                                arc_r, arc_r,
+                                px + arc_r, cy,
+                                cx, cy,
+                                color
+                            ));
+                        } else {
+                            // S-curve: vertical up to mid, arc, horizontal at mid, arc, vertical into child
+                            let mid_y = (py + cy) / 2.0;
+                            svg.push_str(&format!(
+                                r#"<path d="M {} {} L {} {} A {} {} 0 0 1 {} {} L {} {} A {} {} 0 0 0 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
+                                px, py,
+                                px, mid_y + arc_r,
+                                arc_r, arc_r,
+                                px + arc_r, mid_y,
+                                cx - arc_r, mid_y,
+                                arc_r, arc_r,
+                                cx, mid_y - arc_r,
+                                cx, cy,
+                                color
+                            ));
+                        }
                     }
                     svg.push('\n');
                 }
@@ -227,26 +336,33 @@ fn render_horizontal_svg(graph: &GitGraph, colors: &DiagramColors, font: &str, t
                     };
 
                     if (cy - sy).abs() > 1.0 {
-                        let arc_radius = 20.0;
+                        let arc_radius = 10.0;
+                        let mid_y = (sy + cy) / 2.0;
                         if cy > sy {
-                            // Source is above, cherry-pick is below: vertical down, arc, horizontal
+                            // Source is above, cherry-pick is below: S-curve down
                             svg.push_str(&format!(
-                                r#"<path d="M {} {} L {} {} A {} {} 0 0 0 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
+                                r#"<path d="M {} {} L {} {} A {} {} 0 0 0 {} {} L {} {} A {} {} 0 0 1 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
                                 sx, sy,
-                                sx, cy - arc_radius,
+                                sx, mid_y - arc_radius,
                                 arc_radius, arc_radius,
-                                sx + arc_radius, cy,
+                                sx + arc_radius, mid_y,
+                                cx - arc_radius, mid_y,
+                                arc_radius, arc_radius,
+                                cx, mid_y + arc_radius,
                                 cx, cy,
                                 color
                             ));
                         } else {
-                            // Source is below, cherry-pick is above: horizontal, arc, vertical up
+                            // Source is below, cherry-pick is above: S-curve up
                             svg.push_str(&format!(
-                                r#"<path d="M {} {} L {} {} A {} {} 0 0 0 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
+                                r#"<path d="M {} {} L {} {} A {} {} 0 0 1 {} {} L {} {} A {} {} 0 0 0 {} {} L {} {}" stroke="{}" stroke-width="2" fill="none"/>"#,
                                 sx, sy,
-                                cx - arc_radius, sy,
+                                sx, mid_y + arc_radius,
                                 arc_radius, arc_radius,
-                                cx, sy - arc_radius,
+                                sx + arc_radius, mid_y,
+                                cx - arc_radius, mid_y,
+                                arc_radius, arc_radius,
+                                cx, mid_y - arc_radius,
                                 cx, cy,
                                 color
                             ));

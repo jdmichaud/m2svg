@@ -28,7 +28,7 @@
 <circle cx="40" cy="215" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
 <text x="55" y="219" class="commit-text">F</text>
 <polygon points="40,155 50,165 40,175 30,165" fill="#0000ED" stroke="#0000ED" stroke-width="1"/>
-<text x="55" y="169" class="commit-text">M</text>
+<text x="55" y="169" class="commit-text">G</text>
 <circle cx="40" cy="115" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
 <text x="55" y="119" class="commit-text">H</text>
 <circle cx="40" cy="65" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
