@@ -1,5 +1,7 @@
 use m2svg::{render_mermaid_ascii, render_to_svg, AsciiRenderOptions};
 use std::io::{self, Read};
+use std::fs;
+use std::path::Path;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -31,7 +33,19 @@ fn main() {
         .skip(1)
         .find(|a| !a.starts_with('-'))
         .cloned()
-        .map(|s| s.replace("\\n", "\n"))
+        .map(|s| {
+            // Check if it's a file path (either "-" for stdin, or an existing file)
+            if s == "-" {
+                let mut buf = String::new();
+                io::stdin().read_to_string(&mut buf).expect("Failed to read from stdin");
+                buf
+            } else if Path::new(&s).exists() {
+                fs::read_to_string(&s).expect(&format!("Failed to read file: {}", s))
+            } else {
+                // Treat as inline mermaid content
+                s.replace("\\n", "\n")
+            }
+        })
         .unwrap_or_else(|| {
             let mut buf = String::new();
             io::stdin().read_to_string(&mut buf).expect("Failed to read from stdin");
