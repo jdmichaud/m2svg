@@ -25,20 +25,20 @@
     <path d="M 260 0 L 310 0" class="arrow arrow0"/>
   </g>
   <g class="commit-bullets">
-    <circle cx="10" cy="0" r="10" class="commit 0-e5333bb commit0"/>
+    <circle cx="10" cy="0" r="10" class="commit A commit0"/>
     <circle cx="60" cy="0" r="10" class="commit Normal commit0"/>
-    <circle cx="110" cy="0" r="10" class="commit 2-8e634f6 commit0"/>
+    <circle cx="110" cy="0" r="10" class="commit C commit0"/>
     <circle cx="160" cy="0" r="10" class="commit Reverse commit0"/>
     <path d="M 155,-5L165,5M155,5L165,-5" class="commit commit-reverse Reverse commit0"/>
-    <circle cx="210" cy="0" r="10" class="commit 4-6851bbc commit0"/>
+    <circle cx="210" cy="0" r="10" class="commit E commit0"/>
     <rect x="250" y="-10" width="20" height="20" class="commit Highlight commit-highlight0 commit-highlight-outer"/>
     <rect x="254" y="-6" width="12" height="12" class="commit Highlight commit0 commit-highlight-inner"/>
-    <circle cx="310" cy="0" r="10" class="commit 6-0c126d7 commit0"/>
+    <circle cx="310" cy="0" r="10" class="commit G commit0"/>
   </g>
   <g class="commit-labels">
     <g transform="translate(-29.639082031250002, 26.40865234375) rotate(-45, 0, 0)">
-      <rect class="commit-label-bkg" x="-16.13037109375" y="13.5" width="52.2607421875" height="15"/>
-      <text x="-14.13037109375" y="25" class="commit-label">0-e5333bb</text>
+      <rect class="commit-label-bkg" x="22.13037109375" y="13.5" width="14.0" height="15"/>
+      <text x="24.13037109375" y="25" class="commit-label">A</text>
     </g>
     <g transform="translate(-23.5490625, 20.9596875) rotate(-45, 50, 0)">
       <rect class="commit-label-bkg" x="41.8828125" y="13.5" width="36.234375" height="15"/>
@@ -48,8 +48,8 @@
     <circle cy="-19.2" cx="38.16015625" r="1.5" class="tag-hole"/>
     <text y="-16" class="tag-label" x="46.16015625">v1.0.0</text>
     <g transform="translate(-28.581464843750002, 25.46236328125) rotate(-45, 100, 0)">
-      <rect class="commit-label-bkg" x="85.26123046875" y="13.5" width="49.4775390625" height="15"/>
-      <text x="87.26123046875" y="25" class="commit-label">2-8e634f6</text>
+      <rect class="commit-label-bkg" x="120.73876953125" y="13.5" width="14.0" height="15"/>
+      <text x="122.73876953125" y="25" class="commit-label">C</text>
     </g>
     <g transform="translate(-25.61642578125, 22.80943359375) rotate(-45, 150, 0)">
       <rect class="commit-label-bkg" x="139.16259765625" y="13.5" width="41.6748046875" height="15"/>
@@ -59,8 +59,8 @@
     <circle cy="-19.2" cx="138.99755859375" r="1.5" class="tag-hole"/>
     <text y="-16" class="tag-label" x="146.99755859375">RC_1</text>
     <g transform="translate(-29.2609375, 26.0703125) rotate(-45, 200, 0)">
-      <rect class="commit-label-bkg" x="184.3671875" y="13.5" width="51.265625" height="15"/>
-      <text x="186.3671875" y="25" class="commit-label">4-6851bbc</text>
+      <rect class="commit-label-bkg" x="221.6328125" y="13.5" width="14.0" height="15"/>
+      <text x="223.6328125" y="25" class="commit-label">E</text>
     </g>
     <g transform="translate(-26.17046875, 23.305156250000003) rotate(-45, 250, 0)">
       <rect class="commit-label-bkg" x="238.43359375" y="13.5" width="43.1328125" height="15"/>
@@ -70,8 +70,8 @@
     <circle cy="-19.2" cx="240.66015625" r="1.5" class="tag-hole"/>
     <text y="-16" class="tag-label" x="248.66015625">8.8.4</text>
     <g transform="translate(-29.425703125000002, 26.217734375) rotate(-45, 300, 0)">
-      <rect class="commit-label-bkg" x="284.150390625" y="13.5" width="51.69921875" height="15"/>
-      <text x="286.150390625" y="25" class="commit-label">6-0c126d7</text>
+      <rect class="commit-label-bkg" x="321.849609375" y="13.5" width="14.0" height="15"/>
+      <text x="323.849609375" y="25" class="commit-label">G</text>
     </g>
   </g>
 </svg>

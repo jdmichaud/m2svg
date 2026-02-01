@@ -25,13 +25,13 @@
   </g>
   <g class="commit-bullets">
     <circle cx="10" cy="0" r="10" class="commit Normal commit0"/>
-    <circle cx="60" cy="0" r="10" class="commit 1-2a09810 commit0"/>
+    <circle cx="60" cy="0" r="10" class="commit B commit0"/>
     <circle cx="110" cy="0" r="10" class="commit Reverse commit0"/>
     <path d="M 105,-5L115,5M105,5L115,-5" class="commit commit-reverse Reverse commit0"/>
-    <circle cx="160" cy="0" r="10" class="commit 3-96792de commit0"/>
+    <circle cx="160" cy="0" r="10" class="commit D commit0"/>
     <rect x="200" y="-10" width="20" height="20" class="commit Highlight commit-highlight0 commit-highlight-outer"/>
     <rect x="204" y="-6" width="12" height="12" class="commit Highlight commit0 commit-highlight-inner"/>
-    <circle cx="260" cy="0" r="10" class="commit 5-11a7c2b commit0"/>
+    <circle cx="260" cy="0" r="10" class="commit F commit0"/>
   </g>
   <g class="commit-labels">
     <g transform="translate(-23.5490625, 20.9596875) rotate(-45, 0, 0)">
@@ -39,24 +39,24 @@
       <text x="-6.1171875" y="25" class="commit-label">Normal</text>
     </g>
     <g transform="translate(-29.639082031250002, 26.40865234375) rotate(-45, 50, 0)">
-      <rect class="commit-label-bkg" x="33.86962890625" y="13.5" width="52.2607421875" height="15"/>
-      <text x="35.86962890625" y="25" class="commit-label">1-2a09810</text>
+      <rect class="commit-label-bkg" x="72.13037109375" y="13.5" width="14.0" height="15"/>
+      <text x="74.13037109375" y="25" class="commit-label">B</text>
     </g>
     <g transform="translate(-25.61642578125, 22.80943359375) rotate(-45, 100, 0)">
       <rect class="commit-label-bkg" x="89.16259765625" y="13.5" width="41.6748046875" height="15"/>
       <text x="91.16259765625" y="25" class="commit-label">Reverse</text>
     </g>
     <g transform="translate(-29.639082031250002, 26.40865234375) rotate(-45, 150, 0)">
-      <rect class="commit-label-bkg" x="133.86962890625" y="13.5" width="52.2607421875" height="15"/>
-      <text x="135.86962890625" y="25" class="commit-label">3-96792de</text>
+      <rect class="commit-label-bkg" x="172.13037109375" y="13.5" width="14.0" height="15"/>
+      <text x="174.13037109375" y="25" class="commit-label">D</text>
     </g>
     <g transform="translate(-26.17046875, 23.305156250000003) rotate(-45, 200, 0)">
       <rect class="commit-label-bkg" x="188.43359375" y="13.5" width="43.1328125" height="15"/>
       <text x="190.43359375" y="25" class="commit-label">Highlight</text>
     </g>
     <g transform="translate(-29.425703125000002, 26.217734375) rotate(-45, 250, 0)">
-      <rect class="commit-label-bkg" x="234.150390625" y="13.5" width="51.69921875" height="15"/>
-      <text x="236.150390625" y="25" class="commit-label">5-11a7c2b</text>
+      <rect class="commit-label-bkg" x="271.849609375" y="13.5" width="14.0" height="15"/>
+      <text x="273.849609375" y="25" class="commit-label">F</text>
     </g>
   </g>
 </svg>

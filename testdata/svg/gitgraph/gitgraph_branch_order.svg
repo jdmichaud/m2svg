@@ -45,12 +45,12 @@
   </g>
   <g class="commit-arrows"/>
   <g class="commit-bullets">
-    <circle cx="10" cy="0" r="10" class="commit 0-6c8391c commit0"/>
+    <circle cx="10" cy="0" r="10" class="commit A commit0"/>
   </g>
   <g class="commit-labels">
     <g transform="translate(-29.0471875, 25.8790625) rotate(-45, 0, 0)">
-      <rect class="commit-label-bkg" x="-15.3515625" y="13.5" width="50.703125" height="15"/>
-      <text x="-13.3515625" y="25" class="commit-label">0-6c8391c</text>
+      <rect class="commit-label-bkg" x="21.3515625" y="13.5" width="14.0" height="15"/>
+      <text x="23.3515625" y="25" class="commit-label">A</text>
     </g>
   </g>
 </svg>
