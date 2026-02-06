@@ -16,10 +16,10 @@ A Rust library and CLI for rendering Mermaid diagrams as ASCII art or SVG.
 | Flowchart | ✅ |
 | Sequence Diagram | ✅ |
 | Class Diagram | ✅ |
-| State Diagram | ✅ |
+| State Diagram | ❌ |
 | Entity Relationship Diagram | ✅ |
 | GitGraph Diagram | ✅ |
-| Mindmap | ✅ |
+| Mindmap | ❌ |
 | User Journey | ❌ |
 | Gantt | ❌ |
 | Pie Chart | ❌ |
@@ -178,7 +178,9 @@ gitGraph
 
 ```
 ┌───┐     ┌───┐     ┌───┐
-│ A │────▶│ B │────▶│ C │
+│   │     │   │     │   │
+│ A ├────►│ B ├────►│ C │
+│   │     │   │     │   │
 └───┘     └───┘     └───┘
 ```
 
@@ -186,7 +188,9 @@ gitGraph
 
 ```
 +---+     +---+     +---+
+|   |     |   |     |   |
 | A |---->| B |---->| C |
+|   |     |   |     |   |
 +---+     +---+     +---+
 ```
 
