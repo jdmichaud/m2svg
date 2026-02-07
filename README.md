@@ -1,6 +1,10 @@
 # m2svg
 
+🚧 This is a work in progress. Do not use it in a production setting.
+
 A Rust library and CLI for rendering Mermaid diagrams as ASCII art or SVG.
+
+🤖 This project was entirely developed by a Large Language Model.
 
 ## Features
 
@@ -13,11 +17,11 @@ A Rust library and CLI for rendering Mermaid diagrams as ASCII art or SVG.
 
 | Diagram Type | Supported |
 |--------------|-----------|
-| Flowchart | ✅ |
-| Sequence Diagram | ✅ |
-| Class Diagram | ✅ |
+| Flowchart | 🪳 |
+| Sequence Diagram | 🪳 |
+| Class Diagram | 🪳 |
 | State Diagram | ❌ |
-| Entity Relationship Diagram | ✅ |
+| Entity Relationship Diagram | 🪳 |
 | GitGraph Diagram | ✅ |
 | Mindmap | ❌ |
 | User Journey | ❌ |
