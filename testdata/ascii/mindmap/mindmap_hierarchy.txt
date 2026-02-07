@@ -1,0 +1,8 @@
+mindmap
+Root
+    A
+      B
+      C
+---
+Root --- A -+- B
+            +- C

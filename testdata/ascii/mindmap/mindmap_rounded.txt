@@ -1,0 +1,7 @@
+mindmap
+  root(Rounded shape)
+    id1(Child 1)
+    id2(Child 2)
+---
+(Rounded shape) -+- (Child 1)
+                 +- (Child 2)

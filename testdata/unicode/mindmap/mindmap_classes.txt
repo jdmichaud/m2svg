@@ -1,0 +1,10 @@
+mindmap
+    Root
+        A:::urgent
+        B
+            Ba
+            Bb
+---
+Root ─┬─ A
+      └─ B ─┬─ Ba
+            └─ Bb

@@ -1,0 +1,7 @@
+mindmap
+  root)Cloud shape(
+    id1)Child 1(
+    id2)Child 2(
+---
+)Cloud shape( ─┬─ )Child 1(
+               └─ )Child 2(
