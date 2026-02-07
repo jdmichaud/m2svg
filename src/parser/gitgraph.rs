@@ -1,57 +1,21 @@
 //! Parser for Mermaid GitGraph diagrams
 
-use crate::types::{CommitType, GitBranch, GitCommit, GitGraph, GitGraphConfig, GitGraphDirection};
+use crate::types::{CommitType, FrontmatterConfig, GitBranch, GitCommit, GitGraph, GitGraphConfig, GitGraphDirection};
+use super::extract_yaml_value;
 
-/// Parse YAML frontmatter configuration from the raw text (before line splitting)
-/// Returns the config and the remaining text with frontmatter stripped.
-fn parse_frontmatter(text: &str) -> (GitGraphConfig, String) {
+/// Parse gitGraph-specific configuration from frontmatter raw lines.
+/// Common config (theme) is already handled by the general frontmatter parser.
+fn parse_gitgraph_config(frontmatter: &FrontmatterConfig) -> GitGraphConfig {
     let mut config = GitGraphConfig::default();
-    let lines: Vec<&str> = text.lines().collect();
 
-    // Look for opening --- (must be at start after trimming whitespace lines)
-    let mut start = None;
-    for (i, line) in lines.iter().enumerate() {
-        let trimmed = line.trim();
-        if trimmed.is_empty() {
-            continue;
-        }
-        if trimmed == "---" {
-            start = Some(i);
-        }
-        break; // only check the first non-empty line
-    }
+    // Copy theme from the common frontmatter config
+    config.theme = frontmatter.theme.to_string();
 
-    let start = match start {
-        Some(s) => s,
-        None => return (config, text.to_string()),
-    };
-
-    // Find closing ---
-    let mut end = None;
-    for (i, line) in lines.iter().enumerate().skip(start + 1) {
-        if line.trim() == "---" {
-            end = Some(i);
-            break;
-        }
-    }
-
-    let end = match end {
-        Some(e) => e,
-        None => return (config, text.to_string()),
-    };
-
-    // Parse the frontmatter content (simple key: value parsing)
-    let fm_lines = &lines[start + 1..end];
-    let fm_text = fm_lines.join("\n");
-
-    // Extract gitGraph config options
+    // Parse gitGraph-specific options from raw frontmatter lines
+    let fm_text = frontmatter.raw_lines.join("\n");
     parse_config_values(&fm_text, &mut config);
 
-    // Reconstruct text without frontmatter
-    let remaining_lines: Vec<&str> = lines[end + 1..].to_vec();
-    let remaining = remaining_lines.join("\n");
-
-    (config, remaining)
+    config
 }
 
 /// Parse configuration values from frontmatter YAML text
@@ -158,28 +122,13 @@ fn parse_config_values(text: &str, config: &mut GitGraphConfig) {
     }
 }
 
-/// Extract value after a YAML key (case-insensitive key match)
-fn extract_yaml_value<'a>(line: &'a str, key: &str) -> Option<&'a str> {
-    let lower = line.to_lowercase();
-    let key_lower = key.to_lowercase();
-    if let Some(pos) = lower.find(&key_lower) {
-        // Make sure we're matching the key at the start (after optional whitespace/quotes)
-        let before = &lower[..pos];
-        if before
-            .chars()
-            .all(|c| c.is_whitespace() || c == '\'' || c == '"')
-        {
-            let after = &line[pos + key.len()..];
-            return Some(after.trim());
-        }
-    }
-    None
-}
-
 /// Parse a gitGraph diagram from mermaid text.
-/// This function accepts the raw input text (possibly with YAML frontmatter).
-pub fn parse_gitgraph_from_text(text: &str) -> Result<GitGraph, String> {
-    let (config, remaining) = parse_frontmatter(text);
+/// This function accepts the raw input text and a pre-parsed FrontmatterConfig.
+pub fn parse_gitgraph_from_text(text: &str, frontmatter: &FrontmatterConfig) -> Result<GitGraph, String> {
+    let config = parse_gitgraph_config(frontmatter);
+
+    // Strip frontmatter from the text to get the diagram body
+    let (_, remaining) = super::parse_frontmatter(text);
 
     let lines: Vec<&str> = remaining
         .lines()

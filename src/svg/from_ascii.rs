@@ -389,7 +389,7 @@ mod tests {
     fn test_simple_graph_to_svg() {
         let input = "graph LR\n  A --> B";
         let parsed = parse_mermaid(input).unwrap();
-        let graph = match parsed {
+        let graph = match parsed.diagram {
             DiagramType::Flowchart(g) => g,
             _ => panic!("Expected flowchart"),
         };
@@ -407,7 +407,7 @@ mod tests {
     fn test_td_graph_to_svg() {
         let input = "graph TD\n  Start --> End";
         let parsed = parse_mermaid(input).unwrap();
-        let graph = match parsed {
+        let graph = match parsed.diagram {
             DiagramType::Flowchart(g) => g,
             _ => panic!("Expected flowchart"),
         };

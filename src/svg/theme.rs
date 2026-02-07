@@ -6,6 +6,7 @@
 //!   - Unset optionals fall back to color-mix() derivations from bg + fg
 
 use serde::{Deserialize, Serialize};
+use crate::types::MermaidTheme;
 
 /// Diagram color configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -33,14 +34,40 @@ pub struct DiagramColors {
 
 impl Default for DiagramColors {
     fn default() -> Self {
-        Self {
-            bg: "#FFFFFF".to_string(),
-            fg: "#27272A".to_string(),
-            line: None,
-            accent: None,
-            muted: None,
-            surface: None,
-            border: None,
+        Self::from_theme(MermaidTheme::Default)
+    }
+}
+
+impl DiagramColors {
+    /// Create a `DiagramColors` from a Mermaid theme.
+    ///
+    /// Color values are derived from Mermaid's official theme files:
+    /// - `default`: <https://github.com/mermaid-js/mermaid/blob/develop/packages/mermaid/src/themes/theme-default.js>
+    /// - `dark`: <https://github.com/mermaid-js/mermaid/blob/develop/packages/mermaid/src/themes/theme-dark.js>
+    pub fn from_theme(theme: MermaidTheme) -> Self {
+        match theme {
+            MermaidTheme::Default => Self {
+                // Mermaid default: background = 'white', textColor = '#333',
+                // lineColor = '#333333', mainBkg = '#ECECFF', border1 = '#9370DB'
+                bg: "#FFFFFF".to_string(),
+                fg: "#333333".to_string(),
+                line: Some("#333333".to_string()),
+                accent: Some("#333333".to_string()),
+                muted: Some("#666666".to_string()),
+                surface: Some("#ECECFF".to_string()),
+                border: Some("#9370DB".to_string()),
+            },
+            MermaidTheme::Dark => Self {
+                // Mermaid dark: background = '#333', textColor = '#ccc',
+                // lineColor = 'lightgrey', mainBkg = '#1f2020', border1 = '#ccc'
+                bg: "#333333".to_string(),
+                fg: "#CCCCCC".to_string(),
+                line: Some("#AAAAAA".to_string()),
+                accent: Some("#CCCCCC".to_string()),
+                muted: Some("#888888".to_string()),
+                surface: Some("#1F2020".to_string()),
+                border: Some("#CCCCCC".to_string()),
+            },
         }
     }
 }

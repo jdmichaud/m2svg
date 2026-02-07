@@ -61,11 +61,11 @@ pub fn render(input: &str, use_ascii: bool) -> Result<String, String> {
 /// ```
 pub fn render_to_svg(input: &str) -> Result<String, String> {
     let parsed = parse_mermaid(input)?;
-    let colors = svg::DiagramColors::default();
+    let colors = svg::DiagramColors::from_theme(parsed.frontmatter.theme);
     let font = "Inter";
     let transparent = false;
     
-    match parsed {
+    match parsed.diagram {
         DiagramType::Flowchart(graph) => {
             Ok(svg::render_mermaid_to_svg(&graph, &colors, font, transparent))
         }

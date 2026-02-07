@@ -60,7 +60,7 @@ pub fn render_mermaid_ascii(text: &str, options: Option<AsciiRenderOptions>) -> 
     
     let diagram = parser::parse_mermaid(text)?;
     
-    match diagram {
+    match diagram.diagram {
         DiagramType::Flowchart(graph) => {
             let mut config = config;
             if graph.direction == crate::types::Direction::LR 

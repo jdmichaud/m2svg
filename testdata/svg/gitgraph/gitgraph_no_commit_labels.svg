@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="460" height="180" viewBox="0 0 460 180">
 <style>
-  .commit { fill: #FFFFFF; }
-  .commit-text { font-family: 'Inter', sans-serif; font-size: 12px; fill: #27272A; text-anchor: middle; }
-  .branch-text { font-family: 'Inter', sans-serif; font-size: 12px; fill: #27272A; }
+  .commit { fill: #ECECFF; }
+  .commit-text { font-family: 'Inter', sans-serif; font-size: 12px; fill: #333333; text-anchor: middle; }
+  .branch-text { font-family: 'Inter', sans-serif; font-size: 12px; fill: #333333; }
   .tag-text { font-family: 'Inter', sans-serif; font-size: 10px; fill: #333; }
 </style>
 <rect width="100%" height="100%" fill="#FFFFFF"/>

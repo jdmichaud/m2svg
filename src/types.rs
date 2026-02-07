@@ -524,6 +524,59 @@ impl GitGraph {
 }
 
 // ============================================================================
+// Mermaid theme enum
+// ============================================================================
+
+/// Mermaid built-in theme names
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MermaidTheme {
+    /// Light theme (white background, dark text)
+    Default,
+    /// Dark theme (dark background, light text)
+    Dark,
+}
+
+impl MermaidTheme {
+    pub fn from_str(s: &str) -> Self {
+        match s.trim().to_lowercase().as_str() {
+            "dark" => MermaidTheme::Dark,
+            _ => MermaidTheme::Default,
+        }
+    }
+}
+
+impl std::fmt::Display for MermaidTheme {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MermaidTheme::Default => write!(f, "default"),
+            MermaidTheme::Dark => write!(f, "dark"),
+        }
+    }
+}
+
+// ============================================================================
+// Frontmatter configuration (common across all diagram types)
+// ============================================================================
+
+/// Common configuration extracted from YAML frontmatter
+#[derive(Debug, Clone)]
+pub struct FrontmatterConfig {
+    /// The theme to use for SVG rendering
+    pub theme: MermaidTheme,
+    /// Raw frontmatter lines (for diagram-specific parsers to inspect)
+    pub raw_lines: Vec<String>,
+}
+
+impl Default for FrontmatterConfig {
+    fn default() -> Self {
+        Self {
+            theme: MermaidTheme::Default,
+            raw_lines: Vec::new(),
+        }
+    }
+}
+
+// ============================================================================
 // Diagram type enum for dispatch
 // ============================================================================
 
@@ -534,4 +587,11 @@ pub enum DiagramType {
     Class(ClassDiagram),
     Er(ErDiagram),
     GitGraph(GitGraph),
+}
+
+/// Result of parsing a Mermaid diagram: the diagram itself plus frontmatter config
+#[derive(Debug, Clone)]
+pub struct ParsedDiagram {
+    pub diagram: DiagramType,
+    pub frontmatter: FrontmatterConfig,
 }

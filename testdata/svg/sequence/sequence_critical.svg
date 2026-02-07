@@ -1,6 +1,4 @@
-<?xml version="1.0"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 273.5 270" width="273.5" height="270" style="--bg:#FFFFFF;--fg:#27272A;background:var(--bg)">
-  <style>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 273.5 270" width="273.5" height="270" style="--bg:#FFFFFF;--fg:#333333;--line:#333333;--accent:#333333;--muted:#666666;--surface:#ECECFF;--border:#9370DB;background:var(--bg)"><style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
   text { font-family: 'Inter', system-ui, sans-serif; }
   svg {
@@ -18,21 +16,12 @@
     --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
     --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
   }
-</style>
-  <line x1="67.5" y1="40.0" x2="67.5" y2="210.0" class="lifeline"/>
-  <rect x="20.0" y="0.0" width="95.0" height="40.0" class="node"/>
-  <text x="67.5" y="20.0" class="node-label" text-anchor="middle" dominant-baseline="middle">Service</text>
-  <rect x="20.0" y="210.0" width="95.0" height="40.0" class="node"/>
-  <text x="67.5" y="230.0" class="node-label" text-anchor="middle" dominant-baseline="middle">Service</text>
-  <line x1="187.5" y1="40.0" x2="187.5" y2="210.0" class="lifeline"/>
-  <rect x="141.5" y="0.0" width="92.0" height="40.0" class="node"/>
-  <text x="187.5" y="20.0" class="node-label" text-anchor="middle" dominant-baseline="middle">DB</text>
-  <rect x="141.5" y="210.0" width="92.0" height="40.0" class="node"/>
-  <text x="187.5" y="230.0" class="node-label" text-anchor="middle" dominant-baseline="middle">DB</text>
-  <line x1="67.5" y1="110.0" x2="187.5" y2="110.0" class="message"/>
-  <polygon points="187.5,110.0 177.5,105.0 177.5,115.0" class="arrow"/>
-  <text x="127.5" y="102.0" class="message-label" text-anchor="middle">connect</text>
-  <line x1="187.5" y1="160.0" x2="67.5" y2="160.0" class="message-dashed"/>
-  <polygon points="67.5,160.0 77.5,155.0 77.5,165.0" class="arrow"/>
-  <text x="127.5" y="152.0" class="message-label" text-anchor="middle">connected</text>
+</style><line x1="67.5" y1="40.0" x2="67.5" y2="210.0" class="lifeline"/>
+<rect x="20.0" y="0.0" width="95.0" height="40.0" class="node"/><text x="67.5" y="20.0" class="node-label" text-anchor="middle" dominant-baseline="middle">Service</text>
+<rect x="20.0" y="210.0" width="95.0" height="40.0" class="node"/><text x="67.5" y="230.0" class="node-label" text-anchor="middle" dominant-baseline="middle">Service</text>
+<line x1="187.5" y1="40.0" x2="187.5" y2="210.0" class="lifeline"/>
+<rect x="141.5" y="0.0" width="92.0" height="40.0" class="node"/><text x="187.5" y="20.0" class="node-label" text-anchor="middle" dominant-baseline="middle">DB</text>
+<rect x="141.5" y="210.0" width="92.0" height="40.0" class="node"/><text x="187.5" y="230.0" class="node-label" text-anchor="middle" dominant-baseline="middle">DB</text>
+<line x1="67.5" y1="110.0" x2="187.5" y2="110.0" class="message"/><polygon points="187.5,110.0 177.5,105.0 177.5,115.0" class="arrow"/><text x="127.5" y="102.0" class="message-label" text-anchor="middle">connect</text>
+<line x1="187.5" y1="160.0" x2="67.5" y2="160.0" class="message-dashed"/><polygon points="67.5,160.0 77.5,155.0 77.5,165.0" class="arrow"/><text x="127.5" y="152.0" class="message-label" text-anchor="middle">connected</text>
 </svg>

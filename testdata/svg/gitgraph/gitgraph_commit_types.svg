@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="460" height="130" viewBox="0 0 460 130">
 <style>
-  .commit { fill: #FFFFFF; }
-  .commit-text { font-family: 'Inter', sans-serif; font-size: 12px; fill: #27272A; text-anchor: middle; }
-  .branch-text { font-family: 'Inter', sans-serif; font-size: 12px; fill: #27272A; }
+  .commit { fill: #ECECFF; }
+  .commit-text { font-family: 'Inter', sans-serif; font-size: 12px; fill: #333333; text-anchor: middle; }
+  .branch-text { font-family: 'Inter', sans-serif; font-size: 12px; fill: #333333; }
   .tag-text { font-family: 'Inter', sans-serif; font-size: 10px; fill: #333; }
 </style>
 <rect width="100%" height="100%" fill="#FFFFFF"/>
@@ -11,17 +11,17 @@
 <line x1="120" y1="40" x2="370" y2="40" stroke="#0000ED" stroke-width="2"/>
 <line x1="370" y1="40" x2="420" y2="40" stroke="lightgrey" stroke-width="1" stroke-dasharray="2"/>
 <circle cx="120" cy="40" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
-<text x="120" y="70" class="commit-text" fill="#27272A" font-size="12px">Normal</text>
+<text x="120" y="70" class="commit-text" fill="#333333" font-size="12px">Normal</text>
 <circle cx="170" cy="40" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
-<text x="170" y="70" class="commit-text" fill="#27272A" font-size="12px">B</text>
+<text x="170" y="70" class="commit-text" fill="#333333" font-size="12px">B</text>
 <circle cx="220" cy="40" r="10" fill="#FFFFFF" stroke="#0000ED" stroke-width="3"/>
-<text x="220" y="70" class="commit-text" fill="#27272A" font-size="12px">Reverse</text>
+<text x="220" y="70" class="commit-text" fill="#333333" font-size="12px">Reverse</text>
 <circle cx="270" cy="40" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
-<text x="270" y="70" class="commit-text" fill="#27272A" font-size="12px">D</text>
+<text x="270" y="70" class="commit-text" fill="#333333" font-size="12px">D</text>
 <circle cx="320" cy="40" r="10" fill="#0000ED" stroke="#FFD700" stroke-width="3"/>
-<text x="320" y="70" class="commit-text" fill="#27272A" font-size="12px">Highlight</text>
+<text x="320" y="70" class="commit-text" fill="#333333" font-size="12px">Highlight</text>
 <circle cx="370" cy="40" r="10" fill="#0000ED" stroke="#0000ED" stroke-width="0"/>
-<text x="370" y="70" class="commit-text" fill="#27272A" font-size="12px">F</text>
+<text x="370" y="70" class="commit-text" fill="#333333" font-size="12px">F</text>
 <text x="105" y="44" class="branch-text" text-anchor="end" fill="#0000ED">main</text>
 </svg>
 

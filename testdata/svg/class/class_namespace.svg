@@ -1,6 +1,4 @@
-<?xml version="1.0"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 164" width="368" height="164" style="--bg:#FFFFFF;--fg:#27272A;background:var(--bg)">
-  <style>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368 164" width="368" height="164" style="--bg:#FFFFFF;--fg:#333333;--line:#333333;--accent:#333333;--muted:#666666;--surface:#ECECFF;--border:#9370DB;background:var(--bg)"><style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
   text { font-family: 'Inter', system-ui, sans-serif; }
   svg {
@@ -18,12 +16,6 @@
     --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
     --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
   }
-</style>
-  <rect x="20.0" y="20.0" width="144.0" height="104.0" class="node"/>
-  <text x="92.0" y="46.0" class="class-name" text-anchor="middle">Rectangle</text>
-  <line x1="20.0" y1="66.0" x2="164.0" y2="66.0" class="divider"/>
-  <text x="32.0" y="72.0" class="member">width : double</text>
-  <text x="32.0" y="92.0" class="member">height : double</text>
-  <rect x="224.0" y="20.0" width="104.0" height="44.0" class="node"/>
-  <text x="276.0" y="46.0" class="class-name" text-anchor="middle">Triangle</text>
-</svg>
+</style><rect x="20.0" y="20.0" width="144.0" height="104.0" class="node"/>
+<text x="92.0" y="46.0" class="class-name" text-anchor="middle">Rectangle</text><line x1="20.0" y1="66.0" x2="164.0" y2="66.0" class="divider"/><text x="32.0" y="72.0" class="member">width : double</text><text x="32.0" y="92.0" class="member">height : double</text><rect x="224.0" y="20.0" width="104.0" height="44.0" class="node"/>
+<text x="276.0" y="46.0" class="class-name" text-anchor="middle">Triangle</text></svg>
