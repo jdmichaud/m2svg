@@ -6,9 +6,11 @@ Guidelines for AI agents working on the m2svg codebase.
 
 m2svg is a Rust library and CLI tool that converts Mermaid diagram syntax to ASCII art or SVG. It supports:
 - Flowcharts/graphs (TB, BT, LR, RL directions)
+- State diagrams (rendered as flowcharts)
 - Sequence diagrams
 - Class diagrams (with inheritance fan-out)
 - ER diagrams
+- Git graphs (commit history visualization)
 
 This is a Rust port of the TypeScript [beautiful-mermaid](https://github.com/lukilabs/beautiful-mermaid) project by Luki Labs. The original TypeScript implementation provides:
 - A reference for expected rendering behavior
@@ -97,33 +99,48 @@ cargo clippy
 
 ```
 src/
-├── lib.rs              # Main library exports, render() and render_to_svg()
+├── lib.rs              # Main library exports: render(), render_to_svg()
 ├── main.rs             # CLI binary
-├── types.rs            # Shared type definitions
-├── parser/             # Parsing modules (flowchart, class, er, sequence)
+├── types.rs            # Shared types: MermaidGraph, DiagramType, ParsedDiagram,
+│                       #   FrontmatterConfig, MermaidTheme, GitGraphConfig, etc.
+├── parser/             # Parsing modules
+│   ├── mod.rs          # parse_mermaid(), parse_frontmatter(), diagram type detection
+│   ├── flowchart.rs    # Flowchart & state diagram parser
+│   ├── sequence.rs     # Sequence diagram parser
+│   ├── class.rs        # Class diagram parser
+│   ├── er.rs           # ER diagram parser
+│   └── gitgraph.rs     # Git graph parser (delegates frontmatter to mod.rs)
 ├── ascii/              # ASCII rendering modules
-│   ├── mod.rs
+│   ├── mod.rs          # render_mermaid_ascii() dispatch
 │   ├── canvas.rs       # 2D character canvas utilities
+│   ├── draw.rs         # Common drawing helpers
+│   ├── types.rs        # ASCII-specific types
 │   ├── grid.rs         # Grid-based layout algorithm (Dagre-style)
 │   ├── flowchart.rs    # Flowchart ASCII renderer
 │   ├── class_diagram.rs
 │   ├── er_diagram.rs
 │   ├── sequence.rs
+│   ├── gitgraph.rs     # Git graph ASCII renderer
 │   └── pathfinder.rs   # A* pathfinding for edge routing
 └── svg/                # SVG rendering modules
-    ├── mod.rs
-    ├── from_ascii.rs   # Convert ASCII to SVG
+    ├── mod.rs           # SVG render dispatch, public exports
+    ├── from_ascii.rs    # Flowchart SVG via ASCII-to-SVG conversion
+    ├── renderer.rs      # Core SVG rendering helpers
+    ├── styles.rs        # Shared SVG CSS styles
+    ├── theme.rs         # DiagramColors, from_theme(), CSS variable system
+    ├── types.rs         # SVG-specific types
     ├── class_diagram.rs
     ├── er_diagram.rs
-    └── sequence.rs
+    ├── sequence.rs
+    └── gitgraph.rs      # Git graph SVG renderer
 
 tests/
 └── integration_tests.rs  # Test runner for testdata fixtures
 
 testdata/
-├── ascii/              # Test fixtures (input + expected output)
-├── unicode/            # Unicode-specific test fixtures
-└── svg/                # SVG test fixtures (input + expected SVG output)
+├── ascii/              # ASCII test fixtures (.txt, input + expected separated by ---)
+├── unicode/            # Unicode test fixtures (.txt, same format as ascii)
+└── svg/                # SVG test fixtures (.mmd input + .svg expected output pairs)
 ```
 
 ## Key Conventions
@@ -139,18 +156,18 @@ testdata/
 - Use descriptive error messages
 
 ### Testing
-- Each test fixture in `testdata/ascii/` and `testdata/svg/` contains input and expected output separated by `\n---\n`
-- The test parser uses `rfind` to split on the **last** `---` separator, so YAML frontmatter `---` delimiters in the input section won't cause issues
-- ASCII/Unicode tests compare rendered text output exactly
-- SVG tests compare complete SVG output exactly (requires deterministic rendering)
+- **ASCII/Unicode fixtures** (`testdata/ascii/`, `testdata/unicode/`): Single `.txt` file with input and expected output separated by `\n---\n`. The test parser uses `rfind` to split on the **last** `---` separator, so YAML frontmatter `---` delimiters in the input section won't cause issues.
+- **SVG fixtures** (`testdata/svg/`): Paired `.mmd` (input) and `.svg` (expected output) files. Lines starting with `#` in `.mmd` files are filtered out as comments by the test runner. SVG tests use semantic comparison (not exact string match).
+- ASCII/Unicode tests compare rendered text output exactly (trailing whitespace normalized)
 - Tests auto-detect ASCII vs Unicode mode based on expected output characters
 - Run specific test: `cargo test test_cls_inheritance`
 - Run all SVG tests: `cargo test svg_`
+- Regenerate an SVG fixture: `grep -v '^\s*#' testdata/svg/<subdir>/<name>.mmd | cargo run -- -s - > testdata/svg/<subdir>/<name>.svg`
 
 ### Diagram Rendering Pipeline
-1. **Parse** - Convert text to AST (parser modules)
+1. **Parse** - `parse_mermaid()` extracts frontmatter (theme, config), detects diagram type, delegates to type-specific parser. Returns `ParsedDiagram` containing `DiagramType` + `FrontmatterConfig`.
 2. **Layout** - Assign positions to elements (layout modules)
-3. **Render** - Draw to canvas or generate SVG (renderer/ascii/svg modules)
+3. **Render** - Draw to canvas (ASCII/Unicode) or generate SVG. For SVG, `DiagramColors::from_theme()` applies the theme from frontmatter.
 
 ## Common Tasks
 
@@ -171,26 +188,26 @@ testdata/
    ```
 2. Add test macro in `tests/integration_tests.rs`:
    ```rust
-   ascii_test!(my_test);
+   ascii_test!(flowchart, my_test);
    ```
+   Note: the first argument is the subdirectory (`flowchart`, `class`, `er`, `sequence`, `gitgraph`).
 
 ### Adding a new SVG test fixture
-1. Create `testdata/svg/my_svg_test.txt` with format:
+1. Create `testdata/svg/<subdir>/<name>.mmd` with the Mermaid input:
    ```
-   # Optional comment about the test
+   # Optional comment (will be filtered out)
    graph TD
      A --> B
-   ---
-   <svg xmlns=...>...</svg>
    ```
-2. Add test macro in `tests/integration_tests.rs`:
-   ```rust
-   svg_test!(my_svg_test);
-   ```
-3. To generate expected output, run:
+2. Generate the expected SVG output:
    ```bash
-   echo 'graph TD; A-->B' | cargo run -- -s -
+   grep -v '^\s*#' testdata/svg/<subdir>/<name>.mmd | cargo run -- -s - > testdata/svg/<subdir>/<name>.svg
    ```
+3. Add test macro in `tests/integration_tests.rs`:
+   ```rust
+   svg_test!(<subdir>, <name>);
+   ```
+   Note: the `svg_test!` macro takes two arguments — subdirectory and test name.
 
 ### Fixing rendering issues
 1. Check the relevant renderer in `src/ascii/` or `src/svg/`
@@ -277,11 +294,12 @@ SVG output must be deterministic for exact-match testing. Key considerations:
 Edges use A* pathfinding to avoid nodes. The pathfinder in `src/ascii/pathfinder.rs` treats node bounding boxes as obstacles. Complex layouts may route edges around multiple nodes.
 
 ### YAML Frontmatter Configuration
-GitGraph diagrams support Mermaid-compatible YAML frontmatter for configuration:
+All diagram types support Mermaid-compatible YAML frontmatter for configuration. Frontmatter is parsed once by a generalized parser in `src/parser/mod.rs` before diagram-specific parsing.
 
 ```
 ---
 config:
+  theme: dark
   gitGraph:
     showBranches: false
     showCommitLabel: false
@@ -293,10 +311,29 @@ gitGraph
 ```
 
 Key implementation details:
-- **Parser**: `parse_frontmatter()` in `src/parser/gitgraph.rs` extracts YAML before diagram content
-- **Config struct**: `GitGraphConfig` in `src/types.rs` holds all config fields with sensible defaults
-- **Frontmatter stripping**: `strip_frontmatter()` in `src/parser/mod.rs` removes `---`-delimited blocks before diagram type detection
+- **Generalized parser**: `parse_frontmatter()` in `src/parser/mod.rs` extracts YAML between `---` delimiters, returning `(FrontmatterConfig, remaining_text)`. This is the single source of truth for all diagram types.
+- **`FrontmatterConfig`** (in `src/types.rs`): Contains `theme: MermaidTheme` (common config) and `raw_lines: Vec<String>` (for diagram-specific parsers to inspect)
+- **`ParsedDiagram`** (in `src/types.rs`): Wrapper returned by `parse_mermaid()`, containing both `diagram: DiagramType` and `frontmatter: FrontmatterConfig`
+- **`extract_yaml_value()`**: Public helper in `parser/mod.rs` for case-insensitive YAML key lookup, reused by `parser/gitgraph.rs`
+- **GitGraph-specific config**: `GitGraphConfig` in `src/types.rs` holds gitGraph-specific fields (`showBranches`, `showCommitLabel`, `mainBranchName`, `mainBranchOrder`). Parsed from `FrontmatterConfig::raw_lines` in `parser/gitgraph.rs`.
 - **Structural options**: `showBranches`, `showCommitLabel`, `mainBranchName`, `mainBranchOrder` affect layout in both ASCII and SVG
 - **Visual theming**: `git0`-`git7`, `commitLabelColor`, `tagLabelColor` etc. affect SVG colors only
 - **`parallelCommits`**: Detected and warned via `eprintln!` but not implemented
 - **Test fixtures with frontmatter**: Work correctly because `parse_test_file` uses `rfind` for the last `---` separator
+
+### Theme System
+SVG output supports Mermaid themes via the `theme` key in YAML frontmatter.
+
+**Supported themes**: `default` (light) and `dark`
+
+**Architecture** (in `src/svg/theme.rs`):
+- `MermaidTheme` enum (`Default`, `Dark`) in `src/types.rs`
+- `DiagramColors::from_theme(theme)` maps a theme to concrete CSS color values
+- CSS variables: `--bg`, `--fg`, `--line`, `--accent`, `--muted`, `--surface`, `--border`
+- Optional variables (`--line`, `--accent`, etc.) fall back to `color-mix()` derivations in CSS if not set
+
+**Default theme colors**: white bg (`#FFFFFF`), dark text (`#333333`), lavender surface (`#ECECFF`), purple border (`#9370DB`)
+
+**Dark theme colors**: dark bg (`#333333`), light text (`#CCCCCC`), near-black surface (`#1F2020`), light border (`#CCCCCC`)
+
+**Flow**: `parse_mermaid()` → `ParsedDiagram` (includes `frontmatter.theme`) → `render_to_svg()` calls `DiagramColors::from_theme(parsed.frontmatter.theme)` → colors injected into SVG `<style>` block as CSS custom properties
