@@ -83,6 +83,7 @@ echo "graph LR\n  A --> B" | m2svg --svg
 
 ### Flowcharts (graph/flowchart)
 
+````text
 ```mermaid
 graph TD
     A[Start] --> B{Decision}
@@ -91,34 +92,42 @@ graph TD
     C --> E[End]
     D --> E
 ```
+````
 
 ### Sequence Diagrams
 
+````text
 ```mermaid
 sequenceDiagram
     Alice->>Bob: Hello
     Bob-->>Alice: Hi back
 ```
+````
 
 ### Class Diagrams
 
+````text
 ```mermaid
 classDiagram
     Animal <|-- Dog
     Animal : +int age
     Dog : +bark()
 ```
+````
 
 ### ER Diagrams
 
+````text
 ```mermaid
 erDiagram
     CUSTOMER ||--o{ ORDER : places
     ORDER ||--|{ LINE-ITEM : contains
 ```
+````
 
 ### GitGraph Diagrams
 
+````text
 ```mermaid
 gitGraph
    commit
@@ -128,6 +137,7 @@ gitGraph
    checkout main
    merge develop
 ```
+````
 
 #### GitGraph Configuration
 
