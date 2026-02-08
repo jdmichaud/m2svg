@@ -13,6 +13,7 @@ pub enum Direction {
 }
 
 impl Direction {
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Option<Self> {
         match s.to_uppercase().as_str() {
             "TD" => Some(Direction::TD),
@@ -198,6 +199,12 @@ pub struct SequenceDiagram {
     pub notes: Vec<Note>,
 }
 
+impl Default for SequenceDiagram {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SequenceDiagram {
     pub fn new() -> Self {
         Self {
@@ -312,6 +319,12 @@ pub struct ClassDiagram {
     pub direction: String,
 }
 
+impl Default for ClassDiagram {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ClassDiagram {
     pub fn new() -> Self {
         Self {
@@ -385,6 +398,12 @@ pub struct ErDiagram {
     pub relationships: Vec<ErRelationship>,
 }
 
+impl Default for ErDiagram {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ErDiagram {
     pub fn new() -> Self {
         Self {
@@ -407,6 +426,7 @@ pub enum GitGraphDirection {
 }
 
 impl GitGraphDirection {
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Option<Self> {
         match s.to_uppercase().as_str() {
             "LR" => Some(GitGraphDirection::LR),
@@ -555,6 +575,7 @@ pub enum MermaidTheme {
 }
 
 impl MermaidTheme {
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Self {
         match s.trim().to_lowercase().as_str() {
             "dark" => MermaidTheme::Dark,

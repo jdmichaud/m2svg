@@ -122,9 +122,7 @@ fn deduplicate_subgraph_nodes(
         // Claim unclaimed nodes in this subgraph
         if current_sg_idx < ascii_subgraphs.len() {
             for &node_idx in &ascii_subgraphs[current_sg_idx].node_indices {
-                if !node_owner.contains_key(&node_idx) {
-                    node_owner.insert(node_idx, current_sg_idx);
-                }
+                node_owner.entry(node_idx).or_insert(current_sg_idx);
             }
         }
     }

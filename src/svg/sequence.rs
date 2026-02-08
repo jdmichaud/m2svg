@@ -49,8 +49,8 @@ pub fn render_sequence_svg(
         let needed = msg.label.len() as f64 * 8.0 + 40.0;
         let num_gaps = (hi - lo) as f64;
         let per_gap = needed / num_gaps;
-        for g in lo..hi {
-            gaps[g] = gaps[g].max(per_gap);
+        for gap in &mut gaps[lo..hi] {
+            *gap = (*gap).max(per_gap);
         }
     }
 
@@ -100,7 +100,7 @@ pub fn render_sequence_svg(
             r#"<line x1="{:.1}" y1="{:.1}" x2="{:.1}" y2="{:.1}" class="lifeline"/>"#,
             x, top, x, bottom
         ));
-        svg.push_str("\n");
+        svg.push('\n');
 
         // Draw actor boxes (header)
         let w = actor_widths[i];

@@ -29,7 +29,7 @@ pub fn render_sequence_ascii(
         .iter()
         .map(|a| a.label.len() + 2 * box_pad + 2)
         .collect();
-    let half_box: Vec<usize> = actor_box_widths.iter().map(|w| (w + 1) / 2).collect();
+    let half_box: Vec<usize> = actor_box_widths.iter().map(|w| w.div_ceil(2)).collect();
     let actor_box_h = 3; // top border + label row + bottom border
 
     // Compute minimum gap between adjacent lifelines
@@ -52,9 +52,9 @@ pub fn render_sequence_ascii(
         let hi = fi.max(ti);
         let needed = msg.label.len() + 4;
         let num_gaps = hi - lo;
-        let per_gap = (needed + num_gaps - 1) / num_gaps;
-        for g in lo..hi {
-            adj_max_width[g] = adj_max_width[g].max(per_gap);
+        let per_gap = needed.div_ceil(num_gaps);
+        for adj in &mut adj_max_width[lo..hi] {
+            *adj = (*adj).max(per_gap);
         }
     }
 
@@ -96,7 +96,7 @@ pub fn render_sequence_ascii(
     let mut total_w = last_ll + last_half + 2;
 
     // Ensure canvas is wide enough for self-message labels
-    for (_m, msg) in diagram.messages.iter().enumerate() {
+    for msg in diagram.messages.iter() {
         if msg.from == msg.to {
             let fi = actor_idx.get(msg.from.as_str()).copied().unwrap_or(0);
             let self_right = ll_x[fi] + 6 + 2 + msg.label.len();
@@ -213,7 +213,7 @@ pub fn render_sequence_ascii(
             }
 
             // Draw arrowhead
-            let arrow_x = if ti > fi { to_x } else { to_x };
+            let arrow_x = to_x;
             set_char(&mut canvas, arrow_x, arrow_y, arrow_char);
 
             // Draw label above the line

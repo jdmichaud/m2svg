@@ -9,10 +9,10 @@ use crate::types::{
 /// Parse gitGraph-specific configuration from frontmatter raw lines.
 /// Common config (theme) is already handled by the general frontmatter parser.
 fn parse_gitgraph_config(frontmatter: &FrontmatterConfig) -> GitGraphConfig {
-    let mut config = GitGraphConfig::default();
-
-    // Copy theme from the common frontmatter config
-    config.theme = frontmatter.theme.to_string();
+    let mut config = GitGraphConfig {
+        theme: frontmatter.theme.to_string(),
+        ..GitGraphConfig::default()
+    };
 
     // Parse gitGraph-specific options from raw frontmatter lines
     let fm_text = frontmatter.raw_lines.join("\n");
@@ -218,10 +218,7 @@ fn parse_commit(line: &str, graph: &mut GitGraph, counter: &mut u8) -> Result<()
     }
 
     // Generate ID if not provided, but always consume a counter slot
-    let id = commit_id.unwrap_or_else(|| {
-        let id = (*counter as char).to_string();
-        id
-    });
+    let id = commit_id.unwrap_or_else(|| (*counter as char).to_string());
     // Always advance counter (custom ID consumes a slot too)
     *counter += 1;
 
@@ -320,10 +317,8 @@ fn parse_merge(line: &str, graph: &mut GitGraph, counter: &mut u8) -> Result<(),
     let source_branch = parts[1].to_string();
 
     // Merge commits get a unique auto-generated ID from the counter (like regular commits)
-    let commit_id = extract_quoted_value(line, "id:").unwrap_or_else(|| {
-        let id = (*counter as char).to_string();
-        id
-    });
+    let commit_id =
+        extract_quoted_value(line, "id:").unwrap_or_else(|| (*counter as char).to_string());
     // Always advance counter
     *counter += 1;
 

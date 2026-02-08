@@ -219,40 +219,52 @@ pub fn get_opposite(d: Direction) -> Direction {
 /// Determine 8-way direction from one coordinate to another
 pub fn determine_direction(from: GridCoord, to: GridCoord) -> Direction {
     if from.x == to.x {
-        return if from.y < to.y { DOWN } else { UP };
+        if from.y < to.y {
+            DOWN
+        } else {
+            UP
+        }
     } else if from.y == to.y {
-        return if from.x < to.x { RIGHT } else { LEFT };
+        if from.x < to.x {
+            RIGHT
+        } else {
+            LEFT
+        }
     } else if from.x < to.x {
-        return if from.y < to.y {
+        if from.y < to.y {
             LOWER_RIGHT
         } else {
             UPPER_RIGHT
-        };
+        }
+    } else if from.y < to.y {
+        LOWER_LEFT
     } else {
-        return if from.y < to.y {
-            LOWER_LEFT
-        } else {
-            UPPER_LEFT
-        };
+        UPPER_LEFT
     }
 }
 
 pub fn determine_direction_drawing(from: DrawingCoord, to: DrawingCoord) -> Direction {
     if from.x == to.x {
-        return if from.y < to.y { DOWN } else { UP };
+        if from.y < to.y {
+            DOWN
+        } else {
+            UP
+        }
     } else if from.y == to.y {
-        return if from.x < to.x { RIGHT } else { LEFT };
+        if from.x < to.x {
+            RIGHT
+        } else {
+            LEFT
+        }
     } else if from.x < to.x {
-        return if from.y < to.y {
+        if from.y < to.y {
             LOWER_RIGHT
         } else {
             UPPER_RIGHT
-        };
+        }
+    } else if from.y < to.y {
+        LOWER_LEFT
     } else {
-        return if from.y < to.y {
-            LOWER_LEFT
-        } else {
-            UPPER_LEFT
-        };
+        UPPER_LEFT
     }
 }

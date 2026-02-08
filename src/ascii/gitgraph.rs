@@ -56,7 +56,7 @@ pub fn render_gitgraph(graph: &GitGraph, use_ascii: bool) -> String {
 /// - Row 0: branch 0 commits
 /// - Row 1: connectors (\ and /)
 /// - Row 2: branch 1 commits
-/// etc.
+///   etc.
 fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
     let chars = if use_ascii {
         GitChars::ascii()
@@ -260,11 +260,7 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
                     // Check if this is part of a cascading fork (multiple branches from same parent)
                     let siblings = forks_by_parent.get(parent_id).map(|v| v.len()).unwrap_or(1);
 
-                    let row_diff = if child_row > parent_row {
-                        child_row - parent_row
-                    } else {
-                        parent_row - child_row
-                    };
+                    let row_diff = child_row.abs_diff(parent_row);
 
                     let fork_col = if has_ordered_branches {
                         // For ordered branches: column = parent_end + diagonal distance
@@ -315,11 +311,7 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
                     } else {
                         source.id.len()
                     };
-                    let row_diff = if source_row > commit_row {
-                        source_row - commit_row
-                    } else {
-                        commit_row - source_row
-                    };
+                    let row_diff = source_row.abs_diff(commit_row);
                     // Diagonal spans row_diff-1 intermediate rows, landing at the target
                     let merge_col = source_col + source_len + row_diff.max(1) - 1;
                     col = col.max(merge_col);
@@ -341,11 +333,7 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
 
                     // Position after source + diagonal distance
                     // Diagonal advances (row_diff - 1) columns (last step lands on target row)
-                    let row_diff = if cherry_row > source_row {
-                        cherry_row - source_row
-                    } else {
-                        source_row - cherry_row
-                    };
+                    let row_diff = cherry_row.abs_diff(source_row);
                     let cherry_col = source_col + source_len + row_diff - 1;
                     col = col.max(cherry_col);
                 }
@@ -505,11 +493,7 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
                             } else {
                                 source.id.len()
                             };
-                            let row_diff = if source_row > commit_row {
-                                source_row - commit_row
-                            } else {
-                                commit_row - source_row
-                            };
+                            let row_diff = source_row.abs_diff(commit_row);
                             let merge_col_needed = source_col + source_len + row_diff.max(1) - 1;
                             col = col.max(merge_col_needed);
                         }
@@ -548,11 +532,7 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
                             } else {
                                 source.id.len()
                             };
-                            let row_diff = if source_row > merge_row {
-                                source_row - merge_row
-                            } else {
-                                merge_row - source_row
-                            };
+                            let row_diff = source_row.abs_diff(merge_row);
                             let needed_col = source_col + source_len + row_diff.max(1) - 1;
 
                             if needed_col > current_merge_col {
@@ -603,11 +583,7 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
                             } else {
                                 source.id.len()
                             };
-                            let row_diff = if source_row > merge_row {
-                                source_row - merge_row
-                            } else {
-                                merge_row - source_row
-                            };
+                            let row_diff = source_row.abs_diff(merge_row);
 
                             // Skip downward merges into tagged branches (they use horizontal bridges)
                             if source_row < merge_row
@@ -874,10 +850,9 @@ fn render_horizontal(graph: &GitGraph, use_ascii: bool) -> String {
                                         if row == tag_row
                                             && check_x >= tag_start
                                             && check_x < tag_end
+                                            && tag_collision_row.is_none()
                                         {
-                                            if tag_collision_row.is_none() {
-                                                tag_collision_row = Some(row);
-                                            }
+                                            tag_collision_row = Some(row);
                                         }
                                     }
                                     check_x += 1;
@@ -1210,7 +1185,7 @@ fn render_vertical_tb(graph: &GitGraph, use_ascii: bool) -> String {
         if let Some(source_col) = merge_source_col {
             if source_col > commit_col {
                 let mut merge_line = String::new();
-                for c in 0..num_cols {
+                for (c, &branch_active) in active_branches[..num_cols].iter().enumerate() {
                     if c == commit_col {
                         if use_ascii {
                             merge_line.push(chars.v_line);
@@ -1235,20 +1210,12 @@ fn render_vertical_tb(graph: &GitGraph, use_ascii: bool) -> String {
                             merge_line.push('─');
                             merge_line.push('─');
                         }
-                    } else if active_branches[c] && c < source_col {
+                    } else if branch_active && c < source_col {
                         merge_line.push(chars.v_line);
-                        if !use_ascii {
-                            merge_line.push(' ');
-                        } else {
-                            merge_line.push(' ');
-                        }
+                        merge_line.push(' ');
                     } else {
                         merge_line.push(' ');
-                        if !use_ascii && c < source_col {
-                            merge_line.push(' ');
-                        } else {
-                            merge_line.push(' ');
-                        }
+                        merge_line.push(' ');
                     }
                 }
                 lines.push(merge_line.trim_end().to_string());
@@ -1268,7 +1235,7 @@ fn render_vertical_tb(graph: &GitGraph, use_ascii: bool) -> String {
             // Unicode fork: ├──C  (develop)
             if let Some(parent_col) = fork_parent_col {
                 if commit_col > parent_col {
-                    for c in 0..num_cols {
+                    for (c, &branch_active) in active_branches[..num_cols].iter().enumerate() {
                         if c == parent_col {
                             commit_line.push('├');
                             commit_line.push('─');
@@ -1288,8 +1255,7 @@ fn render_vertical_tb(graph: &GitGraph, use_ascii: bool) -> String {
                             let is_first_on_branch = graph
                                 .commits
                                 .iter()
-                                .filter(|cc| cc.branch == commit.branch)
-                                .next()
+                                .find(|cc| cc.branch == commit.branch)
                                 .map(|cc| cc.id == commit.id)
                                 .unwrap_or(false);
 
@@ -1299,7 +1265,7 @@ fn render_vertical_tb(graph: &GitGraph, use_ascii: bool) -> String {
                         } else if c > parent_col && c < commit_col {
                             commit_line.push('─');
                             commit_line.push('─');
-                        } else if active_branches[c] {
+                        } else if branch_active {
                             commit_line.push(chars.v_line);
                             commit_line.push(' ');
                         } else {
@@ -1318,8 +1284,8 @@ fn render_vertical_tb(graph: &GitGraph, use_ascii: bool) -> String {
 
                         if !next_is_fork && !next_is_merge {
                             let mut connector_line = String::new();
-                            for c in 0..num_cols {
-                                if active_branches[c] {
+                            for &branch_active in &active_branches[..num_cols] {
+                                if branch_active {
                                     connector_line.push(chars.v_line);
                                     connector_line.push(' ');
                                     if !use_ascii {
@@ -1346,7 +1312,7 @@ fn render_vertical_tb(graph: &GitGraph, use_ascii: bool) -> String {
             if let Some(parent_col) = fork_parent_col {
                 if commit_col > parent_col {
                     let mut fork_line = String::new();
-                    for c in 0..num_cols {
+                    for (c, &branch_active) in active_branches[..num_cols].iter().enumerate() {
                         if c == parent_col {
                             fork_line.push(chars.v_line);
                             fork_line.push(chars.fork_down);
@@ -1354,7 +1320,7 @@ fn render_vertical_tb(graph: &GitGraph, use_ascii: bool) -> String {
                             // Don't draw anything at the commit column - the \ leads here
                             fork_line.push(' ');
                             fork_line.push(' ');
-                        } else if active_branches[c] {
+                        } else if branch_active {
                             fork_line.push(chars.v_line);
                             fork_line.push(' ');
                         } else {
@@ -1368,7 +1334,7 @@ fn render_vertical_tb(graph: &GitGraph, use_ascii: bool) -> String {
         }
 
         // Draw normal commit line
-        for c in 0..num_cols {
+        for (c, &branch_active) in active_branches[..num_cols].iter().enumerate() {
             if c == commit_col {
                 // Draw commit label
                 let label = if !graph.config.show_commit_label {
@@ -1384,8 +1350,7 @@ fn render_vertical_tb(graph: &GitGraph, use_ascii: bool) -> String {
                 let is_first_on_branch = graph
                     .commits
                     .iter()
-                    .filter(|cc| cc.branch == commit.branch)
-                    .next()
+                    .find(|cc| cc.branch == commit.branch)
                     .map(|cc| cc.id == commit.id)
                     .unwrap_or(false);
 
@@ -1399,7 +1364,7 @@ fn render_vertical_tb(graph: &GitGraph, use_ascii: bool) -> String {
                         commit_line.push(' ');
                     }
                 }
-            } else if active_branches[c] {
+            } else if branch_active {
                 commit_line.push(chars.v_line);
                 commit_line.push(' ');
                 if !use_ascii {
@@ -1423,8 +1388,8 @@ fn render_vertical_tb(graph: &GitGraph, use_ascii: bool) -> String {
 
             if !next_is_fork && !next_is_merge {
                 let mut connector_line = String::new();
-                for c in 0..num_cols {
-                    if active_branches[c] {
+                for &branch_active in &active_branches[..num_cols] {
+                    if branch_active {
                         connector_line.push(chars.v_line);
                         connector_line.push(' ');
                         if !use_ascii {

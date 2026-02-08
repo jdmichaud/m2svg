@@ -50,8 +50,8 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
         let annotation_width = annotation_str.as_ref().map(|s| s.len()).unwrap_or(0) + 2 * padding;
         let header_width = cls.label.len() + 2 * padding;
 
-        let attr_lines: Vec<String> = cls.attributes.iter().map(|m| format_member(m)).collect();
-        let method_lines: Vec<String> = cls.methods.iter().map(|m| format_member(m)).collect();
+        let attr_lines: Vec<String> = cls.attributes.iter().map(format_member).collect();
+        let method_lines: Vec<String> = cls.methods.iter().map(format_member).collect();
 
         let attr_width = attr_lines.iter().map(|s| s.len()).max().unwrap_or(0) + 2 * padding;
         let method_width = method_lines.iter().map(|s| s.len()).max().unwrap_or(0) + 2 * padding;
@@ -793,14 +793,13 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
             }
         } else {
             // Arrow at target (bottom)
-            if rel.label.is_some() {
+            if let Some(lbl) = rel.label.as_ref() {
                 // Vertical line from source to mid_y (label row)
                 for y in (top_bottom_y + 1)..mid_y {
                     set_char(&mut canvas, top_center_x, y, line_v);
                 }
 
                 // Draw label (with space padding)
-                let lbl = rel.label.as_ref().unwrap();
                 let padded = format!(" {} ", lbl);
                 let label_start = top_center_x - (padded.len() as i32 / 2);
                 for (i, ch) in padded.chars().enumerate() {

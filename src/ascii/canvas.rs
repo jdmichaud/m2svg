@@ -198,7 +198,8 @@ pub fn merge_canvases(
                         let mx = mx_i32 as usize;
                         let my = my_i32 as usize;
                         // Grow canvas if needed
-                        if mx >= merged.len() || my >= merged.get(0).map(|v| v.len()).unwrap_or(0) {
+                        if mx >= merged.len() || my >= merged.first().map(|v| v.len()).unwrap_or(0)
+                        {
                             increase_size(&mut merged, mx, my);
                         }
                         if mx < merged.len() && my < merged[mx].len() {

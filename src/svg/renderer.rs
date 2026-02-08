@@ -18,14 +18,13 @@ pub fn render_svg(
     font: &str,
     transparent: bool,
 ) -> String {
-    let mut parts: Vec<String> = Vec::new();
-
-    // SVG root with CSS variables + style block + defs
-    parts.push(svg_open_tag(graph.width, graph.height, colors, transparent));
-    parts.push(build_style_block(font));
-    parts.push("<defs>".to_string());
-    parts.push(arrow_marker_defs());
-    parts.push("</defs>".to_string());
+    let mut parts: Vec<String> = vec![
+        svg_open_tag(graph.width, graph.height, colors, transparent),
+        build_style_block(font),
+        "<defs>".to_string(),
+        arrow_marker_defs(),
+        "</defs>".to_string(),
+    ];
 
     // 1. Group backgrounds (subgraph rectangles with header bands)
     for group in &graph.groups {
@@ -580,10 +579,8 @@ fn render_state_end(x: f64, y: f64, w: f64, h: f64) -> String {
 
 fn render_node_label(node: &PositionedNode) -> String {
     // State pseudostates have no label
-    if matches!(node.shape, NodeShape::StateStart | NodeShape::StateEnd) {
-        if node.label.is_empty() {
-            return String::new();
-        }
+    if matches!(node.shape, NodeShape::StateStart | NodeShape::StateEnd) && node.label.is_empty() {
+        return String::new();
     }
 
     let cx = node.x + node.width / 2.0;
@@ -625,14 +622,5 @@ pub fn escape_xml(text: &str) -> String {
 /// Format a float to match JavaScript's number-to-string behavior.
 /// JavaScript outputs full precision for floating point numbers.
 fn fmt_num(n: f64) -> String {
-    // Use JavaScript-compatible precision
-    // Rust's default float display matches JS for most cases
-    // Just need to handle integer values without decimal point
-    let s = format!("{}", n);
-    // If it already looks good (has decimal or is integer), return as-is
-    if s.contains('.') || !s.contains('e') {
-        s
-    } else {
-        s
-    }
+    format!("{}", n)
 }

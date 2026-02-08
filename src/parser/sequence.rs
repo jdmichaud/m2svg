@@ -7,6 +7,15 @@ use crate::types::{
 use regex::Regex;
 use std::collections::HashSet;
 
+lazy_static::lazy_static! {
+    static ref ACTOR_RE: Regex = Regex::new(r"^(participant|actor)\s+(\S+?)(?:\s+as\s+(.+))?$").unwrap();
+    static ref NOTE_RE: Regex = Regex::new(r"(?i)^Note\s+(left of|right of|over)\s+([^:]+):\s*(.+)$").unwrap();
+    static ref BLOCK_RE: Regex = Regex::new(r"^(loop|alt|opt|par|critical|break|rect)\s*(.*)$").unwrap();
+    static ref DIVIDER_RE: Regex = Regex::new(r"^(else|and)\s*(.*)$").unwrap();
+    static ref MSG_RE: Regex = Regex::new(r"^(\S+?)\s*(--?>?>|--?[)x]|--?>>|--?>)\s*([+-]?)(\S+?)\s*:\s*(.+)$").unwrap();
+    static ref SIMPLE_MSG_RE: Regex = Regex::new(r"^(\S+?)\s*(->>|-->>|-\)|--\)|-x|--x|->|-->)\s*([+-]?)(\S+?)\s*:\s*(.+)$").unwrap();
+}
+
 /// Parse a Mermaid sequence diagram
 pub fn parse_sequence_diagram(lines: &[&str]) -> Result<SequenceDiagram, String> {
     let mut diagram = SequenceDiagram::new();
@@ -17,8 +26,7 @@ pub fn parse_sequence_diagram(lines: &[&str]) -> Result<SequenceDiagram, String>
         let line = *line;
 
         // Participant / Actor declaration
-        let actor_re = Regex::new(r"^(participant|actor)\s+(\S+?)(?:\s+as\s+(.+))?$").unwrap();
-        if let Some(caps) = actor_re.captures(line) {
+        if let Some(caps) = ACTOR_RE.captures(line) {
             let type_str = &caps[1];
             let id = caps[2].to_string();
             let label = caps
@@ -43,9 +51,7 @@ pub fn parse_sequence_diagram(lines: &[&str]) -> Result<SequenceDiagram, String>
         }
 
         // Note
-        let note_re =
-            Regex::new(r"(?i)^Note\s+(left of|right of|over)\s+([^:]+):\s*(.+)$").unwrap();
-        if let Some(caps) = note_re.captures(line) {
+        if let Some(caps) = NOTE_RE.captures(line) {
             let pos_str = caps[1].to_lowercase();
             let actors_str = caps[2].trim();
             let text = caps[3].trim().to_string();
@@ -76,8 +82,7 @@ pub fn parse_sequence_diagram(lines: &[&str]) -> Result<SequenceDiagram, String>
         }
 
         // Block start
-        let block_re = Regex::new(r"^(loop|alt|opt|par|critical|break|rect)\s*(.*)$").unwrap();
-        if let Some(caps) = block_re.captures(line) {
+        if let Some(caps) = BLOCK_RE.captures(line) {
             let block_type = match &caps[1] {
                 "loop" => BlockType::Loop,
                 "alt" => BlockType::Alt,
@@ -104,8 +109,7 @@ pub fn parse_sequence_diagram(lines: &[&str]) -> Result<SequenceDiagram, String>
         }
 
         // Block divider
-        let divider_re = Regex::new(r"^(else|and)\s*(.*)$").unwrap();
-        if let Some(caps) = divider_re.captures(line) {
+        if let Some(caps) = DIVIDER_RE.captures(line) {
             if let Some(current) = block_stack.last_mut() {
                 let label = caps
                     .get(2)
@@ -139,10 +143,7 @@ pub fn parse_sequence_diagram(lines: &[&str]) -> Result<SequenceDiagram, String>
         }
 
         // Message patterns
-        let msg_re =
-            Regex::new(r"^(\S+?)\s*(--?>?>|--?[)x]|--?>>|--?>)\s*([+-]?)(\S+?)\s*:\s*(.+)$")
-                .unwrap();
-        if let Some(caps) = msg_re.captures(line) {
+        if let Some(caps) = MSG_RE.captures(line) {
             let from = caps[1].to_string();
             let arrow = &caps[2];
             let activation_mark = caps.get(3).map(|m| m.as_str()).unwrap_or("");
@@ -176,10 +177,7 @@ pub fn parse_sequence_diagram(lines: &[&str]) -> Result<SequenceDiagram, String>
         }
 
         // Simplified message format
-        let simple_msg_re =
-            Regex::new(r"^(\S+?)\s*(->>|-->>|-\)|--\)|-x|--x|->|-->)\s*([+-]?)(\S+?)\s*:\s*(.+)$")
-                .unwrap();
-        if let Some(caps) = simple_msg_re.captures(line) {
+        if let Some(caps) = SIMPLE_MSG_RE.captures(line) {
             let from = caps[1].to_string();
             let arrow = &caps[2];
             let activation_mark = caps.get(3).map(|m| m.as_str()).unwrap_or("");

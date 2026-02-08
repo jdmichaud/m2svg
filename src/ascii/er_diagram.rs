@@ -92,11 +92,7 @@ fn render_general_er(diagram: &ErDiagram, config: &AsciiConfig) -> Result<String
     // Format attributes for each entity
     let attrs_for: Vec<Vec<String>> = ordered_ids
         .iter()
-        .map(|id| {
-            entity_for(id)
-                .map(|e| format_entity_attrs(e))
-                .unwrap_or_default()
-        })
+        .map(|id| entity_for(id).map(format_entity_attrs).unwrap_or_default())
         .collect();
 
     // Find relationship between two adjacent entities (if any)
@@ -145,7 +141,7 @@ fn render_general_er(diagram: &ErDiagram, config: &AsciiConfig) -> Result<String
             let line_len = label_padded_len.max(2);
 
             // Build the connector: card1 + line_chars + card2
-            let line_fill: String = std::iter::repeat(fill_char).take(line_len).collect();
+            let line_fill: String = std::iter::repeat_n(fill_char, line_len).collect();
             let connector = format!("{}{}{}", card1, line_fill, card2);
             let width = connector.chars().count();
 

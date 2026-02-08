@@ -43,7 +43,7 @@ fn main() {
                     .expect("Failed to read from stdin");
                 buf
             } else if Path::new(&s).exists() {
-                fs::read_to_string(&s).expect(&format!("Failed to read file: {}", s))
+                fs::read_to_string(&s).unwrap_or_else(|_| panic!("Failed to read file: {}", s))
             } else {
                 // Treat as inline mermaid content
                 s.replace("\\n", "\n")

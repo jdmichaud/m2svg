@@ -257,8 +257,8 @@ fn draw_path(
 
     let mut previous_coord = path[0];
 
-    for i in 1..path.len() {
-        let next_coord = path[i];
+    for next_coord in &path[1..] {
+        let next_coord = *next_coord;
         let prev_dc = grid_to_drawing_coord(graph, previous_coord, None);
         let next_dc = grid_to_drawing_coord(graph, next_coord, None);
 

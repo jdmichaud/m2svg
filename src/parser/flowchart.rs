@@ -428,7 +428,7 @@ fn parse_edge_line(line: &str, graph: &mut MermaidGraph, subgraph_stack: &mut [M
             let arrow_op = &caps[2];
             let label = caps.get(3).map(|m| m.as_str().to_string());
 
-            remaining = &remaining[caps[0].len()..].trim_start();
+            remaining = remaining[caps[0].len()..].trim_start();
 
             // Determine edge style and arrow end
             let (style, has_arrow_end) = match arrow_op {
@@ -492,7 +492,7 @@ fn consume_node_group<'a>(
                     if let Some(last_id) = ids.last() {
                         graph.class_assignments.insert(last_id.clone(), class_name);
                     }
-                    remaining = &remaining[caps[0].len()..].trim_start();
+                    remaining = remaining[caps[0].len()..].trim_start();
                 }
             }
 
