@@ -272,6 +272,7 @@ unicode_test!(class, cls_methods);
 unicode_test!(er, er_attributes);
 unicode_test!(er, er_basic);
 unicode_test!(er, er_identifying);
+unicode_test!(er, er_multi_relationship);
 
 // =============================================================================
 // Unicode Sequence diagram tests
