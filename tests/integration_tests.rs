@@ -194,6 +194,7 @@ ascii_test!(class, cls_methods);
 ascii_test!(er, er_attributes);
 ascii_test!(er, er_basic);
 ascii_test!(er, er_identifying);
+ascii_test!(er, er_multi_relationship);
 
 // =============================================================================
 // ASCII Sequence diagram tests

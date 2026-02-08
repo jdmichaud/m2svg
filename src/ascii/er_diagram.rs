@@ -32,65 +32,129 @@ pub fn render_er_ascii(diagram: &ErDiagram, config: &AsciiConfig) -> Result<Stri
         return render_er_with_attributes(diagram, config);
     }
     
-    // Calculate dimensions for each entity
-    let mut entity_boxes: Vec<EntityBox> = Vec::new();
-    
-    for entity in &diagram.entities {
-        let header_width = entity.label.len() + 2;
-        
-        let attr_lines: Vec<String> = entity.attributes
-            .iter()
-            .map(|a| {
-                let key_str = a.keys.iter()
-                    .map(|k| match k {
-                        crate::types::ErKey::PK => "PK",
-                        crate::types::ErKey::FK => "FK",
-                        crate::types::ErKey::UK => "UK",
-                    })
-                    .collect::<Vec<_>>()
-                    .join(" ");
-                if key_str.is_empty() {
-                    format!("{} {}", a.attr_type, a.name)
-                } else {
-                    format!("{} {} {}", a.attr_type, a.name, key_str)
-                }
-            })
-            .collect();
-        
-        let attr_width = attr_lines.iter().map(|s| s.len()).max().unwrap_or(0) + 2;
-        let box_width = header_width.max(attr_width) + 2;
-        let box_height = 3 + attr_lines.len(); // header + attrs + borders
-        
-        entity_boxes.push(EntityBox {
-            _id: entity.id.clone(),
-            label: entity.label.clone(),
-            _attr_lines: attr_lines,
-            width: box_width,
-            height: box_height.max(3),
-            x: 0,
-            y: 0,
-        });
+    // General case: render entities in relationship-chain order with inline relationships
+    render_general_er(diagram, config)
+}
+
+/// General case: render multiple entities chained by relationships inline.
+///
+/// Entities are ordered by following the relationship chain. Each relationship
+/// is drawn as a label + cardinality connector in the gap between adjacent boxes,
+/// matching the inline style used by the simple single-relationship renderer.
+fn render_general_er(diagram: &ErDiagram, config: &AsciiConfig) -> Result<String, String> {
+    let use_ascii = config.use_ascii;
+
+    // Build an ordered sequence of entities by walking the relationship chain.
+    // Start with the first entity mentioned in the first relationship and expand.
+    let mut ordered_ids: Vec<String> = Vec::new();
+    if !diagram.relationships.is_empty() {
+        ordered_ids.push(diagram.relationships[0].entity1.clone());
     }
-    
-    // Simple layout: stack entities horizontally
-    let spacing = 6;
-    let mut cur_x = 0;
-    for eb in &mut entity_boxes {
-        eb.x = cur_x as i32;
-        eb.y = 0;
-        cur_x += eb.width + spacing;
+    for rel in &diagram.relationships {
+        if !ordered_ids.contains(&rel.entity1) {
+            ordered_ids.push(rel.entity1.clone());
+        }
+        if !ordered_ids.contains(&rel.entity2) {
+            ordered_ids.push(rel.entity2.clone());
+        }
     }
-    
-    let total_w = entity_boxes.iter().map(|eb| eb.x as usize + eb.width).max().unwrap_or(1) + 2;
-    let total_h = entity_boxes.iter().map(|eb| eb.y as usize + eb.height).max().unwrap_or(1) + 2;
-    
+    // Add any entities not referenced by relationships
+    for ent in &diagram.entities {
+        if !ordered_ids.contains(&ent.id) {
+            ordered_ids.push(ent.id.clone());
+        }
+    }
+
+    // Look up labels
+    let label_for = |id: &str| -> String {
+        diagram.entities.iter()
+            .find(|e| e.id == id)
+            .map(|e| e.label.clone())
+            .unwrap_or_else(|| id.to_string())
+    };
+
+    // Find relationship between two adjacent entities (if any)
+    let rel_between = |id1: &str, id2: &str| -> Option<&crate::types::ErRelationship> {
+        diagram.relationships.iter().find(|r| {
+            (r.entity1 == id1 && r.entity2 == id2) ||
+            (r.entity1 == id2 && r.entity2 == id1)
+        })
+    };
+
+    // For each adjacent pair, compute the relationship connector string and label
+    struct Gap {
+        label: String,
+        connector: String,
+        width: usize,
+    }
+
+    let mut gaps: Vec<Gap> = Vec::new();
+    for i in 0..ordered_ids.len().saturating_sub(1) {
+        let id1 = &ordered_ids[i];
+        let id2 = &ordered_ids[i + 1];
+        if let Some(rel) = rel_between(id1, id2) {
+            // Determine direction: if entity1 matches id1, draw card1--card2; otherwise reverse
+            let (c1, c2) = if rel.entity1 == *id1 {
+                (rel.cardinality1, rel.cardinality2)
+            } else {
+                (rel.cardinality2, rel.cardinality1)
+            };
+            let card1 = cardinality_to_str_left(c1, use_ascii);
+            let card2 = cardinality_to_str_right(c2, use_ascii);
+            let line_style = if rel.identifying { if use_ascii { "--" } else { "──" } } else { ".." };
+            let connector = format!("{}{}{}", card1, line_style, card2);
+            let label = rel.label.clone();
+            let width = connector.chars().count().max(label.chars().count());
+            gaps.push(Gap { label, connector, width });
+        } else {
+            // No relationship — just spacing
+            gaps.push(Gap {
+                label: String::new(),
+                connector: String::new(),
+                width: 6,
+            });
+        }
+    }
+
+    // Compute entity box widths
+    let entity_widths: Vec<usize> = ordered_ids.iter()
+        .map(|id| label_for(id).len() + 4)
+        .collect();
+
+    // Compute positions — each entity box is placed after the previous box + gap
+    let mut positions: Vec<usize> = Vec::new();
+    let mut cur_x = 0usize;
+    for (i, w) in entity_widths.iter().enumerate() {
+        positions.push(cur_x);
+        if i < gaps.len() {
+            cur_x += w + gaps[i].width;
+        }
+    }
+
+    let total_w = positions.last().unwrap_or(&0) + entity_widths.last().unwrap_or(&0) + 3;
+    let box_height = 3i32;
+    let total_h = box_height as usize + 1;
+
     let mut canvas = mk_canvas(total_w, total_h);
-    
-    // Draw entity boxes
-    for eb in &entity_boxes {
-        draw_entity_box(&mut canvas, eb, use_ascii);
+
+    // Draw entity boxes and gap connectors
+    for (i, id) in ordered_ids.iter().enumerate() {
+        let label = label_for(id);
+        let x = positions[i] as i32;
+        let w = entity_widths[i] as i32;
+        draw_simple_box(&mut canvas, x, 0, w, box_height, &label, use_ascii);
+
+        // Draw the gap connector to the right of this box
+        if i < gaps.len() {
+            let gap = &gaps[i];
+            let gap_x = x + w;
+            // Row 0 (top line of boxes): draw the label
+            draw_text(&mut canvas, gap_x, 0, &gap.label);
+            // Row 1 (middle line of boxes): draw the connector
+            draw_text(&mut canvas, gap_x, 1, &gap.connector);
+        }
     }
-    
+
     Ok(canvas_to_string(&canvas))
 }
 
@@ -121,8 +185,8 @@ fn render_simple_er(diagram: &ErDiagram, config: &AsciiConfig) -> Result<String,
     let box_height = 3;
     
     // Cardinality symbols
-    let card1 = cardinality_to_str(rel.cardinality1, use_ascii);
-    let card2 = cardinality_to_str(rel.cardinality2, use_ascii);
+    let card1 = cardinality_to_str_left(rel.cardinality1, use_ascii);
+    let card2 = cardinality_to_str_right(rel.cardinality2, use_ascii);
     let line_style = if rel.identifying { if use_ascii { "--" } else { "───" } } else { ".." };
     
     // Total width - the label and rel_str share the same space
@@ -210,8 +274,8 @@ fn render_er_with_attributes(diagram: &ErDiagram, config: &AsciiConfig) -> Resul
     }).unwrap_or_default();
     
     // Cardinality symbols
-    let card1 = cardinality_to_str(rel.cardinality1, use_ascii);
-    let card2 = cardinality_to_str(rel.cardinality2, use_ascii);
+    let card1 = cardinality_to_str_left(rel.cardinality1, use_ascii);
+    let card2 = cardinality_to_str_right(rel.cardinality2, use_ascii);
     let line_style = if rel.identifying { if use_ascii { "--" } else { "───" } } else { ".." };
     let rel_str = format!("{}{}{}", card1, line_style, card2);
     
@@ -347,13 +411,14 @@ fn render_er_with_attributes(diagram: &ErDiagram, config: &AsciiConfig) -> Resul
     Ok(canvas_to_string(&canvas))
 }
 
-fn cardinality_to_str(card: Cardinality, use_ascii: bool) -> &'static str {
+/// Left-side cardinality symbol (entity is to the left of the connector)
+fn cardinality_to_str_left(card: Cardinality, use_ascii: bool) -> &'static str {
     if use_ascii {
         match card {
             Cardinality::One => "||",
             Cardinality::ZeroOne => "o|",
             Cardinality::Many => "}|",
-            Cardinality::ZeroMany => "o{",
+            Cardinality::ZeroMany => "}o",
         }
     } else {
         match card {
@@ -365,47 +430,23 @@ fn cardinality_to_str(card: Cardinality, use_ascii: bool) -> &'static str {
     }
 }
 
-struct EntityBox {
-    _id: String,
-    label: String,
-    _attr_lines: Vec<String>,
-    width: usize,
-    height: usize,
-    x: i32,
-    y: i32,
-}
-
-fn draw_entity_box(canvas: &mut super::types::Canvas, eb: &EntityBox, use_ascii: bool) {
-    let (h_line, v_line, tl, tr, bl, br) = if use_ascii {
-        ('-', '|', '+', '+', '+', '+')
+/// Right-side cardinality symbol (entity is to the right of the connector)
+fn cardinality_to_str_right(card: Cardinality, use_ascii: bool) -> &'static str {
+    if use_ascii {
+        match card {
+            Cardinality::One => "||",
+            Cardinality::ZeroOne => "|o",
+            Cardinality::Many => "|{",
+            Cardinality::ZeroMany => "o{",
+        }
     } else {
-        ('─', '│', '┌', '┐', '└', '┘')
-    };
-    
-    let x = eb.x;
-    let y = eb.y;
-    let w = eb.width as i32;
-    let h = eb.height as i32;
-    
-    // Top border
-    set_char(canvas, x, y, tl);
-    for i in 1..(w - 1) {
-        set_char(canvas, x + i, y, h_line);
+        match card {
+            Cardinality::One => "║",
+            Cardinality::ZeroOne => "o│",
+            Cardinality::Many => "╟",
+            Cardinality::ZeroMany => "o╟",
+        }
     }
-    set_char(canvas, x + w - 1, y, tr);
-    
-    // Label row
-    set_char(canvas, x, y + 1, v_line);
-    let label_x = x + 2;
-    draw_text(canvas, label_x, y + 1, &eb.label);
-    set_char(canvas, x + w - 1, y + 1, v_line);
-    
-    // Bottom border
-    set_char(canvas, x, y + h - 1, bl);
-    for i in 1..(w - 1) {
-        set_char(canvas, x + i, y + h - 1, h_line);
-    }
-    set_char(canvas, x + w - 1, y + h - 1, br);
 }
 
 fn draw_simple_box(canvas: &mut super::types::Canvas, x: i32, y: i32, w: i32, h: i32, label: &str, use_ascii: bool) {
