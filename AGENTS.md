@@ -93,6 +93,13 @@ cargo fmt
 
 # Lint
 cargo clippy
+
+# Regenerate test fixtures (after rendering changes)
+./regen_fixtures.sh                          # All fixtures
+./regen_fixtures.sh class                    # All class diagram fixtures
+./regen_fixtures.sh class/cls_basic          # One specific fixture (ASCII + Unicode)
+./regen_fixtures.sh --svg class              # SVG class fixtures only
+./regen_fixtures.sh --svg class/class_basic  # One SVG fixture
 ```
 
 ## Project Structure
@@ -212,7 +219,8 @@ testdata/
 ### Fixing rendering issues
 1. Check the relevant renderer in `src/ascii/` or `src/svg/`
 2. Labels are drawn in input order (later overwrites earlier for overlap handling)
-3. Use test fixtures to verify expected output
+3. After fixing, regenerate affected fixtures: `./regen_fixtures.sh <subdir>` or `./regen_fixtures.sh <subdir>/<name>`
+4. Run `cargo test` to verify
 
 ### Adding SVG support for a diagram type
 1. Create `src/svg/<diagram>.rs` with render function
