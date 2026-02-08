@@ -1,0 +1,232 @@
+classDiagram
+direction LR
+
+%% =========================
+%% Core Users & Auth
+%% =========================
+class User {
+  +UUID id
+  +String email
+  +String passwordHash
+  +UserStatus status
+  +DateTime createdAt
+  +login()
+  +logout()
+}
+
+class Customer {
+  +String firstName
+  +String lastName
+  +getOrderHistory()
+}
+
+class Admin {
+  +String role
+  +banUser()
+  +refundOrder()
+}
+
+class Address {
+  +String street
+  +String city
+  +String country
+  +String zipCode
+}
+
+class Session {
+  +UUID sessionId
+  +DateTime expiresAt
+  +isValid()
+}
+
+User <|-- Customer
+User <|-- Admin
+User "1" o-- "*" Address
+User "1" o-- "*" Session
+
+%% =========================
+%% Products & Inventory
+%% =========================
+class Product {
+  +UUID productId
+  +String name
+  +String description
+  +Decimal price
+  +ProductStatus status
+}
+
+class Category {
+  +UUID categoryId
+  +String name
+}
+
+class InventoryItem {
+  +UUID inventoryId
+  +int quantity
+  +reserve()
+  +release()
+}
+
+class Supplier {
+  +UUID supplierId
+  +String name
+}
+
+Product "*" -- "*" Category
+Product "1" *-- "1" InventoryItem
+Supplier "1" -- "*" InventoryItem
+
+%% =========================
+%% Orders & Cart
+%% =========================
+class ShoppingCart {
+  +UUID cartId
+  +addItem()
+  +removeItem()
+  +clear()
+}
+
+class CartItem {
+  +int quantity
+  +Decimal subtotal()
+}
+
+class Order {
+  +UUID orderId
+  +OrderStatus status
+  +DateTime placedAt
+  +calculateTotal()
+}
+
+class OrderItem {
+  +int quantity
+  +Decimal price
+}
+
+Customer "1" -- "1" ShoppingCart
+ShoppingCart "1" *-- "*" CartItem
+CartItem "*" --> "1" Product
+
+Customer "1" -- "*" Order
+Order "1" *-- "*" OrderItem
+OrderItem "*" --> "1" Product
+
+%% =========================
+%% Payments
+%% =========================
+class Payment {
+  <<abstract>>
+  +UUID paymentId
+  +Decimal amount
+  +PaymentStatus status
+  +process()
+}
+
+class CreditCardPayment {
+  +String last4Digits
+  +authorize()
+}
+
+class PayPalPayment {
+  +String paypalAccount
+  +redirectToPayPal()
+}
+
+class Invoice {
+  +UUID invoiceId
+  +generatePDF()
+}
+
+Payment <|-- CreditCardPayment
+Payment <|-- PayPalPayment
+Order "1" -- "1" Payment
+Order "1" -- "1" Invoice
+
+%% =========================
+%% Shipping
+%% =========================
+class Shipment {
+  +UUID shipmentId
+  +ShipmentStatus status
+  +ship()
+  +deliver()
+}
+
+class Carrier {
+  +String name
+  +calculateRate()
+}
+
+Order "1" -- "1" Shipment
+Shipment "*" --> "1" Carrier
+Shipment "1" o-- "1" Address
+
+%% =========================
+%% Reviews & Notifications
+%% =========================
+class Review {
+  +int rating
+  +String comment
+  +DateTime createdAt
+}
+
+class Notification {
+  <<interface>>
+  +send()
+}
+
+class EmailNotification {
+  +String emailAddress
+}
+
+class SMSNotification {
+  +String phoneNumber
+}
+
+Customer "1" -- "*" Review
+Product "1" -- "*" Review
+
+Notification <|.. EmailNotification
+Notification <|.. SMSNotification
+User "1" -- "*" Notification
+
+%% =========================
+%% Enums
+%% =========================
+class UserStatus {
+  <<enumeration>>
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+class ProductStatus {
+  <<enumeration>>
+  DRAFT
+  ACTIVE
+  DISCONTINUED
+}
+
+class OrderStatus {
+  <<enumeration>>
+  PENDING
+  PAID
+  SHIPPED
+  COMPLETED
+  CANCELLED
+}
+
+class PaymentStatus {
+  <<enumeration>>
+  INITIATED
+  AUTHORIZED
+  FAILED
+  CAPTURED
+}
+
+class ShipmentStatus {
+  <<enumeration>>
+  CREATED
+  IN_TRANSIT
+  DELIVERED
+}
