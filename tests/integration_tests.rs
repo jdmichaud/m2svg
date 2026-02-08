@@ -187,10 +187,17 @@ ascii_test!(class, cls_all_relationships);
 ascii_test!(class, cls_annotation);
 ascii_test!(class, cls_association);
 ascii_test!(class, cls_basic);
+ascii_test!(class, cls_cardinality);
+ascii_test!(class, cls_comment);
 ascii_test!(class, cls_dependency);
+ascii_test!(class, cls_direction);
+ascii_test!(class, cls_generics);
 ascii_test!(class, cls_inheritance);
 ascii_test!(class, cls_inheritance_fanout);
+ascii_test!(class, cls_lollipop);
 ascii_test!(class, cls_methods);
+ascii_test!(class, cls_notes);
+ascii_test!(class, cls_separate_annotation);
 
 // =============================================================================
 // ASCII ER diagram tests
@@ -266,10 +273,17 @@ unicode_test!(class, cls_all_relationships);
 unicode_test!(class, cls_annotation);
 unicode_test!(class, cls_association);
 unicode_test!(class, cls_basic);
+unicode_test!(class, cls_cardinality);
+unicode_test!(class, cls_comment);
 unicode_test!(class, cls_dependency);
+unicode_test!(class, cls_direction);
+unicode_test!(class, cls_generics);
 unicode_test!(class, cls_inheritance);
 unicode_test!(class, cls_inheritance_fanout);
+unicode_test!(class, cls_lollipop);
 unicode_test!(class, cls_methods);
+unicode_test!(class, cls_notes);
+unicode_test!(class, cls_separate_annotation);
 
 // =============================================================================
 // Unicode ER diagram tests

@@ -296,9 +296,11 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
 
     let mut canvas = mk_canvas(total_w, total_h);
 
-    // Draw class boxes
-    for cb in class_boxes.values() {
-        draw_class_box(&mut canvas, cb, use_ascii);
+    // Draw class boxes (in definition order for deterministic overlap)
+    for cls in &diagram.classes {
+        if let Some(cb) = class_boxes.get(&cls.id) {
+            draw_class_box(&mut canvas, cb, use_ascii);
+        }
     }
 
     // Group inheritance relationships by parent for fan-out rendering
@@ -548,6 +550,14 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
             RelationshipType::Composition | RelationshipType::Aggregation
         );
 
+        // Determine cardinality placement: from_card near source, to_card near target
+        // "from" is top when from_box.y < to_box.y, otherwise bottom
+        let (top_card, bottom_card) = if from_box.y <= to_box.y {
+            (&rel.from_cardinality, &rel.to_cardinality)
+        } else {
+            (&rel.to_cardinality, &rel.from_cardinality)
+        };
+
         if marker_at_source {
             // Marker at source (top)
             let marker_y = top_bottom_y + 1;
@@ -571,13 +581,14 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
             }
         } else {
             // Arrow at target (bottom)
-            // Vertical line from source
-            for y in (top_bottom_y + 1)..mid_y {
-                set_char(&mut canvas, top_center_x, y, line_v);
-            }
+            if rel.label.is_some() {
+                // Vertical line from source to mid_y (label row)
+                for y in (top_bottom_y + 1)..mid_y {
+                    set_char(&mut canvas, top_center_x, y, line_v);
+                }
 
-            // Draw label if present (with space padding)
-            if let Some(ref lbl) = rel.label {
+                // Draw label (with space padding)
+                let lbl = rel.label.as_ref().unwrap();
                 let padded = format!(" {} ", lbl);
                 let label_start = top_center_x - (padded.len() as i32 / 2);
                 for (i, ch) in padded.chars().enumerate() {
@@ -586,15 +597,39 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
                         set_char(&mut canvas, x, mid_y, ch);
                     }
                 }
-            }
 
-            // Vertical line to arrow
-            for y in (mid_y + 1)..(bottom_top_y - 1) {
-                set_char(&mut canvas, bottom_center_x, y, line_v);
+                // Vertical line from below label to arrow
+                for y in (mid_y + 1)..(bottom_top_y - 1) {
+                    set_char(&mut canvas, bottom_center_x, y, line_v);
+                }
+            } else {
+                // No label: continuous vertical line from source to arrow
+                for y in (top_bottom_y + 1)..(bottom_top_y - 1) {
+                    set_char(&mut canvas, top_center_x, y, line_v);
+                }
             }
 
             // Arrow head pointing down
             set_char(&mut canvas, bottom_center_x, bottom_top_y - 1, marker_char);
+        }
+
+        // Draw cardinality labels
+        // Top cardinality: to the left of the vertical line, on the first line below the source box
+        if let Some(ref card) = top_card {
+            let card_y = top_bottom_y + 1;
+            let card_x = top_center_x - card.len() as i32;
+            draw_text(&mut canvas, card_x, card_y, card);
+        }
+        // Bottom cardinality: right after the arrow marker
+        if let Some(ref card) = bottom_card {
+            let card_y = bottom_top_y - 1;
+            let card_x = bottom_center_x + 1;
+            if card.len() > 1 {
+                let padded = format!(" {}", card);
+                draw_text(&mut canvas, card_x, card_y, &padded);
+            } else {
+                draw_text(&mut canvas, card_x, card_y, card);
+            }
         }
     }
 

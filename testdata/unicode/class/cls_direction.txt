@@ -1,0 +1,31 @@
+classDiagram
+  direction RL
+  class Student {
+    -idCard : IdCard
+  }
+  class IdCard{
+    -id : int
+    -name : string
+  }
+  class Bike{
+    -id : int
+    -name : string
+  }
+  Student "1" --o "1" IdCard : carries
+  Student "1" --o "1" Bike : rides
+---
+          ┌─────────────────┐              
+          │ Student         │              
+          ├─────────────────┤              
+          │ -idCard: IdCard │              
+          └─────────────────┘              
+                  1◇                       
+                                           
+                 rides                     
+         1         │          1            
+┌───────────────┐    ┌───────────────┐     
+│ IdCard        │    │ Bike          │     
+├───────────────┤    ├───────────────┤     
+│ -id: int      │    │ -id: int      │     
+│ -name: string │    │ -name: string │     
+└───────────────┘    └───────────────┘     

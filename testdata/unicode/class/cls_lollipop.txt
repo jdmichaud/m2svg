@@ -1,0 +1,29 @@
+classDiagram
+  class Class01 {
+    int amount
+    draw()
+  }
+  Class01 --() bar
+  Class02 --() bar
+
+  foo ()-- Class01
+---
+  ┌─┌─────┐─┐       
+  │ │ foo0│ │       
+  └─└─────┘─┘       
+       │            
+       │            
+       ▼            
+┌──────│──────┐     
+│ Class│1     │     
+├──────│──────┤     
+│ amoun│: int │     
+├──────│──────┤     
+│ draw │      │     
+└──────│──────┘     
+       │            
+       │            
+       ▼            
+    ┌─────┐         
+    │ bar │         
+    └─────┘         

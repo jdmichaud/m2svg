@@ -1,8 +1,8 @@
 //! Class diagram parser
 
 use crate::types::{
-    ClassDiagram, ClassMember, ClassNamespace, ClassNode, ClassRelationship, RelationshipType,
-    Visibility,
+    ClassDiagram, ClassMember, ClassNamespace, ClassNode, ClassNote, ClassRelationship,
+    RelationshipType, Visibility,
 };
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -10,6 +10,7 @@ use std::collections::HashMap;
 
 lazy_static! {
     static ref RE_ANNOTATION: Regex = Regex::new(r"^<<(\w+)>>$").unwrap();
+    static ref RE_SEPARATE_ANNOTATION: Regex = Regex::new(r"^<<(\w+)>>\s+(\S+)$").unwrap();
     static ref RE_NAMESPACE: Regex = Regex::new(r"^namespace\s+(\S+)\s*\{$").unwrap();
     static ref RE_CLASS_BLOCK: Regex = Regex::new(r"^class\s+(\S+?)(?:\s*~(\w+)~)?\s*\{$").unwrap();
     static ref RE_CLASS_ONLY: Regex = Regex::new(r"^class\s+(\S+?)(?:\s*~(\w+)~)?\s*$").unwrap();
@@ -18,6 +19,12 @@ lazy_static! {
     static ref RE_INLINE_ATTR: Regex = Regex::new(r"^(\S+?)\s*:\s*(.+)$").unwrap();
     static ref RE_METHOD: Regex = Regex::new(r"^(.+?)\(([^)]*)\)(?:\s*(.+))?$").unwrap();
     static ref RE_ATTR: Regex = Regex::new(r"^(\S+)\s+(.+)$").unwrap();
+    static ref RE_DIRECTION: Regex = Regex::new(r"^direction\s+(TB|BT|LR|RL)$").unwrap();
+    static ref RE_NOTE_GENERAL: Regex = Regex::new(r#"^note\s+"([^"]+)"$"#).unwrap();
+    static ref RE_NOTE_FOR: Regex = Regex::new(r#"^note\s+for\s+(\S+)\s+"([^"]+)"$"#).unwrap();
+    static ref RE_LOLLIPOP_RIGHT: Regex = Regex::new(r"^(\S+)\s+--\(\)\s+(\S+)$").unwrap();
+    static ref RE_LOLLIPOP_LEFT: Regex = Regex::new(r"^(\S+)\s+\(\)--\s+(\S+)$").unwrap();
+    static ref RE_CLASS_INLINE_ANNOT: Regex = Regex::new(r"^class\s+(\S+?)\s+<<(\w+)>>$").unwrap();
 }
 
 /// Parse a Mermaid class diagram
@@ -84,6 +91,30 @@ pub fn parse_class_diagram(lines: &[&str]) -> Result<ClassDiagram, String> {
             continue;
         }
 
+        // Direction keyword: `direction RL`
+        if let Some(caps) = RE_DIRECTION.captures(line) {
+            diagram.direction = caps[1].to_string();
+            continue;
+        }
+
+        // Note for a specific class: `note for Duck "can fly"`
+        if let Some(caps) = RE_NOTE_FOR.captures(line) {
+            diagram.notes.push(ClassNote {
+                text: caps[2].to_string(),
+                for_class: Some(caps[1].to_string()),
+            });
+            continue;
+        }
+
+        // General note: `note "This is a general note"`
+        if let Some(caps) = RE_NOTE_GENERAL.captures(line) {
+            diagram.notes.push(ClassNote {
+                text: caps[1].to_string(),
+                for_class: None,
+            });
+            continue;
+        }
+
         // Class block start: `class ClassName {` or `class ClassName~Generic~ {`
         if let Some(caps) = RE_CLASS_BLOCK.captures(line) {
             let id = caps[1].to_string();
@@ -122,6 +153,56 @@ pub fn parse_class_diagram(lines: &[&str]) -> Result<ClassDiagram, String> {
         if let Some(caps) = RE_INLINE_ANNOT.captures(line) {
             let cls = ensure_class(&mut class_map, &mut class_order, &caps[1]);
             cls.annotation = Some(caps[2].to_string());
+            continue;
+        }
+
+        // Class with inline annotation: `class Shape <<interface>>`
+        if let Some(caps) = RE_CLASS_INLINE_ANNOT.captures(line) {
+            let cls = ensure_class(&mut class_map, &mut class_order, &caps[1]);
+            cls.annotation = Some(caps[2].to_string());
+            continue;
+        }
+
+        // Separate annotation: `<<interface>> Shape`
+        if let Some(caps) = RE_SEPARATE_ANNOTATION.captures(line) {
+            let cls = ensure_class(&mut class_map, &mut class_order, &caps[2]);
+            cls.annotation = Some(caps[1].to_string());
+            continue;
+        }
+
+        // Lollipop interface: `Class01 --() bar`
+        if let Some(caps) = RE_LOLLIPOP_RIGHT.captures(line) {
+            let from = caps[1].to_string();
+            let to = caps[2].to_string();
+            ensure_class(&mut class_map, &mut class_order, &from);
+            ensure_class(&mut class_map, &mut class_order, &to);
+            diagram.relationships.push(ClassRelationship {
+                from: from.clone(),
+                to: to.clone(),
+                rel_type: RelationshipType::Association,
+                from_cardinality: None,
+                to_cardinality: None,
+                label: None,
+                marker_at_from: false,
+            });
+            continue;
+        }
+
+        // Lollipop interface: `foo ()-- Class01`
+        if let Some(caps) = RE_LOLLIPOP_LEFT.captures(line) {
+            let from = caps[1].to_string();
+            let to = caps[2].to_string();
+            ensure_class(&mut class_map, &mut class_order, &from);
+            ensure_class(&mut class_map, &mut class_order, &to);
+            diagram.relationships.push(ClassRelationship {
+                from: from.clone(),
+                to: to.clone(),
+                rel_type: RelationshipType::Association,
+                from_cardinality: None,
+                to_cardinality: None,
+                label: None,
+                marker_at_from: false,
+            });
             continue;
         }
 
@@ -198,6 +279,10 @@ fn parse_member(line: &str) -> Option<ParsedMember> {
         return None;
     }
 
+    // Convert ~ generics to <> before parsing
+    let converted = convert_tilde_generics(trimmed);
+    let trimmed = converted.as_str();
+
     // Extract visibility prefix
     let (visibility, rest) = if let Some(first_char) = trimmed.chars().next() {
         if matches!(first_char, '+' | '-' | '#' | '~') {
@@ -229,7 +314,28 @@ fn parse_member(line: &str) -> Option<ParsedMember> {
         });
     }
 
-    // Attribute: might be "Type name" or "name: Type" or just "name"
+    // Attribute: might be "Type name" or "name : Type" or just "name"
+    // Check for "name : type" format first (colon-separated)
+    if rest.contains(" : ") {
+        let parts: Vec<&str> = rest.splitn(2, " : ").collect();
+        if parts.len() == 2 {
+            let name = parts[0].trim();
+            let type_str = parts[1].trim();
+            let is_static = type_str.ends_with('$');
+            let is_abstract = type_str.ends_with('*');
+            return Some(ParsedMember {
+                member: ClassMember {
+                    visibility,
+                    name: name.trim_end_matches(['$', '*']).to_string(),
+                    member_type: Some(type_str.trim_end_matches(['$', '*']).to_string()),
+                    is_static,
+                    is_abstract,
+                },
+                is_method: false,
+            });
+        }
+    }
+
     if let Some(caps) = RE_ATTR.captures(rest) {
         let first = caps[1].trim();
         let second = caps[2].trim();
@@ -266,89 +372,92 @@ fn parse_member(line: &str) -> Option<ParsedMember> {
     })
 }
 
+/// Convert Mermaid `~` generic notation to `<>` notation.
+/// e.g., `List~int~` → `List<int>`, `List~List~int~~` → `List<List<int>>`
+fn convert_tilde_generics(s: &str) -> String {
+    if !s.contains('~') {
+        return s.to_string();
+    }
+
+    let mut result = String::with_capacity(s.len());
+    let chars: Vec<char> = s.chars().collect();
+    let mut i = 0;
+    let mut depth = 0;
+
+    while i < chars.len() {
+        if chars[i] == '~' {
+            // Look at context: if next char is `~` or end-of-string, it's a closing `>`
+            // If next char is alphanumeric or `(`, it's an opening `<`
+            if depth > 0
+                && (i + 1 >= chars.len()
+                    || chars[i + 1] == '~'
+                    || chars[i + 1] == ')'
+                    || chars[i + 1] == ' '
+                    || chars[i + 1] == ',')
+            {
+                result.push('>');
+                depth -= 1;
+            } else {
+                result.push('<');
+                depth += 1;
+            }
+        } else {
+            result.push(chars[i]);
+        }
+        i += 1;
+    }
+
+    result
+}
+
 fn parse_relationship(line: &str) -> Option<ClassRelationship> {
-    // Pattern: [FROM] ["card"] ARROW ["card"] [TO] [: label]
-    // Arrows: <|--, *--, o--, -->, ..|>, ..>
+    // Pattern: [FROM] ["card1"] ARROW ["card2"] [TO] [: label]
+    // Arrows: <|--, *--, o--, -->, ..|>, ..>, --, ..
     // marker_at_from: true = marker at 'from' end, false = marker at 'to' end
 
-    let patterns = [
+    let arrow_patterns: &[(&str, RelationshipType, bool)] = &[
         // Prefix markers - marker at 'from' side
-        (
-            r"^(\S+)\s+<\|--\s+(\S+)(?:\s*:\s*(.+))?$",
-            RelationshipType::Inheritance,
-            true,
-        ), // A <|-- B: marker at A
-        (
-            r"^(\S+)\s+\*--\s+(\S+)(?:\s*:\s*(.+))?$",
-            RelationshipType::Composition,
-            true,
-        ), // A *-- B: marker at A
-        (
-            r"^(\S+)\s+o--\s+(\S+)(?:\s*:\s*(.+))?$",
-            RelationshipType::Aggregation,
-            true,
-        ), // A o-- B: marker at A
+        ("<|--", RelationshipType::Inheritance, true),
+        ("*--", RelationshipType::Composition, true),
+        ("o--", RelationshipType::Aggregation, true),
         // Suffix markers - marker at 'to' side
-        (
-            r"^(\S+)\s+-->\s+(\S+)(?:\s*:\s*(.+))?$",
-            RelationshipType::Association,
-            false,
-        ), // A --> B: marker at B
-        (
-            r"^(\S+)\s+\.\.>\s+(\S+)(?:\s*:\s*(.+))?$",
-            RelationshipType::Dependency,
-            false,
-        ), // A ..> B: marker at B
-        (
-            r"^(\S+)\s+\.\.\|>\s+(\S+)(?:\s*:\s*(.+))?$",
-            RelationshipType::Realization,
-            false,
-        ), // A ..|> B: marker at B
+        ("-->", RelationshipType::Association, false),
+        ("..>", RelationshipType::Dependency, false),
+        ("..|>", RelationshipType::Realization, false),
         // Reversed patterns
-        (
-            r"^(\S+)\s+--\|>\s+(\S+)(?:\s*:\s*(.+))?$",
-            RelationshipType::Inheritance,
-            false,
-        ), // A --|> B: marker at B
-        (
-            r"^(\S+)\s+--\*\s+(\S+)(?:\s*:\s*(.+))?$",
-            RelationshipType::Composition,
-            false,
-        ), // A --* B: marker at B
-        (
-            r"^(\S+)\s+--o\s+(\S+)(?:\s*:\s*(.+))?$",
-            RelationshipType::Aggregation,
-            false,
-        ), // A --o B: marker at B
-        (
-            r"^(\S+)\s+<--\s+(\S+)(?:\s*:\s*(.+))?$",
-            RelationshipType::Association,
-            true,
-        ), // A <-- B: marker at A
-        (
-            r"^(\S+)\s+<\.\.\s+(\S+)(?:\s*:\s*(.+))?$",
-            RelationshipType::Dependency,
-            true,
-        ), // A <.. B: marker at A
-        (
-            r"^(\S+)\s+<\|\.\.\s+(\S+)(?:\s*:\s*(.+))?$",
-            RelationshipType::Realization,
-            true,
-        ), // A <|.. B: marker at A
+        ("--|>", RelationshipType::Inheritance, false),
+        ("--*", RelationshipType::Composition, false),
+        ("--o", RelationshipType::Aggregation, false),
+        ("<--", RelationshipType::Association, true),
+        ("<..", RelationshipType::Dependency, true),
+        ("<|..", RelationshipType::Realization, true),
+        // Plain links (must come after longer patterns)
+        ("--", RelationshipType::Association, false),
+        ("..", RelationshipType::Dependency, false),
     ];
 
-    for (pattern, rel_type, marker_at_from) in patterns {
-        if let Some(caps) = Regex::new(pattern).ok()?.captures(line) {
+    for &(arrow, rel_type, marker_at_from) in arrow_patterns {
+        // Try to find the arrow in the line, with spaces around it
+        // Must handle: FROM ARROW TO, FROM "card" ARROW "card" TO
+        let arrow_escaped = regex::escape(arrow);
+        let pattern = format!(
+            r#"^(\S+)\s+(?:"([^"]*)")?\s*{}\s*(?:"([^"]*)")?\s*(\S+)(?:\s*:\s*(.+))?$"#,
+            arrow_escaped
+        );
+
+        if let Some(caps) = Regex::new(&pattern).ok()?.captures(line) {
             let from = caps[1].to_string();
-            let to = caps[2].to_string();
-            let label = caps.get(3).map(|m| m.as_str().trim().to_string());
+            let from_card = caps.get(2).map(|m| m.as_str().to_string());
+            let to_card = caps.get(3).map(|m| m.as_str().to_string());
+            let to = caps[4].to_string();
+            let label = caps.get(5).map(|m| m.as_str().trim().to_string());
 
             return Some(ClassRelationship {
                 from,
                 to,
                 rel_type,
-                from_cardinality: None,
-                to_cardinality: None,
+                from_cardinality: from_card,
+                to_cardinality: to_card,
                 label,
                 marker_at_from,
             });

@@ -290,10 +290,20 @@ pub struct ClassNamespace {
 }
 
 #[derive(Debug, Clone)]
+pub struct ClassNote {
+    pub text: String,
+    /// If Some, this note is attached to a specific class
+    pub for_class: Option<String>,
+}
+
+#[derive(Debug, Clone)]
 pub struct ClassDiagram {
     pub classes: Vec<ClassNode>,
     pub relationships: Vec<ClassRelationship>,
     pub namespaces: Vec<ClassNamespace>,
+    pub notes: Vec<ClassNote>,
+    /// Layout direction: "TB" (default), "BT", "LR", "RL"
+    pub direction: String,
 }
 
 impl ClassDiagram {
@@ -302,6 +312,8 @@ impl ClassDiagram {
             classes: Vec::new(),
             relationships: Vec::new(),
             namespaces: Vec::new(),
+            notes: Vec::new(),
+            direction: "TB".to_string(),
         }
     }
 }
