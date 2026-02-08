@@ -2,6 +2,6 @@ erDiagram
     CUSTOMER ||--o{ ORDER : places
     ORDER ||--|{ LINE-ITEM : contains
 ---
-+----------+ places +-------+ contains +-----------+
-| CUSTOMER |||----o{| ORDER |||------|{| LINE-ITEM |
-+----------+        +-------+          +-----------+
++----------+   places   +-------+   contains   +-----------+
+| CUSTOMER |||--------o{| ORDER |||----------|{| LINE-ITEM |
++----------+            +-------+              +-----------+

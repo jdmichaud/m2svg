@@ -101,19 +101,31 @@ fn render_general_er(diagram: &ErDiagram, config: &AsciiConfig) -> Result<String
             };
             let card1 = cardinality_to_str_left(c1, use_ascii);
             let card2 = cardinality_to_str_right(c2, use_ascii);
-            let line_style = if rel.identifying { if use_ascii { "--" } else { "──" } } else { ".." };
-            let connector_base = format!("{}{}{}", card1, line_style, card2);
-            let label = format!(" {} ", rel.label); // pad label with spaces for breathing room
-            let width = connector_base.chars().count().max(label.chars().count());
-            // Pre-build the full-width connector: insert fill chars between line and right cardinality
-            let connector = if connector_base.chars().count() < width {
-                let fill_char = if rel.identifying { if use_ascii { '-' } else { '─' } } else { '.' };
-                let extra = width - connector_base.chars().count();
-                let fill: String = std::iter::repeat(fill_char).take(extra).collect();
-                format!("{}{}{}{}", card1, line_style, fill, card2)
-            } else {
-                connector_base
-            };
+            let card1_len = card1.chars().count();
+            let card2_len = card2.chars().count();
+            let is_identifying = rel.identifying;
+            let fill_char = if is_identifying { if use_ascii { '-' } else { '─' } } else { '.' };
+
+            // The label (with padding) must fit over the line portion only
+            let label_padded = format!(" {} ", rel.label);
+            let label_padded_len = label_padded.chars().count();
+            // Minimum 2 line chars (the base "--" or "..")
+            let line_len = label_padded_len.max(2);
+
+            // Build the connector: card1 + line_chars + card2
+            let line_fill: String = std::iter::repeat(fill_char).take(line_len).collect();
+            let connector = format!("{}{}{}", card1, line_fill, card2);
+            let width = connector.chars().count();
+
+            // Build the label string: centered over the line portion, offset by card1_len
+            let label_total_pad = line_len.saturating_sub(label_padded_len);
+            let label_left_pad = label_total_pad / 2;
+            let label = format!(
+                "{}{}",
+                " ".repeat(card1_len + label_left_pad),
+                label_padded.trim_end()
+            );
+
             gaps.push(Gap { label, connector, width });
         } else {
             // No relationship — just spacing
@@ -157,10 +169,9 @@ fn render_general_er(diagram: &ErDiagram, config: &AsciiConfig) -> Result<String
         if i < gaps.len() {
             let gap = &gaps[i];
             let gap_x = x + w;
-            // Row 0 (top line of boxes): draw the label centered in gap
-            let label_pad = (gap.width as i32 - gap.label.chars().count() as i32) / 2;
-            draw_text(&mut canvas, gap_x + label_pad.max(0), 0, &gap.label);
-            // Row 1 (middle line of boxes): draw the connector (already padded to full gap width)
+            // Row 0 (top line of boxes): draw the label (pre-offset to center over line portion)
+            draw_text(&mut canvas, gap_x, 0, &gap.label);
+            // Row 1 (middle line of boxes): draw the connector
             draw_text(&mut canvas, gap_x, 1, &gap.connector);
         }
     }
