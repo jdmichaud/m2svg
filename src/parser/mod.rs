@@ -100,14 +100,21 @@ pub fn parse_frontmatter(text: &str) -> (FrontmatterConfig, String) {
     // Extract common config
     let mut config = FrontmatterConfig {
         theme: MermaidTheme::Default,
+        title: None,
         raw_lines: fm_lines,
     };
 
-    // Parse theme from frontmatter
+    // Parse theme and title from frontmatter
     for line in fm_text.lines() {
         let trimmed = line.trim().trim_start_matches("- ");
         if let Some(val) = extract_yaml_value(trimmed, "theme:") {
             config.theme = MermaidTheme::from_str(val.trim().trim_matches('\'').trim_matches('"'));
+        }
+        if let Some(val) = extract_yaml_value(trimmed, "title:") {
+            let title = val.trim().trim_matches('\'').trim_matches('"').to_string();
+            if !title.is_empty() {
+                config.title = Some(title);
+            }
         }
     }
 

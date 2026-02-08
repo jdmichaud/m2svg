@@ -63,7 +63,7 @@ pub fn render_mermaid_ascii(
 
     let diagram = parser::parse_mermaid(text)?;
 
-    match diagram.diagram {
+    let result = match diagram.diagram {
         DiagramType::Flowchart(graph) => {
             let mut config = config;
             if graph.direction == crate::types::Direction::LR
@@ -87,5 +87,19 @@ pub fn render_mermaid_ascii(
         DiagramType::Class(diagram) => class_diagram::render_class_ascii(&diagram, &config),
         DiagramType::Er(diagram) => er_diagram::render_er_ascii(&diagram, &config),
         DiagramType::GitGraph(graph) => Ok(gitgraph::render_gitgraph(&graph, config.use_ascii)),
+    }?;
+
+    // Prepend title if present in frontmatter
+    if let Some(ref title) = diagram.frontmatter.title {
+        let diagram_width = result.lines().map(|l| l.len()).max().unwrap_or(0);
+        let title_width = title.len();
+        let pad = if title_width < diagram_width {
+            (diagram_width - title_width) / 2
+        } else {
+            0
+        };
+        Ok(format!("{}{}\n\n{}", " ".repeat(pad), title, result))
+    } else {
+        Ok(result)
     }
 }

@@ -172,6 +172,7 @@ ascii_test!(flowchart, three_nodes);
 ascii_test!(flowchart, three_nodes_single_line);
 ascii_test!(flowchart, two_layer_single_graph);
 ascii_test!(flowchart, two_layer_single_graph_longer_names);
+ascii_test!(flowchart, title_frontmatter);
 ascii_test!(flowchart, two_nodes_linked);
 ascii_test!(flowchart, two_nodes_longer_names);
 ascii_test!(flowchart, two_root_nodes);
@@ -254,6 +255,7 @@ unicode_test!(flowchart, two_nodes_linked);
 unicode_test!(flowchart, two_nodes_longer_names);
 unicode_test!(flowchart, two_root_nodes);
 unicode_test!(flowchart, two_root_nodes_longer_names);
+unicode_test!(flowchart, title_frontmatter);
 unicode_test!(flowchart, two_single_root_nodes);
 
 // =============================================================================
@@ -569,6 +571,7 @@ svg_test!(flowchart, flowchart_subgraphs);
 svg_test!(flowchart, flowchart_subroutine);
 svg_test!(flowchart, flowchart_td_direction);
 svg_test!(flowchart, flowchart_thick_link);
+svg_test!(flowchart, flowchart_title);
 svg_test!(flowchart, flowchart_trapezoid);
 svg_test!(sequence, sequence_activation);
 svg_test!(sequence, sequence_actors);

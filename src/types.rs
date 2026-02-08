@@ -563,6 +563,8 @@ impl std::fmt::Display for MermaidTheme {
 pub struct FrontmatterConfig {
     /// The theme to use for SVG rendering
     pub theme: MermaidTheme,
+    /// Optional diagram title from frontmatter
+    pub title: Option<String>,
     /// Raw frontmatter lines (for diagram-specific parsers to inspect)
     pub raw_lines: Vec<String>,
 }
@@ -571,6 +573,7 @@ impl Default for FrontmatterConfig {
     fn default() -> Self {
         Self {
             theme: MermaidTheme::Default,
+            title: None,
             raw_lines: Vec::new(),
         }
     }

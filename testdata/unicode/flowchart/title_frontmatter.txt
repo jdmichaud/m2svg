@@ -1,0 +1,23 @@
+---
+title: My Flowchart
+---
+graph TD
+  A --> B
+---
+  My Flowchart
+
+┌───┐ 
+│   │ 
+│ A │ 
+│   │ 
+└─┬─┘ 
+  │   
+  │   
+  │   
+  │   
+  ▼   
+┌───┐ 
+│   │ 
+│ B │ 
+│   │ 
+└───┘ 

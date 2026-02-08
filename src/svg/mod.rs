@@ -15,7 +15,7 @@ mod from_ascii;
 mod gitgraph;
 mod renderer;
 mod sequence;
-mod styles;
+pub mod styles;
 mod theme;
 mod types;
 
