@@ -249,7 +249,17 @@ fn format_member(m: &ClassMember) -> String {
         Visibility::Package => "~",
         Visibility::None => "",
     };
-    if let Some(ref member_type) = m.member_type {
+    if m.is_method {
+        let params = m.params.as_deref().unwrap_or("");
+        let has_params = !params.is_empty();
+        let ret = match &m.member_type {
+            Some(t) if !t.eq_ignore_ascii_case("void") && !has_params => {
+                format!(" : {}", t)
+            }
+            _ => String::new(),
+        };
+        format!("{}{}({}){}", vis, m.name, params, ret)
+    } else if let Some(ref member_type) = m.member_type {
         format!("{}{} : {}", vis, m.name, member_type)
     } else {
         format!("{}{}", vis, m.name)

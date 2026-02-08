@@ -251,6 +251,10 @@ pub struct ClassMember {
     pub member_type: Option<String>,
     pub is_static: bool,
     pub is_abstract: bool,
+    /// True if this member is a method (has parentheses)
+    pub is_method: bool,
+    /// Parameter names for methods (e.g. "amount, other")
+    pub params: Option<String>,
 }
 
 #[derive(Debug, Clone)]

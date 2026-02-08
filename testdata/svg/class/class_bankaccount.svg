@@ -17,4 +17,4 @@
     --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
   }
 </style><rect x="20.0" y="20.0" width="192.0" height="164.0" class="node"/>
-<text x="116.0" y="46.0" class="class-name" text-anchor="middle">BankAccount</text><line x1="20.0" y1="66.0" x2="212.0" y2="66.0" class="divider"/><text x="32.0" y="72.0" class="member">+owner : String</text><text x="32.0" y="92.0" class="member">+balance : Bigdecimal</text><line x1="20.0" y1="112.0" x2="212.0" y2="112.0" class="divider"/><text x="32.0" y="118.0" class="member">+deposit</text><text x="32.0" y="138.0" class="member">+withdrawal</text></svg>
+<text x="116.0" y="46.0" class="class-name" text-anchor="middle">BankAccount</text><line x1="20.0" y1="66.0" x2="212.0" y2="66.0" class="divider"/><text x="32.0" y="72.0" class="member">+owner : String</text><text x="32.0" y="92.0" class="member">+balance : Bigdecimal</text><line x1="20.0" y1="112.0" x2="212.0" y2="112.0" class="divider"/><text x="32.0" y="118.0" class="member">+deposit(amount)</text><text x="32.0" y="138.0" class="member">+withdrawal(amount)</text></svg>

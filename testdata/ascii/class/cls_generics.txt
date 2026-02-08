@@ -11,16 +11,16 @@ Square : +setMessages(List~string~ messages)
 Square : +getMessages() List~string~
 Square : +getDistanceMatrix() List~List~int~~
 ---
-+-------------------------------------+     
-|            Square<Shape>            |     
-+-------------------------------------+     
-| id: int                             |     
-| position: List<int>                 |     
-| -messages: List<string>             |     
-+-------------------------------------+     
-| setPoints                           |     
-| getPoints: List<int>                |     
-| +setMessages                        |     
-| +getMessages: List<string>          |     
-| +getDistanceMatrix: List<List<int>> |     
-+-------------------------------------+     
++---------------------------------------+     
+|             Square<Shape>             |     
++---------------------------------------+     
+| id: int                               |     
+| position: List<int>                   |     
+| -messages: List<string>               |     
++---------------------------------------+     
+| setPoints(points)                     |     
+| getPoints(): List<int>                |     
+| +setMessages(messages)                |     
+| +getMessages(): List<string>          |     
+| +getDistanceMatrix(): List<List<int>> |     
++---------------------------------------+     

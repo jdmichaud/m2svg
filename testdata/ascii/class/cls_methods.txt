@@ -7,13 +7,13 @@ classDiagram
     -validate() bool
   }
 ---
-+-----------------+     
-|   BankAccount   |     
-+-----------------+     
-| +owner: String  |     
-| -balance: int   |     
-+-----------------+     
-| +deposit: void  |     
-| +withdraw: bool |     
-| -validate: bool |     
-+-----------------+     
++-------------------+     
+|    BankAccount    |     
++-------------------+     
+| +owner: String    |     
+| -balance: int     |     
++-------------------+     
+| +deposit(amount)  |     
+| +withdraw(amount) |     
+| -validate(): bool |     
++-------------------+     

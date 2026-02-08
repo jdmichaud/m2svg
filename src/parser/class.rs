@@ -315,7 +315,24 @@ fn parse_member(line: &str) -> Option<ParsedMember> {
     // Check if it's a method (has parentheses)
     if let Some(caps) = RE_METHOD.captures(rest) {
         let name = caps[1].trim().to_string();
+        let params_raw = caps[2].trim();
         let type_str = caps.get(3).map(|m| m.as_str().trim().to_string());
+
+        // Extract just the parameter names (strip types)
+        // e.g. "int amount, String name" -> "amount, name"
+        let params = if params_raw.is_empty() {
+            None
+        } else {
+            let names: Vec<&str> = params_raw
+                .split(',')
+                .map(|p| {
+                    let p = p.trim();
+                    // If param has a space, last word is the name
+                    p.rsplit_once(' ').map(|(_, name)| name).unwrap_or(p)
+                })
+                .collect();
+            Some(names.join(", "))
+        };
 
         let is_static = name.ends_with('$') || rest.contains('$');
         let is_abstract = name.ends_with('*') || rest.contains('*');
@@ -327,6 +344,8 @@ fn parse_member(line: &str) -> Option<ParsedMember> {
                 member_type: type_str,
                 is_static,
                 is_abstract,
+                is_method: true,
+                params,
             },
             is_method: true,
         });
@@ -348,6 +367,8 @@ fn parse_member(line: &str) -> Option<ParsedMember> {
                     member_type: Some(type_str.trim_end_matches(['$', '*']).to_string()),
                     is_static,
                     is_abstract,
+                    is_method: false,
+                    params: None,
                 },
                 is_method: false,
             });
@@ -369,6 +390,8 @@ fn parse_member(line: &str) -> Option<ParsedMember> {
                 member_type: Some(first.to_string()),
                 is_static,
                 is_abstract,
+                is_method: false,
+                params: None,
             },
             is_method: false,
         });
@@ -385,6 +408,8 @@ fn parse_member(line: &str) -> Option<ParsedMember> {
             member_type: None,
             is_static,
             is_abstract,
+            is_method: false,
+            params: None,
         },
         is_method: false,
     })

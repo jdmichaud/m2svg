@@ -17,4 +17,4 @@
     --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
   }
 </style><rect x="20.0" y="20.0" width="128.0" height="144.0" class="node"/>
-<text x="84.0" y="46.0" class="annotation" text-anchor="middle">&lt;&lt;interface&gt;&gt;</text><text x="84.0" y="66.0" class="class-name" text-anchor="middle">Shape</text><line x1="20.0" y1="86.0" x2="148.0" y2="86.0" class="divider"/><text x="32.0" y="92.0" class="member">noOfVertices</text><line x1="20.0" y1="112.0" x2="148.0" y2="112.0" class="divider"/><text x="32.0" y="118.0" class="member">draw</text></svg>
+<text x="84.0" y="46.0" class="annotation" text-anchor="middle">&lt;&lt;interface&gt;&gt;</text><text x="84.0" y="66.0" class="class-name" text-anchor="middle">Shape</text><line x1="20.0" y1="86.0" x2="148.0" y2="86.0" class="divider"/><text x="32.0" y="92.0" class="member">noOfVertices</text><line x1="20.0" y1="112.0" x2="148.0" y2="112.0" class="divider"/><text x="32.0" y="118.0" class="member">draw()</text></svg>

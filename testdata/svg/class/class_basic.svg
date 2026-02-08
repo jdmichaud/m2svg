@@ -17,4 +17,4 @@
     --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
   }
 </style><rect x="20.0" y="20.0" width="152.0" height="164.0" class="node"/>
-<text x="96.0" y="46.0" class="class-name" text-anchor="middle">Animal</text><line x1="20.0" y1="66.0" x2="172.0" y2="66.0" class="divider"/><text x="32.0" y="72.0" class="member">+age : int</text><text x="32.0" y="92.0" class="member">+gender : String</text><line x1="20.0" y1="112.0" x2="172.0" y2="112.0" class="divider"/><text x="32.0" y="118.0" class="member">+isMammal</text><text x="32.0" y="138.0" class="member">+mate</text></svg>
+<text x="96.0" y="46.0" class="class-name" text-anchor="middle">Animal</text><line x1="20.0" y1="66.0" x2="172.0" y2="66.0" class="divider"/><text x="32.0" y="72.0" class="member">+age : int</text><text x="32.0" y="92.0" class="member">+gender : String</text><line x1="20.0" y1="112.0" x2="172.0" y2="112.0" class="divider"/><text x="32.0" y="118.0" class="member">+isMammal()</text><text x="32.0" y="138.0" class="member">+mate()</text></svg>
