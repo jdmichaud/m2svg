@@ -11,7 +11,7 @@ impl GridCoord {
     pub fn new(x: i32, y: i32) -> Self {
         Self { x, y }
     }
-    
+
     pub fn key(&self) -> String {
         format!("{},{}", self.x, self.y)
     }
@@ -189,14 +189,30 @@ pub fn grid_coord_direction(c: GridCoord, dir: Direction) -> GridCoord {
 
 /// Get the opposite direction
 pub fn get_opposite(d: Direction) -> Direction {
-    if d == UP { return DOWN; }
-    if d == DOWN { return UP; }
-    if d == LEFT { return RIGHT; }
-    if d == RIGHT { return LEFT; }
-    if d == UPPER_RIGHT { return LOWER_LEFT; }
-    if d == UPPER_LEFT { return LOWER_RIGHT; }
-    if d == LOWER_RIGHT { return UPPER_LEFT; }
-    if d == LOWER_LEFT { return UPPER_RIGHT; }
+    if d == UP {
+        return DOWN;
+    }
+    if d == DOWN {
+        return UP;
+    }
+    if d == LEFT {
+        return RIGHT;
+    }
+    if d == RIGHT {
+        return LEFT;
+    }
+    if d == UPPER_RIGHT {
+        return LOWER_LEFT;
+    }
+    if d == UPPER_LEFT {
+        return LOWER_RIGHT;
+    }
+    if d == LOWER_RIGHT {
+        return UPPER_LEFT;
+    }
+    if d == LOWER_LEFT {
+        return UPPER_RIGHT;
+    }
     MIDDLE
 }
 
@@ -207,9 +223,17 @@ pub fn determine_direction(from: GridCoord, to: GridCoord) -> Direction {
     } else if from.y == to.y {
         return if from.x < to.x { RIGHT } else { LEFT };
     } else if from.x < to.x {
-        return if from.y < to.y { LOWER_RIGHT } else { UPPER_RIGHT };
+        return if from.y < to.y {
+            LOWER_RIGHT
+        } else {
+            UPPER_RIGHT
+        };
     } else {
-        return if from.y < to.y { LOWER_LEFT } else { UPPER_LEFT };
+        return if from.y < to.y {
+            LOWER_LEFT
+        } else {
+            UPPER_LEFT
+        };
     }
 }
 
@@ -219,8 +243,16 @@ pub fn determine_direction_drawing(from: DrawingCoord, to: DrawingCoord) -> Dire
     } else if from.y == to.y {
         return if from.x < to.x { RIGHT } else { LEFT };
     } else if from.x < to.x {
-        return if from.y < to.y { LOWER_RIGHT } else { UPPER_RIGHT };
+        return if from.y < to.y {
+            LOWER_RIGHT
+        } else {
+            UPPER_RIGHT
+        };
     } else {
-        return if from.y < to.y { LOWER_LEFT } else { UPPER_LEFT };
+        return if from.y < to.y {
+            LOWER_LEFT
+        } else {
+            UPPER_LEFT
+        };
     }
 }

@@ -1,7 +1,10 @@
 //! Parser for Mermaid GitGraph diagrams
 
-use crate::types::{CommitType, FrontmatterConfig, GitBranch, GitCommit, GitGraph, GitGraphConfig, GitGraphDirection};
 use super::extract_yaml_value;
+use crate::types::{
+    CommitType, FrontmatterConfig, GitBranch, GitCommit, GitGraph, GitGraphConfig,
+    GitGraphDirection,
+};
 
 /// Parse gitGraph-specific configuration from frontmatter raw lines.
 /// Common config (theme) is already handled by the general frontmatter parser.
@@ -124,7 +127,10 @@ fn parse_config_values(text: &str, config: &mut GitGraphConfig) {
 
 /// Parse a gitGraph diagram from mermaid text.
 /// This function accepts the raw input text and a pre-parsed FrontmatterConfig.
-pub fn parse_gitgraph_from_text(text: &str, frontmatter: &FrontmatterConfig) -> Result<GitGraph, String> {
+pub fn parse_gitgraph_from_text(
+    text: &str,
+    frontmatter: &FrontmatterConfig,
+) -> Result<GitGraph, String> {
     let config = parse_gitgraph_config(frontmatter);
 
     // Strip frontmatter from the text to get the diagram body

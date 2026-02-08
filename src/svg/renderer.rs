@@ -7,7 +7,9 @@ use super::styles::{
     estimate_text_width, ArrowHead, FontSizes, FontWeights, StrokeWidths, TEXT_BASELINE_SHIFT,
 };
 use super::theme::{build_style_block, svg_open_tag, DiagramColors};
-use super::types::{EdgeStyle, NodeShape, Point, PositionedEdge, PositionedGraph, PositionedGroup, PositionedNode};
+use super::types::{
+    EdgeStyle, NodeShape, Point, PositionedEdge, PositionedGraph, PositionedGroup, PositionedNode,
+};
 
 /// Render a positioned graph as an SVG string.
 pub fn render_svg(
@@ -90,7 +92,7 @@ fn render_group(group: &PositionedGroup) -> String {
         (Some(x), Some(y), Some(w), Some(h)) => (x, y, w, h),
         _ => return String::new(),
     };
-    
+
     let header_height = FontSizes::GROUP_HEADER + 16.0;
     let mut parts: Vec<String> = Vec::new();
 
@@ -299,7 +301,15 @@ fn render_rect(x: f64, y: f64, w: f64, h: f64, fill: &str, stroke: &str, sw: &st
     )
 }
 
-fn render_rounded_rect(x: f64, y: f64, w: f64, h: f64, fill: &str, stroke: &str, sw: &str) -> String {
+fn render_rounded_rect(
+    x: f64,
+    y: f64,
+    w: f64,
+    h: f64,
+    fill: &str,
+    stroke: &str,
+    sw: &str,
+) -> String {
     format!(
         r#"<rect x="{}" y="{}" width="{}" height="{}" rx="6" ry="6" fill="{}" stroke="{}" stroke-width="{}" />"#,
         x, y, w, h, fill, stroke, sw
@@ -331,10 +341,14 @@ fn render_diamond(x: f64, y: f64, w: f64, h: f64, fill: &str, stroke: &str, sw: 
     let hh = h / 2.0;
     let points = format!(
         "{},{} {},{} {},{} {},{}",
-        cx, cy - hh,      // top
-        cx + hw, cy,      // right
-        cx, cy + hh,      // bottom
-        cx - hw, cy       // left
+        cx,
+        cy - hh, // top
+        cx + hw,
+        cy, // right
+        cx,
+        cy + hh, // bottom
+        cx - hw,
+        cy // left
     );
     format!(
         r#"<polygon points="{}" fill="{}" stroke="{}" stroke-width="{}" />"#,
@@ -350,13 +364,37 @@ fn render_subroutine(x: f64, y: f64, w: f64, h: f64, fill: &str, stroke: &str, s
         r#"<rect x="{}" y="{}" width="{}" height="{}" rx="0" ry="0" fill="{}" stroke="{}" stroke-width="{}" />
 <line x1="{}" y1="{}" x2="{}" y2="{}" stroke="{}" stroke-width="{}" />
 <line x1="{}" y1="{}" x2="{}" y2="{}" stroke="{}" stroke-width="{}" />"#,
-        x, y, w, h, fill, stroke, sw,
-        x + inset, y, x + inset, y + h, stroke, sw,
-        x + w - inset, y, x + w - inset, y + h, stroke, sw
+        x,
+        y,
+        w,
+        h,
+        fill,
+        stroke,
+        sw,
+        x + inset,
+        y,
+        x + inset,
+        y + h,
+        stroke,
+        sw,
+        x + w - inset,
+        y,
+        x + w - inset,
+        y + h,
+        stroke,
+        sw
     )
 }
 
-fn render_double_circle(x: f64, y: f64, w: f64, h: f64, fill: &str, stroke: &str, sw: &str) -> String {
+fn render_double_circle(
+    x: f64,
+    y: f64,
+    w: f64,
+    h: f64,
+    fill: &str,
+    stroke: &str,
+    sw: &str,
+) -> String {
     let cx = x + w / 2.0;
     let cy = y + h / 2.0;
     let outer_r = w.min(h) / 2.0;
@@ -364,8 +402,7 @@ fn render_double_circle(x: f64, y: f64, w: f64, h: f64, fill: &str, stroke: &str
     format!(
         r#"<circle cx="{}" cy="{}" r="{}" fill="{}" stroke="{}" stroke-width="{}" />
 <circle cx="{}" cy="{}" r="{}" fill="{}" stroke="{}" stroke-width="{}" />"#,
-        cx, cy, outer_r, fill, stroke, sw,
-        cx, cy, inner_r, fill, stroke, sw
+        cx, cy, outer_r, fill, stroke, sw, cx, cy, inner_r, fill, stroke, sw
     )
 }
 
@@ -373,12 +410,18 @@ fn render_hexagon(x: f64, y: f64, w: f64, h: f64, fill: &str, stroke: &str, sw: 
     let inset = h / 4.0;
     let points = format!(
         "{},{} {},{} {},{} {},{} {},{} {},{}",
-        x + inset, y,           // top-left
-        x + w - inset, y,       // top-right
-        x + w, y + h / 2.0,     // mid-right
-        x + w - inset, y + h,   // bottom-right
-        x + inset, y + h,       // bottom-left
-        x, y + h / 2.0          // mid-left
+        x + inset,
+        y, // top-left
+        x + w - inset,
+        y, // top-right
+        x + w,
+        y + h / 2.0, // mid-right
+        x + w - inset,
+        y + h, // bottom-right
+        x + inset,
+        y + h, // bottom-left
+        x,
+        y + h / 2.0 // mid-left
     );
     format!(
         r#"<polygon points="{}" fill="{}" stroke="{}" stroke-width="{}" />"#,
@@ -400,11 +443,37 @@ fn render_cylinder(x: f64, y: f64, w: f64, h: f64, fill: &str, stroke: &str, sw:
 <line x1="{}" y1="{}" x2="{}" y2="{}" stroke="{}" stroke-width="{}" />
 <ellipse cx="{}" cy="{}" rx="{}" ry="{}" fill="{}" stroke="{}" stroke-width="{}" />
 <ellipse cx="{}" cy="{}" rx="{}" ry="{}" fill="{}" stroke="{}" stroke-width="{}" />"#,
-        x, body_top, w, body_h, fill,
-        x, body_top, x, body_top + body_h, stroke, sw,
-        x + w, body_top, x + w, body_top + body_h, stroke, sw,
-        cx, y + h - ry, w / 2.0, ry, fill, stroke, sw,
-        cx, body_top, w / 2.0, ry, fill, stroke, sw
+        x,
+        body_top,
+        w,
+        body_h,
+        fill,
+        x,
+        body_top,
+        x,
+        body_top + body_h,
+        stroke,
+        sw,
+        x + w,
+        body_top,
+        x + w,
+        body_top + body_h,
+        stroke,
+        sw,
+        cx,
+        y + h - ry,
+        w / 2.0,
+        ry,
+        fill,
+        stroke,
+        sw,
+        cx,
+        body_top,
+        w / 2.0,
+        ry,
+        fill,
+        stroke,
+        sw
     )
 }
 
@@ -412,11 +481,16 @@ fn render_asymmetric(x: f64, y: f64, w: f64, h: f64, fill: &str, stroke: &str, s
     let indent = 12.0;
     let points = format!(
         "{},{} {},{} {},{} {},{} {},{}",
-        x + indent, y,           // top-left (indented)
-        x + w, y,                // top-right
-        x + w, y + h,            // bottom-right
-        x + indent, y + h,       // bottom-left (indented)
-        x, y + h / 2.0           // left point
+        x + indent,
+        y, // top-left (indented)
+        x + w,
+        y, // top-right
+        x + w,
+        y + h, // bottom-right
+        x + indent,
+        y + h, // bottom-left (indented)
+        x,
+        y + h / 2.0 // left point
     );
     format!(
         r#"<polygon points="{}" fill="{}" stroke="{}" stroke-width="{}" />"#,
@@ -428,10 +502,14 @@ fn render_trapezoid(x: f64, y: f64, w: f64, h: f64, fill: &str, stroke: &str, sw
     let inset = w * 0.15;
     let points = format!(
         "{},{} {},{} {},{} {},{}",
-        x + inset, y,            // top-left (indented)
-        x + w - inset, y,        // top-right (indented)
-        x + w, y + h,            // bottom-right (full width)
-        x, y + h                 // bottom-left (full width)
+        x + inset,
+        y, // top-left (indented)
+        x + w - inset,
+        y, // top-right (indented)
+        x + w,
+        y + h, // bottom-right (full width)
+        x,
+        y + h // bottom-left (full width)
     );
     format!(
         r#"<polygon points="{}" fill="{}" stroke="{}" stroke-width="{}" />"#,
@@ -439,14 +517,26 @@ fn render_trapezoid(x: f64, y: f64, w: f64, h: f64, fill: &str, stroke: &str, sw
     )
 }
 
-fn render_trapezoid_alt(x: f64, y: f64, w: f64, h: f64, fill: &str, stroke: &str, sw: &str) -> String {
+fn render_trapezoid_alt(
+    x: f64,
+    y: f64,
+    w: f64,
+    h: f64,
+    fill: &str,
+    stroke: &str,
+    sw: &str,
+) -> String {
     let inset = w * 0.15;
     let points = format!(
         "{},{} {},{} {},{} {},{}",
-        x, y,                        // top-left (full width)
-        x + w, y,                    // top-right (full width)
-        x + w - inset, y + h,        // bottom-right (indented)
-        x + inset, y + h             // bottom-left (indented)
+        x,
+        y, // top-left (full width)
+        x + w,
+        y, // top-right (full width)
+        x + w - inset,
+        y + h, // bottom-right (indented)
+        x + inset,
+        y + h // bottom-left (indented)
     );
     format!(
         r#"<polygon points="{}" fill="{}" stroke="{}" stroke-width="{}" />"#,
@@ -474,8 +564,13 @@ fn render_state_end(x: f64, y: f64, w: f64, h: f64) -> String {
     format!(
         r#"<circle cx="{}" cy="{}" r="{}" fill="none" stroke="var(--_text)" stroke-width="{}" />
 <circle cx="{}" cy="{}" r="{}" fill="var(--_text)" stroke="none" />"#,
-        cx, cy, outer_r, StrokeWidths::INNER_BOX * 2.0,
-        cx, cy, inner_r
+        cx,
+        cy,
+        outer_r,
+        StrokeWidths::INNER_BOX * 2.0,
+        cx,
+        cy,
+        inner_r
     )
 }
 
@@ -504,7 +599,13 @@ fn render_node_label(node: &PositionedNode) -> String {
 
     format!(
         r#"<text x="{}" y="{}" text-anchor="middle" dy="{}" font-size="{}" font-weight="{}" fill="{}">{}</text>"#,
-        cx, cy, TEXT_BASELINE_SHIFT, FontSizes::NODE_LABEL, FontWeights::NODE_LABEL, text_color, escape_xml(&node.label)
+        cx,
+        cy,
+        TEXT_BASELINE_SHIFT,
+        FontSizes::NODE_LABEL,
+        FontWeights::NODE_LABEL,
+        text_color,
+        escape_xml(&node.label)
     )
 }
 

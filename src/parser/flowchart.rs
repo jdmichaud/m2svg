@@ -1,11 +1,11 @@
 //! Flowchart and state diagram parser
 
-use std::collections::HashMap;
-use regex::Regex;
-use lazy_static::lazy_static;
 use crate::types::{
     Direction, EdgeStyle, MermaidEdge, MermaidGraph, MermaidNode, MermaidSubgraph, NodeShape,
 };
+use lazy_static::lazy_static;
+use regex::Regex;
+use std::collections::HashMap;
 
 lazy_static! {
     static ref RE_HEADER: Regex = Regex::new(r"(?i)^(?:graph|flowchart)\s+(TD|TB|LR|BT|RL)\s*$").unwrap();
@@ -22,7 +22,7 @@ lazy_static! {
     static ref RE_ARROW: Regex = Regex::new(r"^(<)?(-->|-.->|==>|---|-\.-|===)(?:\|([^|]*)\|)?").unwrap();
     static ref RE_CLASS_SUFFIX: Regex = Regex::new(r"^:::([\w][\w-]*)").unwrap();
     static ref RE_BARE_ID: Regex = Regex::new(r"^([\w-]+)").unwrap();
-    
+
     // Node shape patterns (in order of specificity - triple, double, single delimiters)
     static ref RE_NODE_DOUBLE_CIRCLE: Regex = Regex::new(r"^([\w-]+)\(\(\((.+?)\)\)\)").unwrap();
     static ref RE_NODE_STADIUM: Regex = Regex::new(r"^([\w-]+)\(\[(.+?)\]\)").unwrap();
@@ -41,20 +41,24 @@ lazy_static! {
 /// Parse a flowchart/graph diagram
 pub fn parse_flowchart(lines: &[&str]) -> Result<MermaidGraph, String> {
     let header = lines[0];
-    
+
     // Match "graph TD" or "flowchart LR" etc
-    let caps = RE_HEADER.captures(header)
-        .ok_or_else(|| format!("Invalid mermaid header: \"{}\". Expected \"graph TD\", \"flowchart LR\", etc.", header))?;
-    
-    let direction = Direction::from_str(&caps[1])
-        .ok_or_else(|| format!("Invalid direction: {}", &caps[1]))?;
-    
+    let caps = RE_HEADER.captures(header).ok_or_else(|| {
+        format!(
+            "Invalid mermaid header: \"{}\". Expected \"graph TD\", \"flowchart LR\", etc.",
+            header
+        )
+    })?;
+
+    let direction =
+        Direction::from_str(&caps[1]).ok_or_else(|| format!("Invalid direction: {}", &caps[1]))?;
+
     let mut graph = MermaidGraph::new(direction);
     let mut subgraph_stack: Vec<MermaidSubgraph> = Vec::new();
-    
+
     for line in lines.iter().skip(1) {
         let line = *line;
-        
+
         // classDef
         if let Some(caps) = RE_CLASSDEF.captures(line) {
             let name = caps[1].to_string();
@@ -62,17 +66,19 @@ pub fn parse_flowchart(lines: &[&str]) -> Result<MermaidGraph, String> {
             graph.class_defs.insert(name, props);
             continue;
         }
-        
+
         // class assignment
         if let Some(caps) = RE_CLASS.captures(line) {
             let node_ids: Vec<&str> = caps[1].split(',').map(|s| s.trim()).collect();
             let class_name = caps[2].to_string();
             for id in node_ids {
-                graph.class_assignments.insert(id.to_string(), class_name.clone());
+                graph
+                    .class_assignments
+                    .insert(id.to_string(), class_name.clone());
             }
             continue;
         }
-        
+
         // style statement
         if let Some(caps) = RE_STYLE.captures(line) {
             let node_ids: Vec<&str> = caps[1].split(',').map(|s| s.trim()).collect();
@@ -85,7 +91,7 @@ pub fn parse_flowchart(lines: &[&str]) -> Result<MermaidGraph, String> {
             }
             continue;
         }
-        
+
         // direction override inside subgraph
         if let Some(caps) = RE_DIRECTION.captures(line) {
             if let Some(sg) = subgraph_stack.last_mut() {
@@ -93,17 +99,21 @@ pub fn parse_flowchart(lines: &[&str]) -> Result<MermaidGraph, String> {
             }
             continue;
         }
-        
+
         // subgraph start
         if let Some(caps) = RE_SUBGRAPH.captures(line) {
             let rest = caps[1].trim();
             let (id, label) = if let Some(bracket_caps) = RE_SUBGRAPH_BRACKET.captures(rest) {
                 (bracket_caps[1].to_string(), bracket_caps[2].to_string())
             } else {
-                let id = rest.replace(' ', "_").chars().filter(|c| c.is_alphanumeric() || *c == '_').collect();
+                let id = rest
+                    .replace(' ', "_")
+                    .chars()
+                    .filter(|c| c.is_alphanumeric() || *c == '_')
+                    .collect();
                 (id, rest.to_string())
             };
-            
+
             let sg = MermaidSubgraph {
                 id,
                 label,
@@ -114,7 +124,7 @@ pub fn parse_flowchart(lines: &[&str]) -> Result<MermaidGraph, String> {
             subgraph_stack.push(sg);
             continue;
         }
-        
+
         // subgraph end
         if line == "end" {
             if let Some(completed) = subgraph_stack.pop() {
@@ -126,11 +136,11 @@ pub fn parse_flowchart(lines: &[&str]) -> Result<MermaidGraph, String> {
             }
             continue;
         }
-        
+
         // Edge/node definitions
         parse_edge_line(line, &mut graph, &mut subgraph_stack);
     }
-    
+
     Ok(graph)
 }
 
@@ -140,10 +150,10 @@ pub fn parse_state_diagram(lines: &[&str]) -> Result<MermaidGraph, String> {
     let mut composite_stack: Vec<MermaidSubgraph> = Vec::new();
     let mut start_count = 0;
     let mut end_count = 0;
-    
+
     for line in lines.iter().skip(1) {
         let line = *line;
-        
+
         // direction override
         if let Some(caps) = RE_DIRECTION.captures(line) {
             let dir = Direction::from_str(&caps[1]);
@@ -154,10 +164,14 @@ pub fn parse_state_diagram(lines: &[&str]) -> Result<MermaidGraph, String> {
             }
             continue;
         }
-        
+
         // composite state start
         if let Some(caps) = RE_STATE_BLOCK.captures(line) {
-            let label = caps.get(1).map(|m| m.as_str()).unwrap_or(&caps[2]).to_string();
+            let label = caps
+                .get(1)
+                .map(|m| m.as_str())
+                .unwrap_or(&caps[2])
+                .to_string();
             let id = caps[2].to_string();
             let sg = MermaidSubgraph {
                 id,
@@ -169,7 +183,7 @@ pub fn parse_state_diagram(lines: &[&str]) -> Result<MermaidGraph, String> {
             composite_stack.push(sg);
             continue;
         }
-        
+
         // composite state end
         if line == "}" {
             if let Some(completed) = composite_stack.pop() {
@@ -181,25 +195,29 @@ pub fn parse_state_diagram(lines: &[&str]) -> Result<MermaidGraph, String> {
             }
             continue;
         }
-        
+
         // state alias
         if let Some(caps) = RE_STATE_LABEL.captures(line) {
             let label = caps[1].to_string();
             let id = caps[2].to_string();
-            register_state_node(&mut graph, &mut composite_stack, MermaidNode {
-                id,
-                label,
-                shape: NodeShape::Rounded,
-            });
+            register_state_node(
+                &mut graph,
+                &mut composite_stack,
+                MermaidNode {
+                    id,
+                    label,
+                    shape: NodeShape::Rounded,
+                },
+            );
             continue;
         }
-        
+
         // transition
         if let Some(caps) = RE_STATE_TRANS.captures(line) {
             let mut source_id = caps[1].to_string();
             let mut target_id = caps[3].to_string();
             let edge_label = caps.get(4).map(|m| m.as_str().trim().to_string());
-            
+
             if source_id == "[*]" {
                 start_count += 1;
                 source_id = if start_count > 1 {
@@ -207,15 +225,19 @@ pub fn parse_state_diagram(lines: &[&str]) -> Result<MermaidGraph, String> {
                 } else {
                     "_start".to_string()
                 };
-                register_state_node(&mut graph, &mut composite_stack, MermaidNode {
-                    id: source_id.clone(),
-                    label: String::new(),
-                    shape: NodeShape::StateStart,
-                });
+                register_state_node(
+                    &mut graph,
+                    &mut composite_stack,
+                    MermaidNode {
+                        id: source_id.clone(),
+                        label: String::new(),
+                        shape: NodeShape::StateStart,
+                    },
+                );
             } else {
                 ensure_state_node(&mut graph, &mut composite_stack, &source_id);
             }
-            
+
             if target_id == "[*]" {
                 end_count += 1;
                 target_id = if end_count > 1 {
@@ -223,15 +245,19 @@ pub fn parse_state_diagram(lines: &[&str]) -> Result<MermaidGraph, String> {
                 } else {
                     "_end".to_string()
                 };
-                register_state_node(&mut graph, &mut composite_stack, MermaidNode {
-                    id: target_id.clone(),
-                    label: String::new(),
-                    shape: NodeShape::StateEnd,
-                });
+                register_state_node(
+                    &mut graph,
+                    &mut composite_stack,
+                    MermaidNode {
+                        id: target_id.clone(),
+                        label: String::new(),
+                        shape: NodeShape::StateEnd,
+                    },
+                );
             } else {
                 ensure_state_node(&mut graph, &mut composite_stack, &target_id);
             }
-            
+
             graph.edges.push(MermaidEdge {
                 source: source_id,
                 target: target_id,
@@ -242,20 +268,24 @@ pub fn parse_state_diagram(lines: &[&str]) -> Result<MermaidGraph, String> {
             });
             continue;
         }
-        
+
         // state description
         if let Some(caps) = RE_NODE_LABEL.captures(line) {
             let id = caps[1].to_string();
             let label = caps[2].trim().to_string();
-            register_state_node(&mut graph, &mut composite_stack, MermaidNode {
-                id,
-                label,
-                shape: NodeShape::Rounded,
-            });
+            register_state_node(
+                &mut graph,
+                &mut composite_stack,
+                MermaidNode {
+                    id,
+                    label,
+                    shape: NodeShape::Rounded,
+                },
+            );
             continue;
         }
     }
-    
+
     Ok(graph)
 }
 
@@ -267,7 +297,7 @@ fn register_state_node(
     let id = node.id.clone();
     if !graph.nodes.contains_key(&id) {
         graph.nodes.insert(id.clone(), node);
-        graph.node_order.push(id.clone());  // Track insertion order
+        graph.node_order.push(id.clone()); // Track insertion order
     }
     if let Some(current) = composite_stack.last_mut() {
         if !current.node_ids.contains(&id) {
@@ -276,17 +306,17 @@ fn register_state_node(
     }
 }
 
-fn ensure_state_node(
-    graph: &mut MermaidGraph,
-    composite_stack: &mut [MermaidSubgraph],
-    id: &str,
-) {
+fn ensure_state_node(graph: &mut MermaidGraph, composite_stack: &mut [MermaidSubgraph], id: &str) {
     if !graph.nodes.contains_key(id) {
-        register_state_node(graph, composite_stack, MermaidNode {
-            id: id.to_string(),
-            label: id.to_string(),
-            shape: NodeShape::Rounded,
-        });
+        register_state_node(
+            graph,
+            composite_stack,
+            MermaidNode {
+                id: id.to_string(),
+                label: id.to_string(),
+                shape: NodeShape::Rounded,
+            },
+        );
     } else if let Some(current) = composite_stack.last_mut() {
         if !current.node_ids.contains(&id.to_string()) {
             current.node_ids.push(id.to_string());
@@ -374,13 +404,9 @@ fn get_node_patterns() -> Vec<NodePattern> {
 }
 
 /// Parse a line that contains node definitions and edges
-fn parse_edge_line(
-    line: &str,
-    graph: &mut MermaidGraph,
-    subgraph_stack: &mut [MermaidSubgraph],
-) {
+fn parse_edge_line(line: &str, graph: &mut MermaidGraph, subgraph_stack: &mut [MermaidSubgraph]) {
     let mut remaining = line.trim();
-    
+
     // Parse the first node group
     let first_group = consume_node_group(remaining, graph, subgraph_stack);
     if first_group.is_none() {
@@ -391,9 +417,9 @@ fn parse_edge_line(
         return;
     }
     remaining = rest;
-    
+
     let mut prev_ids = first_ids;
-    
+
     // Parse chains of edges
     while !remaining.is_empty() {
         // Try to match an arrow
@@ -401,9 +427,9 @@ fn parse_edge_line(
             let has_arrow_start = caps.get(1).is_some();
             let arrow_op = &caps[2];
             let label = caps.get(3).map(|m| m.as_str().to_string());
-            
+
             remaining = &remaining[caps[0].len()..].trim_start();
-            
+
             // Determine edge style and arrow end
             let (style, has_arrow_end) = match arrow_op {
                 "-->" => (EdgeStyle::Solid, true),
@@ -414,11 +440,12 @@ fn parse_edge_line(
                 "===" => (EdgeStyle::Thick, false),
                 _ => (EdgeStyle::Solid, true),
             };
-            
+
             // Parse target node group
-            if let Some((target_ids, rest2)) = consume_node_group(remaining, graph, subgraph_stack) {
+            if let Some((target_ids, rest2)) = consume_node_group(remaining, graph, subgraph_stack)
+            {
                 remaining = rest2;
-                
+
                 // Create edges for all combinations
                 for source in &prev_ids {
                     for target in &target_ids {
@@ -432,7 +459,7 @@ fn parse_edge_line(
                         });
                     }
                 }
-                
+
                 prev_ids = target_ids;
             } else {
                 break;
@@ -451,13 +478,13 @@ fn consume_node_group<'a>(
 ) -> Option<(Vec<String>, &'a str)> {
     let mut remaining = input.trim();
     let mut ids = Vec::new();
-    
+
     loop {
         // Try to parse a node
         if let Some((id, rest)) = consume_single_node(remaining, graph, subgraph_stack) {
             ids.push(id);
             remaining = rest.trim_start();
-            
+
             // Check for class shorthand :::className
             if remaining.starts_with(":::") {
                 if let Some(caps) = RE_CLASS_SUFFIX.captures(remaining) {
@@ -468,7 +495,7 @@ fn consume_node_group<'a>(
                     remaining = &remaining[caps[0].len()..].trim_start();
                 }
             }
-            
+
             // Check for & separator
             if remaining.starts_with('&') {
                 remaining = remaining[1..].trim_start();
@@ -477,7 +504,7 @@ fn consume_node_group<'a>(
         }
         break;
     }
-    
+
     if ids.is_empty() {
         None
     } else {
@@ -495,61 +522,67 @@ fn consume_single_node<'a>(
     if input.is_empty() {
         return None;
     }
-    
+
     let patterns = get_node_patterns();
-    
+
     // Try each pattern
     for pattern in &patterns {
         if let Some(caps) = pattern.regex.captures(input) {
             let id = caps[1].to_string();
             let label = caps[2].to_string();
             let matched_len = caps[0].len();
-            
+
             // Register node if new
             if !graph.nodes.contains_key(&id) {
-                graph.nodes.insert(id.clone(), MermaidNode {
-                    id: id.clone(),
-                    label,
-                    shape: pattern.shape,
-                });
-                graph.node_order.push(id.clone());  // Track insertion order
+                graph.nodes.insert(
+                    id.clone(),
+                    MermaidNode {
+                        id: id.clone(),
+                        label,
+                        shape: pattern.shape,
+                    },
+                );
+                graph.node_order.push(id.clone()); // Track insertion order
             }
-            
+
             // Track in subgraph
             if let Some(sg) = subgraph_stack.last_mut() {
                 if !sg.node_ids.contains(&id) {
                     sg.node_ids.push(id.clone());
                 }
             }
-            
+
             return Some((id, &input[matched_len..]));
         }
     }
-    
+
     // Try bare node (just an ID)
     if let Some(caps) = RE_BARE_ID.captures(input) {
         let id = caps[1].to_string();
         let matched_len = caps[0].len();
-        
+
         // Register node if new (with default rectangle shape)
         if !graph.nodes.contains_key(&id) {
-            graph.nodes.insert(id.clone(), MermaidNode {
-                id: id.clone(),
-                label: id.clone(),
-                shape: NodeShape::Rectangle,
-            });
-            graph.node_order.push(id.clone());  // Track insertion order
+            graph.nodes.insert(
+                id.clone(),
+                MermaidNode {
+                    id: id.clone(),
+                    label: id.clone(),
+                    shape: NodeShape::Rectangle,
+                },
+            );
+            graph.node_order.push(id.clone()); // Track insertion order
         }
-        
+
         // Track in subgraph
         if let Some(sg) = subgraph_stack.last_mut() {
             if !sg.node_ids.contains(&id) {
                 sg.node_ids.push(id.clone());
             }
         }
-        
+
         return Some((id, &input[matched_len..]));
     }
-    
+
     None
 }

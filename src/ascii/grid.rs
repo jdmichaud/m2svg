@@ -1,19 +1,22 @@
 //! Grid-based layout operations
 
-use super::types::{
-    AsciiGraph, DrawingCoord, Direction, GridCoord,
-    GraphDirection, grid_coord_direction, determine_direction, get_opposite,
-    UP, DOWN, LEFT, RIGHT, UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT,
-};
-use super::pathfinder::{get_path, merge_path};
 use super::canvas::set_canvas_size_to_grid;
+use super::pathfinder::{get_path, merge_path};
+use super::types::{
+    determine_direction, get_opposite, grid_coord_direction, AsciiGraph, Direction, DrawingCoord,
+    GraphDirection, GridCoord, DOWN, LEFT, LOWER_LEFT, LOWER_RIGHT, RIGHT, UP, UPPER_LEFT,
+    UPPER_RIGHT,
+};
 
 /// Grid step size: node occupies 3x3 cells, plus 1 cell gap = 4
 const GRID_STEP: i32 = 4;
 
 /// Check if a node is in any subgraph
 fn is_node_in_any_subgraph(graph: &AsciiGraph, node_idx: usize) -> bool {
-    graph.subgraphs.iter().any(|sg| sg.node_indices.contains(&node_idx))
+    graph
+        .subgraphs
+        .iter()
+        .any(|sg| sg.node_indices.contains(&node_idx))
 }
 
 /// Get the subgraph index that contains a node (first match)
@@ -33,7 +36,7 @@ fn has_incoming_edge_from_outside_subgraph(graph: &AsciiGraph, node_idx: usize) 
         Some(idx) => idx,
         None => return false,
     };
-    
+
     let mut has_external_edge = false;
     for edge in &graph.edges {
         if edge.to_idx == node_idx {
@@ -44,17 +47,17 @@ fn has_incoming_edge_from_outside_subgraph(graph: &AsciiGraph, node_idx: usize) 
             }
         }
     }
-    
+
     if !has_external_edge {
         return false;
     }
-    
+
     // Only return true for the topmost node with an external incoming edge
     let node_gc = match graph.nodes[node_idx].grid_coord {
         Some(gc) => gc,
         None => return false,
     };
-    
+
     for &other_idx in &graph.subgraphs[node_sg_idx].node_indices {
         if other_idx == node_idx {
             continue;
@@ -63,7 +66,7 @@ fn has_incoming_edge_from_outside_subgraph(graph: &AsciiGraph, node_idx: usize) 
             Some(gc) => gc,
             None => continue,
         };
-        
+
         // Check if this other node also has an external incoming edge
         let mut other_has_external = false;
         for edge in &graph.edges {
@@ -75,36 +78,40 @@ fn has_incoming_edge_from_outside_subgraph(graph: &AsciiGraph, node_idx: usize) 
                 }
             }
         }
-        
+
         if other_has_external && other_gc.y < node_gc.y {
             return false; // Another node is topmost
         }
     }
-    
+
     true
 }
 
 /// Convert a grid coordinate to a drawing (character) coordinate
-pub fn grid_to_drawing_coord(graph: &AsciiGraph, c: GridCoord, dir: Option<Direction>) -> DrawingCoord {
+pub fn grid_to_drawing_coord(
+    graph: &AsciiGraph,
+    c: GridCoord,
+    dir: Option<Direction>,
+) -> DrawingCoord {
     let target = if let Some(d) = dir {
         GridCoord::new(c.x + d.x, c.y + d.y)
     } else {
         c
     };
-    
+
     let mut x = 0i32;
     for col in 0..target.x {
         x += *graph.column_width.get(&col).unwrap_or(&0) as i32;
     }
-    
+
     let mut y = 0i32;
     for row in 0..target.y {
         y += *graph.row_height.get(&row).unwrap_or(&0) as i32;
     }
-    
+
     let col_w = *graph.column_width.get(&target.x).unwrap_or(&0) as i32;
     let row_h = *graph.row_height.get(&target.y).unwrap_or(&0) as i32;
-    
+
     DrawingCoord::new(
         x + col_w / 2 + graph.offset_x,
         y + row_h / 2 + graph.offset_y,
@@ -117,21 +124,20 @@ pub fn grid_to_drawing_coord_topleft(graph: &AsciiGraph, c: GridCoord) -> Drawin
     for col in 0..c.x {
         x += *graph.column_width.get(&col).unwrap_or(&0) as i32;
     }
-    
+
     let mut y = 0i32;
     for row in 0..c.y {
         y += *graph.row_height.get(&row).unwrap_or(&0) as i32;
     }
-    
-    DrawingCoord::new(
-        x + graph.offset_x,
-        y + graph.offset_y,
-    )
+
+    DrawingCoord::new(x + graph.offset_x, y + graph.offset_y)
 }
 
 /// Convert a path of grid coords to drawing coords
 pub fn line_to_drawing(graph: &AsciiGraph, line: &[GridCoord]) -> Vec<DrawingCoord> {
-    line.iter().map(|c| grid_to_drawing_coord(graph, *c, None)).collect()
+    line.iter()
+        .map(|c| grid_to_drawing_coord(graph, *c, None))
+        .collect()
 }
 
 /// Reserve a 3x3 block in the grid for a node
@@ -149,7 +155,7 @@ pub fn reserve_spot_in_grid(
         };
         return reserve_spot_in_grid(graph, node_idx, new_pos);
     }
-    
+
     // Reserve the 3x3 block
     for dx in 0..3 {
         for dy in 0..3 {
@@ -157,7 +163,7 @@ pub fn reserve_spot_in_grid(
             graph.grid.insert(reserved.key(), node_idx);
         }
     }
-    
+
     graph.nodes[node_idx].grid_coord = Some(requested);
     requested
 }
@@ -170,30 +176,32 @@ pub fn set_column_width(graph: &mut AsciiGraph, node_idx: usize) {
     };
     let label_len = graph.nodes[node_idx].display_label.len();
     let padding = graph.config.box_border_padding;
-    
+
     // 3 columns: [border=1] [content=2*padding+labelLen] [border=1]
     let col_widths = [1, 2 * padding + label_len, 1];
     // 3 rows: [border=1] [content=1+2*padding] [border=1]
     let row_heights = [1, 1 + 2 * padding, 1];
-    
+
     for (idx, &w) in col_widths.iter().enumerate() {
         let x_coord = gc.x + idx as i32;
         let current = *graph.column_width.get(&x_coord).unwrap_or(&0);
         graph.column_width.insert(x_coord, current.max(w));
     }
-    
+
     for (idx, &h) in row_heights.iter().enumerate() {
         let y_coord = gc.y + idx as i32;
         let current = *graph.row_height.get(&y_coord).unwrap_or(&0);
         graph.row_height.insert(y_coord, current.max(h));
     }
-    
+
     // Padding column/row before the node
     if gc.x > 0 {
         let current = *graph.column_width.get(&(gc.x - 1)).unwrap_or(&0);
-        graph.column_width.insert(gc.x - 1, current.max(graph.config.padding_x));
+        graph
+            .column_width
+            .insert(gc.x - 1, current.max(graph.config.padding_x));
     }
-    
+
     if gc.y > 0 {
         let mut base_padding = graph.config.padding_y;
         // Extra vertical padding for nodes with incoming edges from outside their subgraph
@@ -232,15 +240,15 @@ pub fn determine_start_and_end_dir(
             (DOWN, RIGHT, RIGHT, DOWN)
         };
     }
-    
+
     let d = determine_direction(from_coord, to_coord);
-    
+
     let is_backwards = if graph_direction == GraphDirection::LR {
         d == LEFT || d == UPPER_LEFT || d == LOWER_LEFT
     } else {
         d == UP || d == UPPER_LEFT || d == UPPER_RIGHT
     };
-    
+
     if d == LOWER_RIGHT {
         if graph_direction == GraphDirection::LR {
             (DOWN, LEFT, RIGHT, UP)
@@ -283,7 +291,7 @@ pub fn determine_path(graph: &mut AsciiGraph, edge_idx: usize) {
     let from_idx = graph.edges[edge_idx].from_idx;
     let to_idx = graph.edges[edge_idx].to_idx;
     let is_self_ref = from_idx == to_idx;
-    
+
     let from_coord = match graph.nodes.get(from_idx).and_then(|n| n.grid_coord) {
         Some(c) => c,
         None => return,
@@ -292,16 +300,19 @@ pub fn determine_path(graph: &mut AsciiGraph, edge_idx: usize) {
         Some(c) => c,
         None => return,
     };
-    
+
     let (pref_dir, pref_opp, alt_dir, alt_opp) = determine_start_and_end_dir(
-        from_coord, to_coord, is_self_ref, graph.config.graph_direction,
+        from_coord,
+        to_coord,
+        is_self_ref,
+        graph.config.graph_direction,
     );
-    
+
     // Try preferred path
     let pref_from = grid_coord_direction(from_coord, pref_dir);
     let pref_to = grid_coord_direction(to_coord, pref_opp);
     let preferred_path = get_path(&graph.grid, pref_from, pref_to);
-    
+
     if preferred_path.is_none() {
         graph.edges[edge_idx].start_dir = alt_dir;
         graph.edges[edge_idx].end_dir = alt_opp;
@@ -309,12 +320,12 @@ pub fn determine_path(graph: &mut AsciiGraph, edge_idx: usize) {
         return;
     }
     let preferred_path = merge_path(preferred_path.unwrap());
-    
+
     // Try alternative path
     let alt_from = grid_coord_direction(from_coord, alt_dir);
     let alt_to = grid_coord_direction(to_coord, alt_opp);
     let alternative_path = get_path(&graph.grid, alt_from, alt_to);
-    
+
     if alternative_path.is_none() {
         graph.edges[edge_idx].start_dir = pref_dir;
         graph.edges[edge_idx].end_dir = pref_opp;
@@ -322,7 +333,7 @@ pub fn determine_path(graph: &mut AsciiGraph, edge_idx: usize) {
         return;
     }
     let alternative_path = merge_path(alternative_path.unwrap());
-    
+
     // Pick shorter path
     if preferred_path.len() <= alternative_path.len() {
         graph.edges[edge_idx].start_dir = pref_dir;
@@ -343,17 +354,17 @@ pub fn determine_label_line(graph: &mut AsciiGraph, edge_idx: usize) {
     if edge.text.is_empty() || edge.path.len() < 2 {
         return;
     }
-    
+
     let len_label = edge.text.len();
     let mut prev_step = edge.path[0];
     let mut largest_line: (GridCoord, GridCoord) = (prev_step, edge.path[1]);
     let mut largest_line_size = 0;
-    
+
     for i in 1..edge.path.len() {
         let step = edge.path[i];
         let line = (prev_step, step);
         let line_width = calculate_line_width(graph, line);
-        
+
         if line_width >= len_label {
             largest_line = line;
             break;
@@ -363,15 +374,17 @@ pub fn determine_label_line(graph: &mut AsciiGraph, edge_idx: usize) {
         }
         prev_step = step;
     }
-    
+
     // Ensure column at midpoint is wide enough for the label
     let min_x = largest_line.0.x.min(largest_line.1.x);
     let max_x = largest_line.0.x.max(largest_line.1.x);
     let middle_x = min_x + (max_x - min_x) / 2;
-    
+
     let current = *graph.column_width.get(&middle_x).unwrap_or(&0);
-    graph.column_width.insert(middle_x, current.max(len_label + 2));
-    
+    graph
+        .column_width
+        .insert(middle_x, current.max(len_label + 2));
+
     graph.edges[edge_idx].label_line = vec![largest_line.0, largest_line.1];
 }
 
@@ -400,13 +413,14 @@ fn get_children(graph: &AsciiGraph, node_idx: usize) -> Vec<usize> {
 /// Create the node-to-grid mapping
 pub fn create_mapping(graph: &mut AsciiGraph) {
     let dir = graph.config.graph_direction;
-    let mut highest_position_per_level: std::collections::HashMap<i32, i32> = std::collections::HashMap::new();
-    
+    let mut highest_position_per_level: std::collections::HashMap<i32, i32> =
+        std::collections::HashMap::new();
+
     // Identify root nodes — nodes that aren't seen as children before they appear
     // This preserves the order of first definition
     let mut nodes_seen = std::collections::HashSet::new();
     let mut root_indices = Vec::new();
-    
+
     for idx in 0..graph.nodes.len() {
         if !nodes_seen.contains(&idx) {
             root_indices.push(idx);
@@ -416,19 +430,19 @@ pub fn create_mapping(graph: &mut AsciiGraph) {
             nodes_seen.insert(child_idx);
         }
     }
-    
+
     // If no roots found, pick the first node as root
     let root_indices = if root_indices.is_empty() && !graph.nodes.is_empty() {
         vec![0]
     } else {
         root_indices
     };
-    
+
     // In LR mode with both external and subgraph roots, separate them
     // so subgraph roots are placed one level deeper
     let mut has_external_roots = false;
     let mut has_subgraph_roots_with_edges = false;
-    
+
     for &idx in &root_indices {
         if is_node_in_any_subgraph(graph, idx) {
             if !get_children(graph, idx).is_empty() {
@@ -438,15 +452,18 @@ pub fn create_mapping(graph: &mut AsciiGraph) {
             has_external_roots = true;
         }
     }
-    
-    let should_separate = dir == GraphDirection::LR && has_external_roots && has_subgraph_roots_with_edges;
-    
+
+    let should_separate =
+        dir == GraphDirection::LR && has_external_roots && has_subgraph_roots_with_edges;
+
     let (external_roots, subgraph_roots): (Vec<usize>, Vec<usize>) = if should_separate {
-        root_indices.iter().partition(|&&idx| !is_node_in_any_subgraph(graph, idx))
+        root_indices
+            .iter()
+            .partition(|&&idx| !is_node_in_any_subgraph(graph, idx))
     } else {
         (root_indices.clone(), Vec::new())
     };
-    
+
     // Place external root nodes at level 0
     for &root_idx in &external_roots {
         let level = 0;
@@ -459,86 +476,99 @@ pub fn create_mapping(graph: &mut AsciiGraph) {
         reserve_spot_in_grid(graph, root_idx, requested);
         *highest_position_per_level.entry(level).or_insert(0) += GRID_STEP;
     }
-    
+
     // Place subgraph root nodes at GRID_STEP (one level in from the edge)
     if should_separate && !subgraph_roots.is_empty() {
         let subgraph_level = GRID_STEP;
         for &root_idx in &subgraph_roots {
-            let pos = *highest_position_per_level.get(&subgraph_level).unwrap_or(&0);
+            let pos = *highest_position_per_level
+                .get(&subgraph_level)
+                .unwrap_or(&0);
             let requested = if dir == GraphDirection::LR {
                 GridCoord::new(subgraph_level, pos)
             } else {
                 GridCoord::new(pos, subgraph_level)
             };
             reserve_spot_in_grid(graph, root_idx, requested);
-            *highest_position_per_level.entry(subgraph_level).or_insert(0) += GRID_STEP;
+            *highest_position_per_level
+                .entry(subgraph_level)
+                .or_insert(0) += GRID_STEP;
         }
     }
-    
+
     // Place child nodes level by level (BFS-style traversal)
-    let all_placed_roots: Vec<usize> = external_roots.iter().chain(subgraph_roots.iter()).cloned().collect();
+    let all_placed_roots: Vec<usize> = external_roots
+        .iter()
+        .chain(subgraph_roots.iter())
+        .cloned()
+        .collect();
     let mut queue: Vec<usize> = all_placed_roots.clone();
     let mut visited: std::collections::HashSet<usize> = all_placed_roots.iter().cloned().collect();
-    
+
     while !queue.is_empty() {
         let current_idx = queue.remove(0);
         let gc = match graph.nodes[current_idx].grid_coord {
             Some(c) => c,
             None => continue,
         };
-        
-        let child_level = if dir == GraphDirection::LR { gc.x + GRID_STEP } else { gc.y + GRID_STEP };
-        
+
+        let child_level = if dir == GraphDirection::LR {
+            gc.x + GRID_STEP
+        } else {
+            gc.y + GRID_STEP
+        };
+
         for child_idx in get_children(graph, current_idx) {
             if visited.contains(&child_idx) {
                 continue;
             }
-            
+
             if graph.nodes[child_idx].grid_coord.is_some() {
                 continue; // Already placed
             }
-            
+
             let highest_position = *highest_position_per_level.get(&child_level).unwrap_or(&0);
-            
+
             let requested = if dir == GraphDirection::LR {
                 GridCoord::new(child_level, highest_position)
             } else {
                 GridCoord::new(highest_position, child_level)
             };
-            
+
             reserve_spot_in_grid(graph, child_idx, requested);
-            
-            *highest_position_per_level.entry(child_level).or_insert(0) = highest_position + GRID_STEP;
-            
+
+            *highest_position_per_level.entry(child_level).or_insert(0) =
+                highest_position + GRID_STEP;
+
             visited.insert(child_idx);
             queue.push(child_idx);
         }
     }
-    
+
     // Set column widths and row heights BEFORE determining paths
     for i in 0..graph.nodes.len() {
         set_column_width(graph, i);
     }
-    
+
     // Determine edge paths (now that column widths are set)
     for i in 0..graph.edges.len() {
         determine_path(graph, i);
         determine_label_line(graph, i);
         increase_grid_size_for_path(graph, &graph.edges[i].path.clone());
     }
-    
+
     // Convert grid coords to drawing coords and generate node box drawings
     for i in 0..graph.nodes.len() {
         if let Some(gc) = graph.nodes[i].grid_coord {
             let dc = grid_to_drawing_coord_topleft(graph, gc);
             graph.nodes[i].drawing_coord = Some(dc);
-            
+
             // Generate the node box drawing
             let drawing = super::draw::draw_box(&graph.nodes[i], graph);
             graph.nodes[i].drawing = Some(drawing);
         }
     }
-    
+
     // Resize canvas
     set_canvas_size_to_grid(
         &mut graph.canvas,

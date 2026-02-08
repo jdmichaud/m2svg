@@ -1,10 +1,10 @@
 //! Parser module for Mermaid diagrams
 
-pub mod flowchart;
-pub mod sequence;
 pub mod class;
 pub mod er;
+pub mod flowchart;
 pub mod gitgraph;
+pub mod sequence;
 
 use crate::types::{DiagramType, FrontmatterConfig, MermaidTheme, ParsedDiagram};
 
@@ -91,7 +91,10 @@ pub fn parse_frontmatter(text: &str) -> (FrontmatterConfig, String) {
     };
 
     // Collect the raw frontmatter lines (between the --- delimiters)
-    let fm_lines: Vec<String> = lines[start + 1..end].iter().map(|l| l.to_string()).collect();
+    let fm_lines: Vec<String> = lines[start + 1..end]
+        .iter()
+        .map(|l| l.to_string())
+        .collect();
     let fm_text = fm_lines.join("\n");
 
     // Extract common config

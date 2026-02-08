@@ -1,8 +1,8 @@
 //! ER diagram ASCII rendering
 
-use crate::types::{ErDiagram, Cardinality};
+use super::canvas::{canvas_to_string, draw_text, mk_canvas, set_char};
 use super::types::AsciiConfig;
-use super::canvas::{mk_canvas, canvas_to_string, set_char, draw_text};
+use crate::types::{Cardinality, ErDiagram};
 
 /// Render an ER diagram to ASCII
 pub fn render_er_ascii(diagram: &ErDiagram, config: &AsciiConfig) -> Result<String, String> {
@@ -15,21 +15,27 @@ pub fn render_er_ascii(diagram: &ErDiagram, config: &AsciiConfig) -> Result<Stri
 
 /// Format an entity's attributes as display strings (e.g. "PK string name")
 fn format_entity_attrs(entity: &crate::types::ErEntity) -> Vec<String> {
-    entity.attributes.iter().map(|a| {
-        let key_prefix = a.keys.iter()
-            .map(|k| match k {
-                crate::types::ErKey::PK => "PK",
-                crate::types::ErKey::FK => "FK",
-                crate::types::ErKey::UK => "UK",
-            })
-            .collect::<Vec<_>>()
-            .join(" ");
-        if key_prefix.is_empty() {
-            format!("   {} {}", a.attr_type, a.name)
-        } else {
-            format!("{} {} {}", key_prefix, a.attr_type, a.name)
-        }
-    }).collect()
+    entity
+        .attributes
+        .iter()
+        .map(|a| {
+            let key_prefix = a
+                .keys
+                .iter()
+                .map(|k| match k {
+                    crate::types::ErKey::PK => "PK",
+                    crate::types::ErKey::FK => "FK",
+                    crate::types::ErKey::UK => "UK",
+                })
+                .collect::<Vec<_>>()
+                .join(" ");
+            if key_prefix.is_empty() {
+                format!("   {} {}", a.attr_type, a.name)
+            } else {
+                format!("{} {} {}", key_prefix, a.attr_type, a.name)
+            }
+        })
+        .collect()
 }
 
 /// General case: render entities chained by relationships inline.
@@ -45,7 +51,11 @@ fn render_general_er(diagram: &ErDiagram, config: &AsciiConfig) -> Result<String
     } else {
         ('─', '│', '┌', '┐', '└', '┘')
     };
-    let (div_l, div_r) = if use_ascii { ('+', '+') } else { ('├', '┤') };
+    let (div_l, div_r) = if use_ascii {
+        ('+', '+')
+    } else {
+        ('├', '┤')
+    };
 
     // Build an ordered sequence of entities by walking the relationship chain.
     let mut ordered_ids: Vec<String> = Vec::new();
@@ -80,15 +90,19 @@ fn render_general_er(diagram: &ErDiagram, config: &AsciiConfig) -> Result<String
     };
 
     // Format attributes for each entity
-    let attrs_for: Vec<Vec<String>> = ordered_ids.iter()
-        .map(|id| entity_for(id).map(|e| format_entity_attrs(e)).unwrap_or_default())
+    let attrs_for: Vec<Vec<String>> = ordered_ids
+        .iter()
+        .map(|id| {
+            entity_for(id)
+                .map(|e| format_entity_attrs(e))
+                .unwrap_or_default()
+        })
         .collect();
 
     // Find relationship between two adjacent entities (if any)
     let rel_between = |id1: &str, id2: &str| -> Option<&crate::types::ErRelationship> {
         diagram.relationships.iter().find(|r| {
-            (r.entity1 == id1 && r.entity2 == id2) ||
-            (r.entity1 == id2 && r.entity2 == id1)
+            (r.entity1 == id1 && r.entity2 == id2) || (r.entity1 == id2 && r.entity2 == id1)
         })
     };
 
@@ -114,7 +128,15 @@ fn render_general_er(diagram: &ErDiagram, config: &AsciiConfig) -> Result<String
             let card2 = cardinality_to_str_right(c2, use_ascii);
             let card1_len = card1.chars().count();
             let is_identifying = rel.identifying;
-            let fill_char = if is_identifying { if use_ascii { '-' } else { '─' } } else { '.' };
+            let fill_char = if is_identifying {
+                if use_ascii {
+                    '-'
+                } else {
+                    '─'
+                }
+            } else {
+                '.'
+            };
 
             // The label (with padding) must fit over the line portion only
             let label_padded = format!(" {} ", rel.label);
@@ -136,7 +158,11 @@ fn render_general_er(diagram: &ErDiagram, config: &AsciiConfig) -> Result<String
                 label_padded.trim_end()
             );
 
-            gaps.push(Gap { label, connector, width });
+            gaps.push(Gap {
+                label,
+                connector,
+                width,
+            });
         } else {
             // No relationship — just spacing
             gaps.push(Gap {
@@ -148,7 +174,9 @@ fn render_general_er(diagram: &ErDiagram, config: &AsciiConfig) -> Result<String
     }
 
     // Compute entity box widths (accounting for label and attributes)
-    let entity_widths: Vec<usize> = ordered_ids.iter().enumerate()
+    let entity_widths: Vec<usize> = ordered_ids
+        .iter()
+        .enumerate()
         .map(|(idx, id)| {
             let label_len = label_for(id).len();
             let attr_max = attrs_for[idx].iter().map(|s| s.len()).max().unwrap_or(0);
@@ -159,10 +187,9 @@ fn render_general_er(diagram: &ErDiagram, config: &AsciiConfig) -> Result<String
     // Compute entity box heights
     // No attrs: 3 rows (top, name, bottom)
     // With attrs: 3 + num_attrs + 1 rows (top, name, divider, attrs..., bottom)
-    let entity_heights: Vec<usize> = attrs_for.iter()
-        .map(|attrs| {
-            if attrs.is_empty() { 3 } else { 4 + attrs.len() }
-        })
+    let entity_heights: Vec<usize> = attrs_for
+        .iter()
+        .map(|attrs| if attrs.is_empty() { 3 } else { 4 + attrs.len() })
         .collect();
 
     // Compute positions — each entity box is placed after the previous box + gap
@@ -281,26 +308,34 @@ fn cardinality_to_str_right(card: Cardinality, use_ascii: bool) -> &'static str 
     }
 }
 
-fn draw_simple_box(canvas: &mut super::types::Canvas, x: i32, y: i32, w: i32, h: i32, label: &str, use_ascii: bool) {
+fn draw_simple_box(
+    canvas: &mut super::types::Canvas,
+    x: i32,
+    y: i32,
+    w: i32,
+    h: i32,
+    label: &str,
+    use_ascii: bool,
+) {
     let (h_line, v_line, tl, tr, bl, br) = if use_ascii {
         ('-', '|', '+', '+', '+', '+')
     } else {
         ('─', '│', '┌', '┐', '└', '┘')
     };
-    
+
     // Top border
     set_char(canvas, x, y, tl);
     for i in 1..(w - 1) {
         set_char(canvas, x + i, y, h_line);
     }
     set_char(canvas, x + w - 1, y, tr);
-    
+
     // Middle row
     set_char(canvas, x, y + 1, v_line);
     let label_x = x + (w - label.len() as i32) / 2;
     draw_text(canvas, label_x, y + 1, label);
     set_char(canvas, x + w - 1, y + 1, v_line);
-    
+
     // Bottom border
     set_char(canvas, x, y + h - 1, bl);
     for i in 1..(w - 1) {

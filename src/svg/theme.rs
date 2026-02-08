@@ -5,8 +5,8 @@
 //!   - Optional enrichment variables: --line, --accent, --muted, --surface, --border
 //!   - Unset optionals fall back to color-mix() derivations from bg + fg
 
-use serde::{Deserialize, Serialize};
 use crate::types::MermaidTheme;
+use serde::{Deserialize, Serialize};
 
 /// Diagram color configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -91,7 +91,7 @@ impl Mix {
 /// Build the <style> block with font imports and derived CSS variables.
 pub fn build_style_block(font: &str) -> String {
     let font_encoded = font.replace(' ', "%20");
-    
+
     let derived_vars = format!(
         r#"
     /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
@@ -131,17 +131,9 @@ pub fn build_style_block(font: &str) -> String {
 }
 
 /// Build the SVG opening tag with CSS variables set as inline styles.
-pub fn svg_open_tag(
-    width: f64,
-    height: f64,
-    colors: &DiagramColors,
-    transparent: bool,
-) -> String {
-    let mut vars = vec![
-        format!("--bg:{}", colors.bg),
-        format!("--fg:{}", colors.fg),
-    ];
-    
+pub fn svg_open_tag(width: f64, height: f64, colors: &DiagramColors, transparent: bool) -> String {
+    let mut vars = vec![format!("--bg:{}", colors.bg), format!("--fg:{}", colors.fg)];
+
     if let Some(ref line) = colors.line {
         vars.push(format!("--line:{}", line));
     }
@@ -157,10 +149,14 @@ pub fn svg_open_tag(
     if let Some(ref border) = colors.border {
         vars.push(format!("--border:{}", border));
     }
-    
+
     let vars_str = vars.join(";");
-    let bg_style = if transparent { "" } else { ";background:var(--bg)" };
-    
+    let bg_style = if transparent {
+        ""
+    } else {
+        ";background:var(--bg)"
+    };
+
     // Format dimensions - use integer if whole number, otherwise preserve decimals
     let format_dim = |d: f64| -> String {
         if d.fract() == 0.0 {
@@ -171,10 +167,10 @@ pub fn svg_open_tag(
             s.trim_end_matches('0').trim_end_matches('.').to_string()
         }
     };
-    
+
     let w_str = format_dim(width);
     let h_str = format_dim(height);
-    
+
     format!(
         r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {} {}" width="{}" height="{}" style="{}{}">"#,
         w_str, h_str, w_str, h_str, vars_str, bg_style

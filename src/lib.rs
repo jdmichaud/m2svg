@@ -23,14 +23,14 @@
 //! - Class diagrams (classDiagram)
 //! - ER diagrams (erDiagram)
 
-pub mod types;
-pub mod parser;
 pub mod ascii;
+pub mod parser;
 pub mod svg;
+pub mod types;
 
 pub use ascii::render_mermaid_ascii;
-pub use types::*;
 pub use parser::parse_mermaid;
+pub use types::*;
 
 /// Render a Mermaid diagram to ASCII/Unicode text.
 ///
@@ -64,20 +64,24 @@ pub fn render_to_svg(input: &str) -> Result<String, String> {
     let colors = svg::DiagramColors::from_theme(parsed.frontmatter.theme);
     let font = "Inter";
     let transparent = false;
-    
+
     match parsed.diagram {
-        DiagramType::Flowchart(graph) => {
-            Ok(svg::render_mermaid_to_svg(&graph, &colors, font, transparent))
-        }
-        DiagramType::Sequence(diagram) => {
-            Ok(svg::render_sequence_svg(&diagram, &colors, font, transparent))
-        }
+        DiagramType::Flowchart(graph) => Ok(svg::render_mermaid_to_svg(
+            &graph,
+            &colors,
+            font,
+            transparent,
+        )),
+        DiagramType::Sequence(diagram) => Ok(svg::render_sequence_svg(
+            &diagram,
+            &colors,
+            font,
+            transparent,
+        )),
         DiagramType::Class(diagram) => {
             Ok(svg::render_class_svg(&diagram, &colors, font, transparent))
         }
-        DiagramType::Er(diagram) => {
-            Ok(svg::render_er_svg(&diagram, &colors, font, transparent))
-        }
+        DiagramType::Er(diagram) => Ok(svg::render_er_svg(&diagram, &colors, font, transparent)),
         DiagramType::GitGraph(graph) => {
             Ok(svg::render_gitgraph_svg(&graph, &colors, font, transparent))
         }

@@ -9,7 +9,8 @@ lazy_static! {
     static ref RE_ENTITY_BLOCK: Regex = Regex::new(r"^(\S+)\s*\{$").unwrap();
     static ref RE_ATTRIBUTE: Regex = Regex::new(r"^(\S+)\s+(\S+)(?:\s+(.+))?$").unwrap();
     static ref RE_COMMENT: Regex = Regex::new(r#""([^"]*)""#).unwrap();
-    static ref RE_RELATIONSHIP: Regex = Regex::new(r"^(\S+)\s+([|o}{]+(?:--|\.\.)[|o}{]+)\s+(\S+)\s*:\s*(.+)$").unwrap();
+    static ref RE_RELATIONSHIP: Regex =
+        Regex::new(r"^(\S+)\s+([|o}{]+(?:--|\.\.)[|o}{]+)\s+(\S+)\s*:\s*(.+)$").unwrap();
     static ref RE_LINE_STYLE: Regex = Regex::new(r"^([|o}{]+)(--|\.\.?)([|o}{]+)$").unwrap();
 }
 
@@ -19,17 +20,17 @@ pub fn parse_er_diagram(lines: &[&str]) -> Result<ErDiagram, String> {
     let mut entity_map: HashMap<String, ErEntity> = HashMap::new();
     let mut entity_order: Vec<String> = Vec::new(); // Track insertion order
     let mut current_entity: Option<String> = None;
-    
+
     for line in lines.iter().skip(1) {
         let line = *line;
-        
+
         // Inside entity body
         if let Some(ref entity_id) = current_entity {
             if line == "}" {
                 current_entity = None;
                 continue;
             }
-            
+
             // Attribute line: type name [PK|FK|UK] ["comment"]
             if let Some(attr) = parse_attribute(line) {
                 if let Some(entity) = entity_map.get_mut(entity_id) {
@@ -38,7 +39,7 @@ pub fn parse_er_diagram(lines: &[&str]) -> Result<ErDiagram, String> {
             }
             continue;
         }
-        
+
         // Entity block start: `ENTITY_NAME {`
         if let Some(caps) = RE_ENTITY_BLOCK.captures(line) {
             let id = caps[1].to_string();
@@ -46,7 +47,7 @@ pub fn parse_er_diagram(lines: &[&str]) -> Result<ErDiagram, String> {
             current_entity = Some(id);
             continue;
         }
-        
+
         // Relationship: `ENTITY1 cardinality1--cardinality2 ENTITY2 : label`
         if let Some(rel) = parse_relationship_line(line) {
             ensure_entity(&mut entity_map, &mut entity_order, &rel.entity1);
@@ -55,36 +56,44 @@ pub fn parse_er_diagram(lines: &[&str]) -> Result<ErDiagram, String> {
             continue;
         }
     }
-    
+
     // Collect entities in insertion order
-    diagram.entities = entity_order.into_iter()
+    diagram.entities = entity_order
+        .into_iter()
         .filter_map(|id| entity_map.remove(&id))
         .collect();
     Ok(diagram)
 }
 
-fn ensure_entity(entity_map: &mut HashMap<String, ErEntity>, entity_order: &mut Vec<String>, id: &str) {
+fn ensure_entity(
+    entity_map: &mut HashMap<String, ErEntity>,
+    entity_order: &mut Vec<String>,
+    id: &str,
+) {
     if !entity_map.contains_key(id) {
         entity_order.push(id.to_string());
-        entity_map.insert(id.to_string(), ErEntity {
-            id: id.to_string(),
-            label: id.to_string(),
-            attributes: Vec::new(),
-        });
+        entity_map.insert(
+            id.to_string(),
+            ErEntity {
+                id: id.to_string(),
+                label: id.to_string(),
+                attributes: Vec::new(),
+            },
+        );
     }
 }
 
 fn parse_attribute(line: &str) -> Option<ErAttribute> {
     // Format: type name [PK|FK|UK [...]] ["comment"]
     let caps = RE_ATTRIBUTE.captures(line)?;
-    
+
     let attr_type = caps[1].to_string();
     let name = caps[2].to_string();
     let rest = caps.get(3).map(|m| m.as_str().trim()).unwrap_or("");
-    
+
     // Extract quoted comment first
     let comment = RE_COMMENT.captures(rest).map(|c| c[1].to_string());
-    
+
     // Extract key constraints
     let rest_without_comment = RE_COMMENT.replace_all(rest, "");
     let mut keys = Vec::new();
@@ -97,7 +106,7 @@ fn parse_attribute(line: &str) -> Option<ErAttribute> {
             _ => {}
         }
     }
-    
+
     Some(ErAttribute {
         attr_type,
         name,
@@ -109,23 +118,23 @@ fn parse_attribute(line: &str) -> Option<ErAttribute> {
 fn parse_relationship_line(line: &str) -> Option<ErRelationship> {
     // Match: ENTITY1 <cardinality_and_line> ENTITY2 : label
     let caps = RE_RELATIONSHIP.captures(line)?;
-    
+
     let entity1 = caps[1].to_string();
     let cardinality_str = &caps[2];
     let entity2 = caps[3].to_string();
     let label = caps[4].trim().to_string();
-    
+
     // Split the cardinality string into left side, line style, right side
     let line_caps = RE_LINE_STYLE.captures(cardinality_str)?;
-    
+
     let left_str = &line_caps[1];
     let line_style = &line_caps[2];
     let right_str = &line_caps[3];
-    
+
     let cardinality1 = parse_cardinality(left_str)?;
     let cardinality2 = parse_cardinality(right_str)?;
     let identifying = line_style == "--";
-    
+
     Some(ErRelationship {
         entity1,
         entity2,
@@ -141,7 +150,7 @@ fn parse_cardinality(s: &str) -> Option<Cardinality> {
     let mut chars: Vec<char> = s.chars().collect();
     chars.sort();
     let sorted: String = chars.iter().collect();
-    
+
     match sorted.as_str() {
         "||" => Some(Cardinality::One),
         "|o" | "o|" => Some(Cardinality::ZeroOne),

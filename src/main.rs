@@ -1,11 +1,11 @@
 use m2svg::{render_mermaid_ascii, render_to_svg, AsciiRenderOptions};
-use std::io::{self, Read};
 use std::fs;
+use std::io::{self, Read};
 use std::path::Path;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    
+
     if args.iter().any(|a| a == "-h" || a == "--help") {
         println!("m2svg - Convert Mermaid diagrams to ASCII art or SVG");
         println!();
@@ -24,12 +24,13 @@ fn main() {
         println!("  m2svg --svg 'graph TD\\n  A --> B' > diagram.svg");
         return;
     }
-    
+
     let use_ascii = args.iter().any(|a| a == "-a" || a == "--ascii");
     let use_svg = args.iter().any(|a| a == "-s" || a == "--svg");
-    
+
     // Get input from argument or stdin
-    let input: String = args.iter()
+    let input: String = args
+        .iter()
         .skip(1)
         .find(|a| !a.starts_with('-'))
         .cloned()
@@ -37,7 +38,9 @@ fn main() {
             // Check if it's a file path (either "-" for stdin, or an existing file)
             if s == "-" {
                 let mut buf = String::new();
-                io::stdin().read_to_string(&mut buf).expect("Failed to read from stdin");
+                io::stdin()
+                    .read_to_string(&mut buf)
+                    .expect("Failed to read from stdin");
                 buf
             } else if Path::new(&s).exists() {
                 fs::read_to_string(&s).expect(&format!("Failed to read file: {}", s))
@@ -48,15 +51,17 @@ fn main() {
         })
         .unwrap_or_else(|| {
             let mut buf = String::new();
-            io::stdin().read_to_string(&mut buf).expect("Failed to read from stdin");
+            io::stdin()
+                .read_to_string(&mut buf)
+                .expect("Failed to read from stdin");
             buf
         });
-    
+
     if input.trim().is_empty() {
         eprintln!("Error: No input provided");
         std::process::exit(1);
     }
-    
+
     if use_svg {
         match render_to_svg(&input) {
             Ok(output) => println!("{}", output),
@@ -70,7 +75,7 @@ fn main() {
             use_ascii,
             ..Default::default()
         };
-        
+
         match render_mermaid_ascii(&input, Some(options)) {
             Ok(output) => println!("{}", output),
             Err(e) => {

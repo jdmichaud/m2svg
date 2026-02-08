@@ -1,8 +1,8 @@
 //! Class diagram SVG rendering
 
-use crate::types::{ClassDiagram, ClassMember, RelationshipType, Visibility};
-use super::theme::{DiagramColors, build_style_block, svg_open_tag};
 use super::renderer::escape_xml;
+use super::theme::{build_style_block, svg_open_tag, DiagramColors};
+use crate::types::{ClassDiagram, ClassMember, RelationshipType, Visibility};
 use std::collections::{HashMap, HashSet};
 
 const BOX_PADDING: f64 = 12.0;
@@ -39,7 +39,7 @@ pub fn render_class_svg(
 
     for cls in &diagram.classes {
         let annotation_str = cls.annotation.as_ref().map(|a| format!("<<{}>>", a));
-        
+
         let attr_lines: Vec<String> = cls.attributes.iter().map(format_member).collect();
         let method_lines: Vec<String> = cls.methods.iter().map(format_member).collect();
 
@@ -48,15 +48,18 @@ pub fn render_class_svg(
         let header_width = cls.label.len();
         let attr_width = attr_lines.iter().map(|s| s.len()).max().unwrap_or(0);
         let method_width = method_lines.iter().map(|s| s.len()).max().unwrap_or(0);
-        
-        let max_chars = header_width.max(attr_width).max(method_width).max(annotation_width);
+
+        let max_chars = header_width
+            .max(attr_width)
+            .max(method_width)
+            .max(annotation_width);
         let box_width = (max_chars as f64 * 8.0).max(80.0) + BOX_PADDING * 2.0;
 
         // Calculate height
         let has_annotation = cls.annotation.is_some();
         let header_lines = if has_annotation { 2 } else { 1 };
         let mut total_lines = header_lines;
-        
+
         if !attr_lines.is_empty() || !method_lines.is_empty() {
             total_lines += 1; // divider
             total_lines += attr_lines.len().max(1);
@@ -68,17 +71,20 @@ pub fn render_class_svg(
 
         let box_height = total_lines as f64 * LINE_HEIGHT + BOX_PADDING * 2.0;
 
-        class_boxes.insert(cls.id.clone(), ClassBox {
-            id: cls.id.clone(),
-            label: cls.label.clone(),
-            annotation: cls.annotation.clone(),
-            attr_lines,
-            method_lines,
-            width: box_width,
-            height: box_height,
-            x: 0.0,
-            y: 0.0,
-        });
+        class_boxes.insert(
+            cls.id.clone(),
+            ClassBox {
+                id: cls.id.clone(),
+                label: cls.label.clone(),
+                annotation: cls.annotation.clone(),
+                attr_lines,
+                method_lines,
+                width: box_width,
+                height: box_height,
+                x: 0.0,
+                y: 0.0,
+            },
+        );
     }
 
     // Assign levels using relationship hierarchy
@@ -86,7 +92,10 @@ pub fn render_class_svg(
     let mut children: HashMap<String, HashSet<String>> = HashMap::new();
 
     for rel in &diagram.relationships {
-        let is_hierarchical = matches!(rel.rel_type, RelationshipType::Inheritance | RelationshipType::Realization);
+        let is_hierarchical = matches!(
+            rel.rel_type,
+            RelationshipType::Inheritance | RelationshipType::Realization
+        );
         let (parent, child) = if is_hierarchical && rel.marker_at_from {
             (rel.from.clone(), rel.to.clone())
         } else if is_hierarchical {
@@ -94,15 +103,19 @@ pub fn render_class_svg(
         } else {
             (rel.from.clone(), rel.to.clone())
         };
-        
-        parents.entry(child.clone()).or_default().insert(parent.clone());
+
+        parents
+            .entry(child.clone())
+            .or_default()
+            .insert(parent.clone());
         children.entry(parent).or_default().insert(child);
     }
 
     // Compute levels (BFS from roots)
     let mut levels: HashMap<String, usize> = HashMap::new();
     let allids: HashSet<_> = class_boxes.keys().cloned().collect();
-    let roots: Vec<_> = allids.iter()
+    let roots: Vec<_> = allids
+        .iter()
         .filter(|id| parents.get(*id).map(|p| p.is_empty()).unwrap_or(true))
         .cloned()
         .collect();
@@ -145,7 +158,7 @@ pub fn render_class_svg(
     for (level, nodes) in level_nodes.iter().enumerate() {
         let mut cur_x = 20.0;
         let level_y = level as f64 * (150.0 + V_GAP) + 20.0;
-        
+
         for id in nodes {
             if let Some(b) = class_boxes.get_mut(id) {
                 b.x = cur_x;
@@ -156,15 +169,24 @@ pub fn render_class_svg(
     }
 
     // Calculate canvas size
-    let total_width = class_boxes.values()
+    let total_width = class_boxes
+        .values()
         .map(|b| b.x + b.width)
-        .fold(0.0f64, |a, b| a.max(b)) + 40.0;
-    let total_height = class_boxes.values()
+        .fold(0.0f64, |a, b| a.max(b))
+        + 40.0;
+    let total_height = class_boxes
+        .values()
         .map(|b| b.y + b.height)
-        .fold(0.0f64, |a, b| a.max(b)) + 40.0;
+        .fold(0.0f64, |a, b| a.max(b))
+        + 40.0;
 
     let mut svg = String::new();
-    svg.push_str(&svg_open_tag(total_width, total_height, colors, transparent));
+    svg.push_str(&svg_open_tag(
+        total_width,
+        total_height,
+        colors,
+        transparent,
+    ));
     svg.push_str(&build_style_block(font));
 
     // Draw relationships first (behind boxes)
@@ -172,7 +194,12 @@ pub fn render_class_svg(
         let from_box = class_boxes.get(&rel.from);
         let to_box = class_boxes.get(&rel.to);
         if let (Some(fb), Some(tb)) = (from_box, to_box) {
-            svg.push_str(&draw_relationship(fb, tb, &rel.rel_type, rel.marker_at_from));
+            svg.push_str(&draw_relationship(
+                fb,
+                tb,
+                &rel.rel_type,
+                rel.marker_at_from,
+            ));
         }
     }
 
@@ -204,7 +231,7 @@ fn format_member(m: &ClassMember) -> String {
 
 fn draw_class_box(b: &ClassBox) -> String {
     let mut s = String::new();
-    
+
     // Main box
     s.push_str(&format!(
         r#"<rect x="{:.1}" y="{:.1}" width="{:.1}" height="{:.1}" class="node"/>"#,
@@ -227,7 +254,9 @@ fn draw_class_box(b: &ClassBox) -> String {
     // Class name (bold)
     s.push_str(&format!(
         r#"<text x="{:.1}" y="{:.1}" class="class-name" text-anchor="middle">{}</text>"#,
-        cx, cur_y, escape_xml(&b.label)
+        cx,
+        cur_y,
+        escape_xml(&b.label)
     ));
     cur_y += LINE_HEIGHT;
 
@@ -236,7 +265,10 @@ fn draw_class_box(b: &ClassBox) -> String {
         let div_y = cur_y - LINE_HEIGHT * 0.3 + BOX_PADDING / 2.0;
         s.push_str(&format!(
             r#"<line x1="{:.1}" y1="{:.1}" x2="{:.1}" y2="{:.1}" class="divider"/>"#,
-            b.x, div_y, b.x + b.width, div_y
+            b.x,
+            div_y,
+            b.x + b.width,
+            div_y
         ));
         cur_y += BOX_PADDING / 2.0;
     }
@@ -245,7 +277,9 @@ fn draw_class_box(b: &ClassBox) -> String {
     for attr in &b.attr_lines {
         s.push_str(&format!(
             r#"<text x="{:.1}" y="{:.1}" class="member">{}</text>"#,
-            b.x + BOX_PADDING, cur_y, escape_xml(attr)
+            b.x + BOX_PADDING,
+            cur_y,
+            escape_xml(attr)
         ));
         cur_y += LINE_HEIGHT;
     }
@@ -255,7 +289,10 @@ fn draw_class_box(b: &ClassBox) -> String {
         let div_y = cur_y - LINE_HEIGHT * 0.3 + BOX_PADDING / 2.0;
         s.push_str(&format!(
             r#"<line x1="{:.1}" y1="{:.1}" x2="{:.1}" y2="{:.1}" class="divider"/>"#,
-            b.x, div_y, b.x + b.width, div_y
+            b.x,
+            div_y,
+            b.x + b.width,
+            div_y
         ));
         cur_y += BOX_PADDING / 2.0;
     }
@@ -264,7 +301,9 @@ fn draw_class_box(b: &ClassBox) -> String {
     for method in &b.method_lines {
         s.push_str(&format!(
             r#"<text x="{:.1}" y="{:.1}" class="member">{}</text>"#,
-            b.x + BOX_PADDING, cur_y, escape_xml(method)
+            b.x + BOX_PADDING,
+            cur_y,
+            escape_xml(method)
         ));
         cur_y += LINE_HEIGHT;
     }
@@ -272,29 +311,53 @@ fn draw_class_box(b: &ClassBox) -> String {
     s
 }
 
-fn draw_relationship(from: &ClassBox, to: &ClassBox, rel_type: &RelationshipType, marker_at_from: bool) -> String {
+fn draw_relationship(
+    from: &ClassBox,
+    to: &ClassBox,
+    rel_type: &RelationshipType,
+    marker_at_from: bool,
+) -> String {
     let mut s = String::new();
-    
+
     // Calculate connection points
     let (from_x, from_y, to_x, to_y) = if from.y < to.y {
         // from is above to
-        (from.x + from.width / 2.0, from.y + from.height,
-         to.x + to.width / 2.0, to.y)
+        (
+            from.x + from.width / 2.0,
+            from.y + from.height,
+            to.x + to.width / 2.0,
+            to.y,
+        )
     } else if from.y > to.y {
         // from is below to
-        (from.x + from.width / 2.0, from.y,
-         to.x + to.width / 2.0, to.y + to.height)
+        (
+            from.x + from.width / 2.0,
+            from.y,
+            to.x + to.width / 2.0,
+            to.y + to.height,
+        )
     } else if from.x < to.x {
         // same level, from is left
-        (from.x + from.width, from.y + from.height / 2.0,
-         to.x, to.y + to.height / 2.0)
+        (
+            from.x + from.width,
+            from.y + from.height / 2.0,
+            to.x,
+            to.y + to.height / 2.0,
+        )
     } else {
         // same level, from is right
-        (from.x, from.y + from.height / 2.0,
-         to.x + to.width, to.y + to.height / 2.0)
+        (
+            from.x,
+            from.y + from.height / 2.0,
+            to.x + to.width,
+            to.y + to.height / 2.0,
+        )
     };
 
-    let is_dashed = matches!(rel_type, RelationshipType::Dependency | RelationshipType::Realization);
+    let is_dashed = matches!(
+        rel_type,
+        RelationshipType::Dependency | RelationshipType::Realization
+    );
     let line_class = if is_dashed { "rel-dashed" } else { "rel-line" };
 
     s.push_str(&format!(
@@ -325,10 +388,10 @@ fn draw_relationship(from: &ClassBox, to: &ClassBox, rel_type: &RelationshipType
 
 fn draw_marker(x: f64, y: f64, dx: f64, dy: f64, rel_type: &RelationshipType) -> String {
     let size = 12.0;
-    
+
     // Perpendicular direction
     let (px, py) = (-dy, dx);
-    
+
     match rel_type {
         RelationshipType::Inheritance | RelationshipType::Realization => {
             // Hollow triangle

@@ -1,8 +1,8 @@
 //! ER diagram SVG rendering
 
-use crate::types::{ErDiagram, Cardinality};
-use super::theme::{DiagramColors, build_style_block, svg_open_tag};
 use super::renderer::escape_xml;
+use super::theme::{build_style_block, svg_open_tag, DiagramColors};
+use crate::types::{Cardinality, ErDiagram};
 
 const BOX_PADDING: f64 = 16.0;
 const LINE_HEIGHT: f64 = 22.0;
@@ -33,10 +33,13 @@ pub fn render_er_svg(
     let mut entity_boxes: Vec<EntityBox> = Vec::new();
 
     for entity in &diagram.entities {
-        let attr_lines: Vec<String> = entity.attributes
+        let attr_lines: Vec<String> = entity
+            .attributes
             .iter()
             .map(|a| {
-                let key_str = a.keys.iter()
+                let key_str = a
+                    .keys
+                    .iter()
                     .map(|k| match k {
                         crate::types::ErKey::PK => "PK",
                         crate::types::ErKey::FK => "FK",
@@ -80,30 +83,47 @@ pub fn render_er_svg(
     }
 
     // Calculate canvas size
-    let total_width = entity_boxes.iter()
+    let total_width = entity_boxes
+        .iter()
         .map(|b| b.x + b.width)
-        .fold(0.0f64, |a, b| a.max(b)) + 40.0;
-    let total_height = entity_boxes.iter()
+        .fold(0.0f64, |a, b| a.max(b))
+        + 40.0;
+    let total_height = entity_boxes
+        .iter()
         .map(|b| b.y + b.height)
-        .fold(0.0f64, |a, b| a.max(b)) + 60.0;
+        .fold(0.0f64, |a, b| a.max(b))
+        + 60.0;
 
     let mut svg = String::new();
-    svg.push_str(&svg_open_tag(total_width, total_height, colors, transparent));
+    svg.push_str(&svg_open_tag(
+        total_width,
+        total_height,
+        colors,
+        transparent,
+    ));
     svg.push_str(&build_style_block(font));
 
     // Add ER-specific styles
-    svg.push_str(r#"<style>
+    svg.push_str(
+        r#"<style>
 .er-line { stroke: var(--line); stroke-width: 1.5; }
 .cardinality { font-size: 12px; fill: var(--fg); }
-</style>"#);
+</style>"#,
+    );
 
     // Draw relationships first
     for rel in &diagram.relationships {
         let from_box = entity_boxes.iter().find(|b| b.id == rel.entity1);
         let to_box = entity_boxes.iter().find(|b| b.id == rel.entity2);
-        
+
         if let (Some(fb), Some(tb)) = (from_box, to_box) {
-            svg.push_str(&draw_er_relationship(fb, tb, &rel.cardinality1, &rel.cardinality2, &rel.label));
+            svg.push_str(&draw_er_relationship(
+                fb,
+                tb,
+                &rel.cardinality1,
+                &rel.cardinality2,
+                &rel.label,
+            ));
         }
     }
 
@@ -132,7 +152,9 @@ fn draw_entity_box(eb: &EntityBox) -> String {
     // Entity name (header)
     s.push_str(&format!(
         r#"<text x="{:.1}" y="{:.1}" class="class-name" text-anchor="middle">{}</text>"#,
-        cx, cur_y, escape_xml(&eb.label)
+        cx,
+        cur_y,
+        escape_xml(&eb.label)
     ));
     cur_y += LINE_HEIGHT;
 
@@ -141,7 +163,10 @@ fn draw_entity_box(eb: &EntityBox) -> String {
         let div_y = cur_y - LINE_HEIGHT * 0.3;
         s.push_str(&format!(
             r#"<line x1="{:.1}" y1="{:.1}" x2="{:.1}" y2="{:.1}" class="divider"/>"#,
-            eb.x, div_y, eb.x + eb.width, div_y
+            eb.x,
+            div_y,
+            eb.x + eb.width,
+            div_y
         ));
     }
 
@@ -149,7 +174,9 @@ fn draw_entity_box(eb: &EntityBox) -> String {
     for attr in &eb.attr_lines {
         s.push_str(&format!(
             r#"<text x="{:.1}" y="{:.1}" class="member">{}</text>"#,
-            eb.x + BOX_PADDING, cur_y, escape_xml(attr)
+            eb.x + BOX_PADDING,
+            cur_y,
+            escape_xml(attr)
         ));
         cur_y += LINE_HEIGHT;
     }
@@ -168,11 +195,19 @@ fn draw_er_relationship(
 
     // Calculate connection points (horizontal line between boxes)
     let (from_x, from_y, to_x, to_y) = if from.x < to.x {
-        (from.x + from.width, from.y + from.height / 2.0,
-         to.x, to.y + to.height / 2.0)
+        (
+            from.x + from.width,
+            from.y + from.height / 2.0,
+            to.x,
+            to.y + to.height / 2.0,
+        )
     } else {
-        (from.x, from.y + from.height / 2.0,
-         to.x + to.width, to.y + to.height / 2.0)
+        (
+            from.x,
+            from.y + from.height / 2.0,
+            to.x + to.width,
+            to.y + to.height / 2.0,
+        )
     };
 
     // Main line
@@ -183,17 +218,29 @@ fn draw_er_relationship(
     s.push('\n');
 
     // From side marker
-    s.push_str(&draw_cardinality_marker(from_x, from_y, if from.x < to.x { 1.0 } else { -1.0 }, from_card));
-    
+    s.push_str(&draw_cardinality_marker(
+        from_x,
+        from_y,
+        if from.x < to.x { 1.0 } else { -1.0 },
+        from_card,
+    ));
+
     // To side marker
-    s.push_str(&draw_cardinality_marker(to_x, to_y, if from.x < to.x { -1.0 } else { 1.0 }, to_card));
+    s.push_str(&draw_cardinality_marker(
+        to_x,
+        to_y,
+        if from.x < to.x { -1.0 } else { 1.0 },
+        to_card,
+    ));
 
     // Label in the middle
     let mid_x = (from_x + to_x) / 2.0;
     let mid_y = (from_y + to_y) / 2.0 - 10.0;
     s.push_str(&format!(
         r#"<text x="{:.1}" y="{:.1}" class="edge-label" text-anchor="middle">{}</text>"#,
-        mid_x, mid_y, escape_xml(label)
+        mid_x,
+        mid_y,
+        escape_xml(label)
     ));
     s.push('\n');
 
@@ -209,62 +256,94 @@ fn draw_cardinality_marker(x: f64, y: f64, dir: f64, card: &Cardinality) -> Stri
             // Two vertical lines (||)
             s.push_str(&format!(
                 r#"<line x1="{:.1}" y1="{:.1}" x2="{:.1}" y2="{:.1}" class="er-line"/>"#,
-                x + dir * offset, y - 8.0, x + dir * offset, y + 8.0
+                x + dir * offset,
+                y - 8.0,
+                x + dir * offset,
+                y + 8.0
             ));
             s.push_str(&format!(
                 r#"<line x1="{:.1}" y1="{:.1}" x2="{:.1}" y2="{:.1}" class="er-line"/>"#,
-                x + dir * (offset + 5.0), y - 8.0, x + dir * (offset + 5.0), y + 8.0
+                x + dir * (offset + 5.0),
+                y - 8.0,
+                x + dir * (offset + 5.0),
+                y + 8.0
             ));
         }
         Cardinality::ZeroOne => {
             // Circle + vertical line (o|)
             s.push_str(&format!(
                 r#"<circle cx="{:.1}" cy="{:.1}" r="5" class="marker-hollow"/>"#,
-                x + dir * offset, y
+                x + dir * offset,
+                y
             ));
             s.push_str(&format!(
                 r#"<line x1="{:.1}" y1="{:.1}" x2="{:.1}" y2="{:.1}" class="er-line"/>"#,
-                x + dir * (offset + 10.0), y - 8.0, x + dir * (offset + 10.0), y + 8.0
+                x + dir * (offset + 10.0),
+                y - 8.0,
+                x + dir * (offset + 10.0),
+                y + 8.0
             ));
         }
         Cardinality::ZeroMany => {
             // Circle + crow's foot (o{)
             s.push_str(&format!(
                 r#"<circle cx="{:.1}" cy="{:.1}" r="5" class="marker-hollow"/>"#,
-                x + dir * (offset + 15.0), y
+                x + dir * (offset + 15.0),
+                y
             ));
             // Crow's foot (three lines)
             s.push_str(&format!(
                 r#"<line x1="{:.1}" y1="{:.1}" x2="{:.1}" y2="{:.1}" class="er-line"/>"#,
-                x, y, x + dir * offset, y - 8.0
+                x,
+                y,
+                x + dir * offset,
+                y - 8.0
             ));
             s.push_str(&format!(
                 r#"<line x1="{:.1}" y1="{:.1}" x2="{:.1}" y2="{:.1}" class="er-line"/>"#,
-                x, y, x + dir * offset, y
+                x,
+                y,
+                x + dir * offset,
+                y
             ));
             s.push_str(&format!(
                 r#"<line x1="{:.1}" y1="{:.1}" x2="{:.1}" y2="{:.1}" class="er-line"/>"#,
-                x, y, x + dir * offset, y + 8.0
+                x,
+                y,
+                x + dir * offset,
+                y + 8.0
             ));
         }
         Cardinality::Many => {
             // Vertical line + crow's foot (}|)
             s.push_str(&format!(
                 r#"<line x1="{:.1}" y1="{:.1}" x2="{:.1}" y2="{:.1}" class="er-line"/>"#,
-                x + dir * (offset + 10.0), y - 8.0, x + dir * (offset + 10.0), y + 8.0
+                x + dir * (offset + 10.0),
+                y - 8.0,
+                x + dir * (offset + 10.0),
+                y + 8.0
             ));
             // Crow's foot
             s.push_str(&format!(
                 r#"<line x1="{:.1}" y1="{:.1}" x2="{:.1}" y2="{:.1}" class="er-line"/>"#,
-                x, y, x + dir * offset, y - 8.0
+                x,
+                y,
+                x + dir * offset,
+                y - 8.0
             ));
             s.push_str(&format!(
                 r#"<line x1="{:.1}" y1="{:.1}" x2="{:.1}" y2="{:.1}" class="er-line"/>"#,
-                x, y, x + dir * offset, y
+                x,
+                y,
+                x + dir * offset,
+                y
             ));
             s.push_str(&format!(
                 r#"<line x1="{:.1}" y1="{:.1}" x2="{:.1}" y2="{:.1}" class="er-line"/>"#,
-                x, y, x + dir * offset, y + 8.0
+                x,
+                y,
+                x + dir * offset,
+                y + 8.0
             ));
         }
     }

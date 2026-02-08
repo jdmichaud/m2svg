@@ -1,8 +1,8 @@
 //! A* pathfinding for edge routing
 
 use super::types::GridCoord;
-use std::collections::{BinaryHeap, HashMap};
 use std::cmp::Ordering;
+use std::collections::{BinaryHeap, HashMap};
 
 /// Priority queue item
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -36,12 +36,7 @@ pub fn heuristic(a: GridCoord, b: GridCoord) -> i32 {
 }
 
 /// 4-directional movement
-const MOVE_DIRS: [(i32, i32); 4] = [
-    (1, 0),
-    (-1, 0),
-    (0, 1),
-    (0, -1),
-];
+const MOVE_DIRS: [(i32, i32); 4] = [(1, 0), (-1, 0), (0, 1), (0, -1)];
 
 /// Check if a grid cell is free
 fn is_free_in_grid(grid: &HashMap<String, usize>, c: GridCoord) -> bool {
@@ -61,14 +56,17 @@ pub fn get_path(
     to: GridCoord,
 ) -> Option<Vec<GridCoord>> {
     let mut pq = BinaryHeap::new();
-    pq.push(PQItem { coord: from, priority: 0 });
-    
+    pq.push(PQItem {
+        coord: from,
+        priority: 0,
+    });
+
     let mut cost_so_far: HashMap<String, i32> = HashMap::new();
     cost_so_far.insert(from.key(), 0);
-    
+
     let mut came_from: HashMap<String, Option<GridCoord>> = HashMap::new();
     came_from.insert(from.key(), None);
-    
+
     let mut iterations = 0;
     while let Some(current) = pq.pop() {
         iterations += 1;
@@ -86,31 +84,34 @@ pub fn get_path(
             path.reverse();
             return Some(path);
         }
-        
+
         let current_cost = *cost_so_far.get(&current.coord.key()).unwrap_or(&0);
-        
+
         for (dx, dy) in MOVE_DIRS {
             let next = GridCoord::new(current.coord.x + dx, current.coord.y + dy);
-            
+
             // Allow moving to destination even if occupied
             if !is_free_in_grid(grid, next) && next != to {
                 continue;
             }
-            
+
             let new_cost = current_cost + 1;
             let next_key = next.key();
-            
+
             let existing_cost = cost_so_far.get(&next_key).copied();
-            
+
             if existing_cost.is_none() || new_cost < existing_cost.unwrap() {
                 cost_so_far.insert(next_key.clone(), new_cost);
                 let priority = new_cost + heuristic(next, to);
-                pq.push(PQItem { coord: next, priority });
+                pq.push(PQItem {
+                    coord: next,
+                    priority,
+                });
                 came_from.insert(next_key, Some(current.coord));
             }
         }
     }
-    
+
     None
 }
 
@@ -119,25 +120,25 @@ pub fn merge_path(path: Vec<GridCoord>) -> Vec<GridCoord> {
     if path.len() <= 2 {
         return path;
     }
-    
+
     let mut to_remove = std::collections::HashSet::new();
-    
+
     for idx in 1..path.len() - 1 {
         let prev = path[idx - 1];
         let curr = path[idx];
         let next = path[idx + 1];
-        
+
         let prev_dx = curr.x - prev.x;
         let prev_dy = curr.y - prev.y;
         let dx = next.x - curr.x;
         let dy = next.y - curr.y;
-        
+
         // Same direction — middle point is redundant
         if prev_dx == dx && prev_dy == dy {
             to_remove.insert(idx);
         }
     }
-    
+
     path.into_iter()
         .enumerate()
         .filter(|(i, _)| !to_remove.contains(i))

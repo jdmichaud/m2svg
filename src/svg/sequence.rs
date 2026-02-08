@@ -1,8 +1,8 @@
 //! Sequence diagram SVG rendering
 
-use crate::types::SequenceDiagram;
-use super::theme::{DiagramColors, build_style_block, svg_open_tag};
 use super::renderer::escape_xml;
+use super::theme::{build_style_block, svg_open_tag, DiagramColors};
+use crate::types::SequenceDiagram;
 use std::collections::HashMap;
 
 const ACTOR_BOX_HEIGHT: f64 = 40.0;
@@ -22,13 +22,15 @@ pub fn render_sequence_svg(
     }
 
     // Calculate actor box widths based on label lengths
-    let actor_widths: Vec<f64> = diagram.actors
+    let actor_widths: Vec<f64> = diagram
+        .actors
         .iter()
         .map(|a| (a.label.len() as f64 * 9.0).max(60.0) + ACTOR_PADDING * 2.0)
         .collect();
 
     // Build actor index for lookup
-    let actor_idx: HashMap<&str, usize> = diagram.actors
+    let actor_idx: HashMap<&str, usize> = diagram
+        .actors
         .iter()
         .enumerate()
         .map(|(i, a)| (a.id.as_str(), i))
@@ -39,7 +41,9 @@ pub fn render_sequence_svg(
     for msg in &diagram.messages {
         let fi = actor_idx.get(msg.from.as_str()).copied().unwrap_or(0);
         let ti = actor_idx.get(msg.to.as_str()).copied().unwrap_or(0);
-        if fi == ti { continue; }
+        if fi == ti {
+            continue;
+        }
         let lo = fi.min(ti);
         let hi = fi.max(ti);
         let needed = msg.label.len() as f64 * 8.0 + 40.0;
@@ -75,10 +79,17 @@ pub fn render_sequence_svg(
 
     let footer_y = cur_y + MESSAGE_SPACING;
     let total_height = footer_y + ACTOR_BOX_HEIGHT + 20.0;
-    let total_width = ll_x.last().copied().unwrap_or(0.0) + actor_widths.last().copied().unwrap_or(60.0) / 2.0 + 40.0;
+    let total_width = ll_x.last().copied().unwrap_or(0.0)
+        + actor_widths.last().copied().unwrap_or(60.0) / 2.0
+        + 40.0;
 
     let mut svg = String::new();
-    svg.push_str(&svg_open_tag(total_width, total_height, colors, transparent));
+    svg.push_str(&svg_open_tag(
+        total_width,
+        total_height,
+        colors,
+        transparent,
+    ));
     svg.push_str(&build_style_block(font));
 
     // Draw lifelines (dashed lines between actor boxes)
@@ -90,12 +101,12 @@ pub fn render_sequence_svg(
             x, top, x, bottom
         ));
         svg.push_str("\n");
-        
+
         // Draw actor boxes (header)
         let w = actor_widths[i];
         let label = &diagram.actors[i].label;
         svg.push_str(&draw_actor_box(x, 0.0, w, ACTOR_BOX_HEIGHT, label));
-        
+
         // Draw actor boxes (footer)
         svg.push_str(&draw_actor_box(x, footer_y, w, ACTOR_BOX_HEIGHT, label));
     }
@@ -107,7 +118,11 @@ pub fn render_sequence_svg(
         let y = msg_y[m];
         let is_self = fi == ti;
         let is_dashed = msg.line_style == crate::types::LineStyle::Dashed;
-        let line_class = if is_dashed { "message-dashed" } else { "message" };
+        let line_class = if is_dashed {
+            "message-dashed"
+        } else {
+            "message"
+        };
 
         if is_self {
             // Self-message loop
@@ -121,40 +136,54 @@ pub fn render_sequence_svg(
             // Arrowhead
             svg.push_str(&format!(
                 r#"<polygon points="{:.1},{:.1} {:.1},{:.1} {:.1},{:.1}" class="arrow"/>"#,
-                x, y + loop_height,
-                x + 8.0, y + loop_height - 4.0,
-                x + 8.0, y + loop_height + 4.0
+                x,
+                y + loop_height,
+                x + 8.0,
+                y + loop_height - 4.0,
+                x + 8.0,
+                y + loop_height + 4.0
             ));
             // Label
             svg.push_str(&format!(
                 r#"<text x="{:.1}" y="{:.1}" class="message-label">{}</text>"#,
-                x + loop_width + 5.0, y + loop_height / 2.0 + 4.0, escape_xml(&msg.label)
+                x + loop_width + 5.0,
+                y + loop_height / 2.0 + 4.0,
+                escape_xml(&msg.label)
             ));
         } else {
             let from_x = ll_x[fi];
             let to_x = ll_x[ti];
             let left_to_right = ti > fi;
-            
+
             // Message line
             svg.push_str(&format!(
                 r#"<line x1="{:.1}" y1="{:.1}" x2="{:.1}" y2="{:.1}" class="{}"/>"#,
                 from_x, y, to_x, y, line_class
             ));
-            
+
             // Arrowhead
-            let (ax, dir) = if left_to_right { (to_x, -1.0) } else { (to_x, 1.0) };
+            let (ax, dir) = if left_to_right {
+                (to_x, -1.0)
+            } else {
+                (to_x, 1.0)
+            };
             svg.push_str(&format!(
                 r#"<polygon points="{:.1},{:.1} {:.1},{:.1} {:.1},{:.1}" class="arrow"/>"#,
-                ax, y,
-                ax + dir * 10.0, y - 5.0,
-                ax + dir * 10.0, y + 5.0
+                ax,
+                y,
+                ax + dir * 10.0,
+                y - 5.0,
+                ax + dir * 10.0,
+                y + 5.0
             ));
-            
+
             // Label above line
             let label_x = (from_x + to_x) / 2.0;
             svg.push_str(&format!(
                 r#"<text x="{:.1}" y="{:.1}" class="message-label" text-anchor="middle">{}</text>"#,
-                label_x, y - 8.0, escape_xml(&msg.label)
+                label_x,
+                y - 8.0,
+                escape_xml(&msg.label)
             ));
         }
         svg.push('\n');

@@ -16,7 +16,10 @@ pub fn get_canvas_size(canvas: &Canvas) -> (usize, usize) {
     if canvas.is_empty() {
         return (0, 0);
     }
-    (canvas.len().saturating_sub(1), canvas[0].len().saturating_sub(1))
+    (
+        canvas.len().saturating_sub(1),
+        canvas[0].len().saturating_sub(1),
+    )
 }
 
 /// Create a copy of a canvas with same dimensions
@@ -30,12 +33,12 @@ pub fn increase_size(canvas: &mut Canvas, new_x: usize, new_y: usize) {
     let (curr_x, curr_y) = get_canvas_size(canvas);
     let target_x = new_x.max(curr_x);
     let target_y = new_y.max(curr_y);
-    
+
     // Extend existing columns
     for col in canvas.iter_mut() {
         col.resize(target_y + 1, ' ');
     }
-    
+
     // Add new columns
     while canvas.len() <= target_x {
         canvas.push(vec![' '; target_y + 1]);
@@ -79,11 +82,11 @@ pub fn merge_ascii_junctions(c1: char, c2: char) -> char {
     match (c1, c2) {
         // Crossing lines create +
         ('-', '|') | ('|', '-') => '+',
-        
+
         // Line meets junction - keep junction
         ('-', '+') | ('+', '-') => '+',
         ('|', '+') | ('+', '|') => '+',
-        
+
         // Arrow meets line - keep arrow
         ('>', '-') | ('>', '+') => '>',
         ('-', '>') | ('+', '>') => '>',
@@ -93,13 +96,13 @@ pub fn merge_ascii_junctions(c1: char, c2: char) -> char {
         ('|', '^') | ('+', '^') => '^',
         ('v', '|') | ('v', '+') => 'v',
         ('|', 'v') | ('+', 'v') => 'v',
-        
+
         // Line meets itself - keep line
         ('-', '-') => '-',
         ('|', '|') => '|',
         ('+', '+') => '+',
-        
-        _ => c2,  // Default to the new character
+
+        _ => c2, // Default to the new character
     }
 }
 
@@ -128,29 +131,29 @@ pub fn merge_junctions(c1: char, c2: char) -> char {
         ('│', '┘') | ('┘', '│') => '┤',
         ('│', '┬') | ('┬', '│') => '┼',
         ('│', '┴') | ('┴', '│') => '┼',
-        ('│', '├') | ('├', '│') => '├',  // T-junction going right
-        ('│', '┤') | ('┤', '│') => '┤',  // T-junction going left
+        ('│', '├') | ('├', '│') => '├', // T-junction going right
+        ('│', '┤') | ('┤', '│') => '┤', // T-junction going left
         // Corner merging: opposite corners combine to full cross
         ('┌', '┘') | ('┘', '┌') => '┼',
         ('┐', '└') | ('└', '┐') => '┼',
         // Corner merging: same-side corners combine to T-junctions
-        ('┌', '└') | ('└', '┌') => '├',  // Both have RIGHT arm → ├
-        ('┐', '┘') | ('┘', '┐') => '┤',  // Both have LEFT arm → ┤
-        ('┌', '┐') | ('┐', '┌') => '┬',  // Both have DOWN arm → ┬
-        ('└', '┘') | ('┘', '└') => '┴',  // Both have UP arm → ┴
+        ('┌', '└') | ('└', '┌') => '├', // Both have RIGHT arm → ├
+        ('┐', '┘') | ('┘', '┐') => '┤', // Both have LEFT arm → ┤
+        ('┌', '┐') | ('┐', '┌') => '┬', // Both have DOWN arm → ┬
+        ('└', '┘') | ('┘', '└') => '┴', // Both have UP arm → ┴
         // T-junction merging
         ('┬', '┴') | ('┴', '┬') => '┼',
         ('├', '┤') | ('┤', '├') => '┼',
         // T-junction + corner = full cross or enhanced T
-        ('├', '┐') | ('┐', '├') => '┼',  // ├ (UP,DOWN,RIGHT) + ┐ (LEFT,DOWN) → ┼
-        ('├', '┘') | ('┘', '├') => '┼',  // ├ (UP,DOWN,RIGHT) + ┘ (LEFT,UP) → ┼
-        ('┤', '┌') | ('┌', '┤') => '┼',  // ┤ (UP,DOWN,LEFT) + ┌ (RIGHT,DOWN) → ┼
-        ('┤', '└') | ('└', '┤') => '┼',  // ┤ (UP,DOWN,LEFT) + └ (RIGHT,UP) → ┼
-        ('┬', '└') | ('└', '┬') => '┼',  // ┬ (LEFT,RIGHT,DOWN) + └ (RIGHT,UP) → ┼
-        ('┬', '┘') | ('┘', '┬') => '┼',  // ┬ (LEFT,RIGHT,DOWN) + ┘ (LEFT,UP) → ┼
-        ('┴', '┌') | ('┌', '┴') => '┼',  // ┴ (LEFT,RIGHT,UP) + ┌ (RIGHT,DOWN) → ┼
-        ('┴', '┐') | ('┐', '┴') => '┼',  // ┴ (LEFT,RIGHT,UP) + ┐ (LEFT,DOWN) → ┼
-        _ => c2,  // Default to the new character
+        ('├', '┐') | ('┐', '├') => '┼', // ├ (UP,DOWN,RIGHT) + ┐ (LEFT,DOWN) → ┼
+        ('├', '┘') | ('┘', '├') => '┼', // ├ (UP,DOWN,RIGHT) + ┘ (LEFT,UP) → ┼
+        ('┤', '┌') | ('┌', '┤') => '┼', // ┤ (UP,DOWN,LEFT) + ┌ (RIGHT,DOWN) → ┼
+        ('┤', '└') | ('└', '┤') => '┼', // ┤ (UP,DOWN,LEFT) + └ (RIGHT,UP) → ┼
+        ('┬', '└') | ('└', '┬') => '┼', // ┬ (LEFT,RIGHT,DOWN) + └ (RIGHT,UP) → ┼
+        ('┬', '┘') | ('┘', '┬') => '┼', // ┬ (LEFT,RIGHT,DOWN) + ┘ (LEFT,UP) → ┼
+        ('┴', '┌') | ('┌', '┴') => '┼', // ┴ (LEFT,RIGHT,UP) + ┌ (RIGHT,DOWN) → ┼
+        ('┴', '┐') | ('┐', '┴') => '┼', // ┴ (LEFT,RIGHT,UP) + ┐ (LEFT,DOWN) → ┼
+        _ => c2,                        // Default to the new character
     }
 }
 
@@ -162,7 +165,7 @@ pub fn merge_canvases(
     overlays: &[&Canvas],
 ) -> Canvas {
     let (mut max_x, mut max_y) = get_canvas_size(base);
-    
+
     for overlay in overlays {
         let (o_x, o_y) = get_canvas_size(overlay);
         if offset.x >= 0 && offset.y >= 0 {
@@ -170,9 +173,9 @@ pub fn merge_canvases(
             max_y = max_y.max(o_y.saturating_add(offset.y as usize));
         }
     }
-    
+
     let mut merged = mk_canvas(max_x, max_y);
-    
+
     // Copy base
     for x in 0..=max_x {
         for y in 0..=max_y {
@@ -181,7 +184,7 @@ pub fn merge_canvases(
             }
         }
     }
-    
+
     // Apply overlays
     for overlay in overlays {
         let (o_x, o_y) = get_canvas_size(overlay);
@@ -213,7 +216,7 @@ pub fn merge_canvases(
             }
         }
     }
-    
+
     merged
 }
 
@@ -221,7 +224,7 @@ pub fn merge_canvases(
 pub fn canvas_to_string(canvas: &Canvas) -> String {
     let (max_x, max_y) = get_canvas_size(canvas);
     let mut lines = Vec::new();
-    
+
     for y in 0..=max_y {
         let mut line = String::new();
         for x in 0..=max_x {
@@ -233,7 +236,7 @@ pub fn canvas_to_string(canvas: &Canvas) -> String {
         }
         lines.push(line);
     }
-    
+
     // Remove trailing empty lines
     while !lines.is_empty() {
         let last = lines.last().unwrap();
@@ -243,7 +246,7 @@ pub fn canvas_to_string(canvas: &Canvas) -> String {
             break;
         }
     }
-    
+
     lines.join("\n")
 }
 
@@ -251,7 +254,7 @@ pub fn canvas_to_string(canvas: &Canvas) -> String {
 pub fn flip_canvas_vertically(text: &str) -> String {
     let lines: Vec<&str> = text.lines().collect();
     let mut flipped: Vec<String> = Vec::with_capacity(lines.len());
-    
+
     for line in lines.iter().rev() {
         let mut new_line = String::with_capacity(line.len());
         for c in line.chars() {
@@ -274,7 +277,7 @@ pub fn flip_canvas_vertically(text: &str) -> String {
         }
         flipped.push(new_line);
     }
-    
+
     flipped.join("\n")
 }
 
@@ -295,16 +298,20 @@ pub fn set_canvas_size_to_grid(
 ) {
     let max_col = column_width.keys().max().copied().unwrap_or(0);
     let max_row = row_height.keys().max().copied().unwrap_or(0);
-    
+
     let mut total_width = 0usize;
     for col in 0..=max_col {
         total_width += column_width.get(&col).copied().unwrap_or(0);
     }
-    
+
     let mut total_height = 0usize;
     for row in 0..=max_row {
         total_height += row_height.get(&row).copied().unwrap_or(0);
     }
-    
-    increase_size(canvas, (total_width + offset_x as usize).max(1), (total_height + offset_y as usize).max(1));
+
+    increase_size(
+        canvas,
+        (total_width + offset_x as usize).max(1),
+        (total_height + offset_y as usize).max(1),
+    );
 }

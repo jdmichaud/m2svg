@@ -28,20 +28,20 @@ impl Direction {
 /// Shape of a node in the diagram
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NodeShape {
-    Rectangle,   // [text]
-    Rounded,     // (text)
-    Diamond,     // {text}
-    Stadium,     // ([text])
-    Circle,      // ((text))
-    Subroutine,  // [[text]]
+    Rectangle,    // [text]
+    Rounded,      // (text)
+    Diamond,      // {text}
+    Stadium,      // ([text])
+    Circle,       // ((text))
+    Subroutine,   // [[text]]
     DoubleCircle, // (((text)))
-    Hexagon,     // {{text}}
-    Cylinder,    // [(text)]
-    Asymmetric,  // >text]
-    Trapezoid,   // [/text\]
+    Hexagon,      // {{text}}
+    Cylinder,     // [(text)]
+    Asymmetric,   // >text]
+    Trapezoid,    // [/text\]
     TrapezoidAlt, // [\text/]
-    StateStart,  // filled circle (start pseudostate)
-    StateEnd,    // bullseye circle (end pseudostate)
+    StateStart,   // filled circle (start pseudostate)
+    StateEnd,     // bullseye circle (end pseudostate)
 }
 
 /// Style of an edge/connection
@@ -86,7 +86,7 @@ pub struct MermaidSubgraph {
 pub struct MermaidGraph {
     pub direction: Direction,
     pub nodes: HashMap<String, MermaidNode>,
-    pub node_order: Vec<String>,  // Track insertion order
+    pub node_order: Vec<String>, // Track insertion order
     pub edges: Vec<MermaidEdge>,
     pub subgraphs: Vec<MermaidSubgraph>,
     pub class_defs: HashMap<String, HashMap<String, String>>,
@@ -232,7 +232,7 @@ impl Visibility {
             _ => Visibility::None,
         }
     }
-    
+
     pub fn to_char(&self) -> char {
         match self {
             Visibility::Public => '+',
@@ -264,12 +264,12 @@ pub struct ClassNode {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RelationshipType {
-    Inheritance,   // <|--
-    Composition,   // *--
-    Aggregation,   // o--
-    Association,   // -->
-    Dependency,    // ..>
-    Realization,   // ..|>
+    Inheritance, // <|--
+    Composition, // *--
+    Aggregation, // o--
+    Association, // -->
+    Dependency,  // ..>
+    Realization, // ..|>
 }
 
 #[derive(Debug, Clone)]
@@ -280,7 +280,7 @@ pub struct ClassRelationship {
     pub from_cardinality: Option<String>,
     pub to_cardinality: Option<String>,
     pub label: Option<String>,
-    pub marker_at_from: bool,  // true = marker at 'from' end, false = marker at 'to' end
+    pub marker_at_from: bool, // true = marker at 'from' end, false = marker at 'to' end
 }
 
 #[derive(Debug, Clone)]
@@ -410,10 +410,10 @@ pub enum CommitType {
 /// A commit in the git graph
 #[derive(Debug, Clone)]
 pub struct GitCommit {
-    pub id: String,           // Auto-generated (A, B, C...) or custom
+    pub id: String, // Auto-generated (A, B, C...) or custom
     pub commit_type: CommitType,
     pub tag: Option<String>,
-    pub branch: String,       // Which branch this commit is on
+    pub branch: String,          // Which branch this commit is on
     pub parent_ids: Vec<String>, // Parent commit IDs (1 for normal, 2 for merge)
     pub is_merge: bool,
     pub is_cherry_pick: bool,
@@ -425,8 +425,8 @@ pub struct GitCommit {
 #[derive(Debug, Clone)]
 pub struct GitBranch {
     pub name: String,
-    pub order: Option<i32>,    // Custom ordering
-    pub commit_ids: Vec<String>, // Commits on this branch
+    pub order: Option<i32>,            // Custom ordering
+    pub commit_ids: Vec<String>,       // Commits on this branch
     pub source_commit: Option<String>, // The commit this branch was created from
 }
 
