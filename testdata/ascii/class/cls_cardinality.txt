@@ -3,12 +3,12 @@ classDiagram
     Student "1" --> "1..*" Course
     Galaxy --> "many" Star : Contains
 ---
-+----------+   +---------+  +--------+     
-| Customer |   | Student |  | Galaxy |     
-+----------+   +---------+  +--------+     
-     1|            1|            |         
-      |             |        Contains      
-      v*            v 1..*       v many    
- +--------+    +--------+    +------+      
- | Ticket |    | Course |    | Star |      
- +--------+    +--------+    +------+      
++----------+    +---------+    +--------+     
+| Customer |    | Student |    | Galaxy |     
++----------+    +---------+    +--------+     
+     1|             1               |         
+      |             |           Contains      
+      v*            v 1..*       v many       
+ +--------+    +--------+    +------+         
+ | Ticket |    | Course |    | Star |         
+ +--------+    +--------+    +------+         

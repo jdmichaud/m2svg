@@ -260,6 +260,8 @@ pub struct ClassNode {
     pub attributes: Vec<ClassMember>,
     pub methods: Vec<ClassMember>,
     pub annotation: Option<String>,
+    /// True if this node is a lollipop interface (rendered as plain text, no box)
+    pub is_lollipop: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -23,6 +23,26 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
     let mut class_boxes: HashMap<String, ClassBox> = HashMap::new();
 
     for cls in &diagram.classes {
+        // Lollipop interface nodes are rendered as plain text labels (no box)
+        if cls.is_lollipop {
+            class_boxes.insert(
+                cls.id.clone(),
+                ClassBox {
+                    _id: cls.id.clone(),
+                    label: cls.label.clone(),
+                    annotation: None,
+                    attr_lines: Vec::new(),
+                    method_lines: Vec::new(),
+                    width: cls.label.len(),
+                    height: 1,
+                    x: 0,
+                    y: 0,
+                    is_lollipop: true,
+                },
+            );
+            continue;
+        }
+
         let has_annotation = cls.annotation.is_some();
         let annotation_str = cls.annotation.as_ref().map(|a| format!("<<{}>>", a));
 
@@ -66,6 +86,7 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
                 height: box_height,
                 x: 0,
                 y: 0,
+                is_lollipop: false,
             },
         );
     }
@@ -258,6 +279,63 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
             }
         }
 
+        // Resolve overlaps among positioned nodes at this level:
+        // collect them in group order, then shift any that overlap a predecessor
+        let positioned_ids: Vec<&String> =
+            group.iter().filter(|id| positioned.contains(*id)).collect();
+        if positioned_ids.len() > 1 {
+            // Sort by subtree depth (deepest first → center/left) then by current X.
+            // This ensures nodes with deep subtrees occupy interior positions and
+            // nodes with shallow connections sit on the outside where their edges
+            // can drop straight down without crossing through intermediate boxes.
+            fn subtree_depth(
+                id: &str,
+                children: &HashMap<String, HashSet<String>>,
+                memo: &mut HashMap<String, usize>,
+            ) -> usize {
+                if let Some(&d) = memo.get(id) {
+                    return d;
+                }
+                let d = match children.get(id) {
+                    Some(cs) if !cs.is_empty() => {
+                        1 + cs
+                            .iter()
+                            .map(|c| subtree_depth(c, children, memo))
+                            .max()
+                            .unwrap_or(0)
+                    }
+                    _ => 0,
+                };
+                memo.insert(id.to_string(), d);
+                d
+            }
+            let mut depth_memo: HashMap<String, usize> = HashMap::new();
+            let mut sorted: Vec<String> = positioned_ids.into_iter().cloned().collect();
+            sorted.sort_by(|a, b| {
+                let da = subtree_depth(a, &children, &mut depth_memo);
+                let db = subtree_depth(b, &children, &mut depth_memo);
+                // Deeper subtrees first (larger depth → smaller sort key), then by X
+                db.cmp(&da).then_with(|| {
+                    let xa = class_boxes.get(a).map(|cb| cb.x).unwrap_or(0);
+                    let xb = class_boxes.get(b).map(|cb| cb.x).unwrap_or(0);
+                    xa.cmp(&xb)
+                })
+            });
+            // Re-position: deepest-first gets its centered position; others shift right
+            for i in 1..sorted.len() {
+                let prev_end = class_boxes
+                    .get(&sorted[i - 1])
+                    .map(|cb| cb.x + cb.width as i32)
+                    .unwrap_or(0);
+                if let Some(cb) = class_boxes.get_mut(&sorted[i]) {
+                    let min_x = prev_end + h_gap as i32;
+                    if cb.x < min_x {
+                        cb.x = min_x;
+                    }
+                }
+            }
+        }
+
         // Position remaining nodes (those without children) in gaps
         let mut used_ranges: Vec<(i32, i32)> = Vec::new();
         for id in group {
@@ -344,7 +422,12 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
     // Draw class boxes (in definition order for deterministic overlap)
     for cls in &diagram.classes {
         if let Some(cb) = class_boxes.get(&cls.id) {
-            draw_class_box(&mut canvas, cb, use_ascii);
+            if cb.is_lollipop {
+                // Draw as plain text label (no box)
+                draw_text(&mut canvas, cb.x, cb.y, &cb.label);
+            } else {
+                draw_class_box(&mut canvas, cb, use_ascii);
+            }
         }
     }
 
@@ -560,6 +643,19 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
         }
     }
 
+    // Collect all box bounding rectangles for collision detection
+    let all_boxes: Vec<(i32, i32, i32, i32)> = class_boxes
+        .values()
+        .map(|cb| {
+            (
+                cb.x,
+                cb.y,
+                cb.x + cb.width as i32 - 1,
+                cb.y + cb.height as i32 - 1,
+            )
+        })
+        .collect();
+
     // Draw non-hierarchical relationship lines
     for rel in &non_hierarchical_rels {
         let from_box = class_boxes.get(&rel.from);
@@ -576,6 +672,7 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
             RelationshipType::Dependency | RelationshipType::Realization
         );
         let line_v = if is_dashed { dashed_v } else { solid_v };
+        let line_h = if is_dashed { _dashed_h } else { solid_h };
 
         let (top_box, bottom_box) = if from_box.y < to_box.y {
             (from_box, to_box)
@@ -603,7 +700,77 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
             (&rel.to_cardinality, &rel.from_cardinality)
         };
 
-        if marker_at_source {
+        // Check if the straight vertical path from top_center_x passes through any
+        // intermediate box (not the source or target box themselves)
+        let mut blocked_by: Option<(i32, i32, i32, i32)> = None;
+        for &(bx1, by1, bx2, by2) in &all_boxes {
+            // Skip the source and target boxes themselves
+            if by1 == top_box.y && bx1 == top_box.x {
+                continue;
+            }
+            if by1 == bottom_box.y && bx1 == bottom_box.x {
+                continue;
+            }
+            // Check if the vertical line at top_center_x would pass through this box
+            if top_center_x >= bx1
+                && top_center_x <= bx2
+                && by1 > top_bottom_y
+                && by2 < bottom_top_y
+            {
+                blocked_by = Some((bx1, by1, bx2, by2));
+                break;
+            }
+        }
+
+        if let Some((blocker_x1, _blocker_y1, blocker_x2, blocker_y2)) = blocked_by {
+            // Route around the blocking box: go to one side, down past it, then to target
+            // Choose the side that minimizes distance: prefer routing toward the target,
+            // but ensure route_x is outside the blocker
+            let dist_left = (top_center_x - (blocker_x1 - 2)).abs();
+            let dist_right = ((blocker_x2 + 2) - top_center_x).abs();
+            let route_x = if dist_left <= dist_right && blocker_x1 - 2 >= 0 {
+                blocker_x1 - 2 // two columns left of blocker
+            } else {
+                blocker_x2 + 2 // two columns right of blocker
+            };
+
+            // Vertical line from top box down to first bend
+            let bend1_y = top_bottom_y + 1;
+
+            // Horizontal line from top_center_x to route_x
+            let (hx1, hx2) = if route_x < top_center_x {
+                (route_x, top_center_x)
+            } else {
+                (top_center_x, route_x)
+            };
+            for x in hx1..=hx2 {
+                set_char(&mut canvas, x, bend1_y, line_h);
+            }
+
+            // Vertical line down past the blocker
+            let bend2_y = blocker_y2 + 1;
+            for y in (bend1_y + 1)..=bend2_y {
+                set_char(&mut canvas, route_x, y, line_v);
+            }
+
+            // Horizontal line from route_x to bottom_center_x
+            let (hx1, hx2) = if route_x < bottom_center_x {
+                (route_x, bottom_center_x)
+            } else {
+                (bottom_center_x, route_x)
+            };
+            for x in hx1..=hx2 {
+                set_char(&mut canvas, x, bend2_y, line_h);
+            }
+
+            // Vertical line from bend2 down to arrow
+            for y in (bend2_y + 1)..(bottom_top_y - 1) {
+                set_char(&mut canvas, bottom_center_x, y, line_v);
+            }
+
+            // Arrow head pointing down
+            set_char(&mut canvas, bottom_center_x, bottom_top_y - 1, marker_char);
+        } else if marker_at_source {
             // Marker at source (top)
             let marker_y = top_bottom_y + 1;
             set_char(&mut canvas, top_center_x, marker_y, marker_char);
@@ -647,10 +814,49 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
                 for y in (mid_y + 1)..(bottom_top_y - 1) {
                     set_char(&mut canvas, bottom_center_x, y, line_v);
                 }
-            } else {
-                // No label: continuous vertical line from source to arrow
+            } else if top_center_x == bottom_center_x {
+                // No label, aligned: simple vertical line
                 for y in (top_bottom_y + 1)..(bottom_top_y - 1) {
                     set_char(&mut canvas, top_center_x, y, line_v);
+                }
+            } else if (top_center_x - bottom_center_x).abs() <= 2 {
+                // No label, nearly aligned: draw straight vertical at bottom center
+                for y in (top_bottom_y + 1)..(bottom_top_y - 1) {
+                    set_char(&mut canvas, bottom_center_x, y, line_v);
+                }
+            } else {
+                // No label, not aligned: draw elbow via midpoint
+                // Check if the horizontal segment at mid_y would cross any box
+                let (hx_min, hx_max) = if top_center_x < bottom_center_x {
+                    (top_center_x, bottom_center_x)
+                } else {
+                    (bottom_center_x, top_center_x)
+                };
+                let mut elbow_y = mid_y;
+                for &(bx1, by1, bx2, by2) in &all_boxes {
+                    // Skip source and target
+                    if by1 == top_box.y && bx1 == top_box.x {
+                        continue;
+                    }
+                    if by1 == bottom_box.y && bx1 == bottom_box.x {
+                        continue;
+                    }
+                    // If the box overlaps the horizontal segment range at elbow_y
+                    if elbow_y >= by1 && elbow_y <= by2 && bx2 >= hx_min && bx1 <= hx_max {
+                        // Move elbow below this box
+                        elbow_y = by2 + 1;
+                    }
+                }
+                for y in (top_bottom_y + 1)..elbow_y {
+                    set_char(&mut canvas, top_center_x, y, line_v);
+                }
+                // Horizontal connector at elbow_y
+                for x in hx_min..=hx_max {
+                    set_char(&mut canvas, x, elbow_y, line_h);
+                }
+                // Vertical from connector down to arrow
+                for y in (elbow_y + 1)..(bottom_top_y - 1) {
+                    set_char(&mut canvas, bottom_center_x, y, line_v);
                 }
             }
 
@@ -894,7 +1100,11 @@ fn render_horizontal_class_diagram(
     // Draw class boxes
     for cls in &diagram.classes {
         if let Some(cb) = class_boxes.get(&cls.id) {
-            draw_class_box(&mut canvas, cb, use_ascii);
+            if cb.is_lollipop {
+                draw_text(&mut canvas, cb.x, cb.y, &cb.label);
+            } else {
+                draw_class_box(&mut canvas, cb, use_ascii);
+            }
         }
     }
 
@@ -1267,6 +1477,7 @@ struct ClassBox {
     height: usize,
     x: i32,
     y: i32,
+    is_lollipop: bool,
 }
 
 fn format_member(member: &ClassMember) -> String {

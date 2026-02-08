@@ -35,6 +35,7 @@ pub fn parse_class_diagram(lines: &[&str]) -> Result<ClassDiagram, String> {
     let mut current_namespace: Option<ClassNamespace> = None;
     let mut current_class: Option<String> = None;
     let mut brace_depth = 0;
+    let mut lollipop_counter: usize = 0;
 
     for line in lines.iter().skip(1) {
         let line = *line;
@@ -173,12 +174,20 @@ pub fn parse_class_diagram(lines: &[&str]) -> Result<ClassDiagram, String> {
         // Lollipop interface: `Class01 --() bar`
         if let Some(caps) = RE_LOLLIPOP_RIGHT.captures(line) {
             let from = caps[1].to_string();
-            let to = caps[2].to_string();
+            let to_label = caps[2].to_string();
+            // Each lollipop interface gets a unique ID so duplicates don't merge
+            let to_id = format!("__lollipop_{}_{}", to_label, lollipop_counter);
+            lollipop_counter += 1;
             ensure_class(&mut class_map, &mut class_order, &from);
-            ensure_class(&mut class_map, &mut class_order, &to);
+            ensure_class(&mut class_map, &mut class_order, &to_id);
+            // Set the display label and mark as lollipop
+            if let Some(cls) = class_map.get_mut(&to_id) {
+                cls.label = to_label;
+                cls.is_lollipop = true;
+            }
             diagram.relationships.push(ClassRelationship {
                 from: from.clone(),
-                to: to.clone(),
+                to: to_id,
                 rel_type: RelationshipType::Association,
                 from_cardinality: None,
                 to_cardinality: None,
@@ -190,12 +199,20 @@ pub fn parse_class_diagram(lines: &[&str]) -> Result<ClassDiagram, String> {
 
         // Lollipop interface: `foo ()-- Class01`
         if let Some(caps) = RE_LOLLIPOP_LEFT.captures(line) {
-            let from = caps[1].to_string();
+            let from_label = caps[1].to_string();
             let to = caps[2].to_string();
-            ensure_class(&mut class_map, &mut class_order, &from);
+            // Each lollipop interface gets a unique ID so duplicates don't merge
+            let from_id = format!("__lollipop_{}_{}", from_label, lollipop_counter);
+            lollipop_counter += 1;
+            ensure_class(&mut class_map, &mut class_order, &from_id);
             ensure_class(&mut class_map, &mut class_order, &to);
+            // Set the display label and mark as lollipop
+            if let Some(cls) = class_map.get_mut(&from_id) {
+                cls.label = from_label;
+                cls.is_lollipop = true;
+            }
             diagram.relationships.push(ClassRelationship {
-                from: from.clone(),
+                from: from_id,
                 to: to.clone(),
                 rel_type: RelationshipType::Association,
                 from_cardinality: None,
@@ -261,6 +278,7 @@ fn ensure_class<'a>(
                 attributes: Vec::new(),
                 methods: Vec::new(),
                 annotation: None,
+                is_lollipop: false,
             },
         );
         class_order.push(id.to_string());

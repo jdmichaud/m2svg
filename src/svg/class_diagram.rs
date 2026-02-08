@@ -21,6 +21,7 @@ struct ClassBox {
     height: f64,
     x: f64,
     y: f64,
+    is_lollipop: bool,
 }
 
 /// Render a class diagram to SVG
@@ -38,6 +39,27 @@ pub fn render_class_svg(
     let mut class_boxes: HashMap<String, ClassBox> = HashMap::new();
 
     for cls in &diagram.classes {
+        // Lollipop interface nodes are rendered as plain text (no box)
+        if cls.is_lollipop {
+            let text_width = (cls.label.len() as f64 * 8.0).max(40.0);
+            class_boxes.insert(
+                cls.id.clone(),
+                ClassBox {
+                    id: cls.id.clone(),
+                    label: cls.label.clone(),
+                    annotation: None,
+                    attr_lines: Vec::new(),
+                    method_lines: Vec::new(),
+                    width: text_width,
+                    height: LINE_HEIGHT,
+                    x: 0.0,
+                    y: 0.0,
+                    is_lollipop: true,
+                },
+            );
+            continue;
+        }
+
         let annotation_str = cls.annotation.as_ref().map(|a| format!("<<{}>>", a));
 
         let attr_lines: Vec<String> = cls.attributes.iter().map(format_member).collect();
@@ -83,6 +105,7 @@ pub fn render_class_svg(
                 height: box_height,
                 x: 0.0,
                 y: 0.0,
+                is_lollipop: false,
             },
         );
     }
@@ -207,7 +230,11 @@ pub fn render_class_svg(
     let mut sorted_boxes: Vec<_> = class_boxes.values().collect();
     sorted_boxes.sort_by_key(|b| &b.id);
     for b in sorted_boxes {
-        svg.push_str(&draw_class_box(b));
+        if b.is_lollipop {
+            svg.push_str(&draw_lollipop_label(b));
+        } else {
+            svg.push_str(&draw_class_box(b));
+        }
     }
 
     svg.push_str("</svg>");
@@ -309,6 +336,17 @@ fn draw_class_box(b: &ClassBox) -> String {
     }
 
     s
+}
+
+fn draw_lollipop_label(b: &ClassBox) -> String {
+    let cx = b.x + b.width / 2.0;
+    let cy = b.y + LINE_HEIGHT * 0.7;
+    format!(
+        "<text x=\"{:.1}\" y=\"{:.1}\" class=\"class-name\" text-anchor=\"middle\">{}</text>\n",
+        cx,
+        cy,
+        escape_xml(&b.label)
+    )
 }
 
 fn draw_relationship(
