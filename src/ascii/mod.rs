@@ -94,7 +94,7 @@ pub fn render_mermaid_ascii(
         let diagram_width = result.lines().map(|l| l.len()).max().unwrap_or(0);
         let title_width = title.len();
         let pad = if title_width < diagram_width {
-            (diagram_width - title_width) / 2
+            (diagram_width - title_width).div_ceil(2)
         } else {
             0
         };

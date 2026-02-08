@@ -257,19 +257,20 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
         for id in group {
             if let Some(child_set) = children.get(id) {
                 if !child_set.is_empty() {
-                    // Calculate bounding box of all children
-                    let mut min_x = i32::MAX;
-                    let mut max_x = i32::MIN;
+                    // Calculate center based on child center points
+                    let mut min_cx = i32::MAX;
+                    let mut max_cx = i32::MIN;
                     for child_id in child_set {
                         if let Some(cb) = class_boxes.get(child_id) {
-                            min_x = min_x.min(cb.x);
-                            max_x = max_x.max(cb.x + cb.width as i32);
+                            let cx = cb.x + cb.width as i32 / 2;
+                            min_cx = min_cx.min(cx);
+                            max_cx = max_cx.max(cx);
                         }
                     }
 
-                    if min_x != i32::MAX {
-                        // Center this parent over children
-                        let children_center = (min_x + max_x) / 2;
+                    if min_cx != i32::MAX {
+                        // Center this parent over the midpoint of child centers
+                        let children_center = (min_cx + max_cx) / 2;
                         if let Some(cb) = class_boxes.get_mut(id) {
                             cb.x = children_center - cb.width as i32 / 2;
                             positioned.insert(id.clone());
@@ -635,9 +636,21 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
                 let child_top_y = child_box.y;
                 let line_v = if *is_dashed { dashed_v } else { solid_v };
 
+                // For middle children, snap the vertical bar to the parent center
+                // if it falls within the child's box, for better visual alignment
+                let drop_x = if *child_cx != leftmost_x
+                    && *child_cx != rightmost_x
+                    && parent_center_x >= child_box.x
+                    && parent_center_x < child_box.x + child_box.width as i32
+                {
+                    parent_center_x
+                } else {
+                    *child_cx
+                };
+
                 // Vertical line down to child
                 for y in (bar_y + 1)..child_top_y {
-                    set_char(&mut canvas, *child_cx, y, line_v);
+                    set_char(&mut canvas, drop_x, y, line_v);
                 }
             }
         }
