@@ -765,16 +765,27 @@ fn draw_class_box(canvas: &mut super::types::Canvas, cb: &ClassBox, use_ascii: b
     if let Some(ref annot) = cb.annotation {
         let annot_str = format!("<<{}>>", annot);
         set_char(canvas, x, cur_y, v_line);
-        set_char(canvas, x + 1, cur_y, ' ');
-        draw_text(canvas, x + 2, cur_y, &annot_str);
+        // Center annotation within the box (inner width = w - 2)
+        let inner_w = (w - 2) as usize;
+        let annot_offset = if annot_str.len() < inner_w {
+            (inner_w - annot_str.len()) / 2
+        } else {
+            1
+        };
+        draw_text(canvas, x + 1 + annot_offset as i32, cur_y, &annot_str);
         set_char(canvas, x + w - 1, cur_y, v_line);
         cur_y += 1;
     }
 
-    // Class name row
+    // Class name row (centered)
     set_char(canvas, x, cur_y, v_line);
-    set_char(canvas, x + 1, cur_y, ' ');
-    draw_text(canvas, x + 2, cur_y, &cb.label);
+    let inner_w = (w - 2) as usize;
+    let name_offset = if cb.label.len() < inner_w {
+        (inner_w - cb.label.len()) / 2
+    } else {
+        1
+    };
+    draw_text(canvas, x + 1 + name_offset as i32, cur_y, &cb.label);
     set_char(canvas, x + w - 1, cur_y, v_line);
     cur_y += 1;
 

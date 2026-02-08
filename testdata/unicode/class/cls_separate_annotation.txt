@@ -6,7 +6,7 @@ Shape : draw()
 ---
 ┌───────────────┐     
 │ <<interface>> │     
-│ Shape         │     
+│     Shape     │     
 ├───────────────┤     
 │ noOfVertices  │     
 ├───────────────┤     

@@ -8,7 +8,7 @@ classDiagram
   }
 ---
 ┌─────────────────┐     
-│ BankAccount     │     
+│   BankAccount   │     
 ├─────────────────┤     
 │ +owner: String  │     
 │ -balance: int   │     

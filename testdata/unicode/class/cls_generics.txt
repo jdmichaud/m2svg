@@ -12,7 +12,7 @@ Square : +getMessages() List~string~
 Square : +getDistanceMatrix() List~List~int~~
 ---
 ┌─────────────────────────────────────┐     
-│ Square<Shape>                       │     
+│            Square<Shape>            │     
 ├─────────────────────────────────────┤     
 │ id: int                             │     
 │ position: List<int>                 │     

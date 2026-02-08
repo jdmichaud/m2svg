@@ -15,7 +15,7 @@ classDiagram
   Student "1" --o "1" Bike : rides
 ---
           ┌─────────────────┐              
-          │ Student         │              
+          │     Student     │              
           ├─────────────────┤              
           │ -idCard: IdCard │              
           └─────────────────┘              
@@ -24,7 +24,7 @@ classDiagram
                  rides                     
          1         │          1            
 ┌───────────────┐    ┌───────────────┐     
-│ IdCard        │    │ Bike          │     
+│    IdCard     │    │     Bike      │     
 ├───────────────┤    ├───────────────┤     
 │ -id: int      │    │ -id: int      │     
 │ -name: string │    │ -name: string │     

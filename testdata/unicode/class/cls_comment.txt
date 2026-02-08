@@ -8,7 +8,7 @@ class Shape{
 ---
 ┌───────────────┐     
 │ <<interface>> │     
-│ Shape         │     
+│     Shape     │     
 ├───────────────┤     
 │ noOfVertices  │     
 ├───────────────┤     
