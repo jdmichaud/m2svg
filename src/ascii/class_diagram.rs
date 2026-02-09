@@ -377,17 +377,22 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
     // Top-down pass: re-center children under their (now repositioned) parents.
     // When parents are wider than children, the bottom-up layout may leave children
     // at their original positions while parents were shifted during overlap resolution.
+    // Only applies to non-fan-out cases (single parent with single child).
     for group in level_groups.iter().take(max_level + 1).skip(1) {
-        // For each child at this level, if it has exactly one parent,
-        // re-center it under that parent's center
+        // For each child at this level, if it has exactly one parent
+        // AND that parent has exactly one child, re-center under parent
         for id in group {
             if let Some(parent_set) = parents.get(id) {
                 if parent_set.len() == 1 {
                     let parent_id = parent_set.iter().next().unwrap();
-                    if let Some(parent_box) = class_boxes.get(parent_id) {
-                        let parent_center = parent_box.x + parent_box.width as i32 / 2;
-                        if let Some(cb) = class_boxes.get_mut(id) {
-                            cb.x = parent_center - cb.width as i32 / 2;
+                    let parent_has_one_child =
+                        children.get(parent_id).is_some_and(|cs| cs.len() == 1);
+                    if parent_has_one_child {
+                        if let Some(parent_box) = class_boxes.get(parent_id) {
+                            let parent_center = parent_box.x + parent_box.width as i32 / 2;
+                            if let Some(cb) = class_boxes.get_mut(id) {
+                                cb.x = parent_center - cb.width as i32 / 2;
+                            }
                         }
                     }
                 }
