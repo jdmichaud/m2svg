@@ -374,6 +374,41 @@ pub fn render_class_ascii(diagram: &ClassDiagram, config: &AsciiConfig) -> Resul
         }
     }
 
+    // Top-down pass: re-center children under their (now repositioned) parents.
+    // When parents are wider than children, the bottom-up layout may leave children
+    // at their original positions while parents were shifted during overlap resolution.
+    for group in level_groups.iter().take(max_level + 1).skip(1) {
+        // For each child at this level, if it has exactly one parent,
+        // re-center it under that parent's center
+        for id in group {
+            if let Some(parent_set) = parents.get(id) {
+                if parent_set.len() == 1 {
+                    let parent_id = parent_set.iter().next().unwrap();
+                    if let Some(parent_box) = class_boxes.get(parent_id) {
+                        let parent_center = parent_box.x + parent_box.width as i32 / 2;
+                        if let Some(cb) = class_boxes.get_mut(id) {
+                            cb.x = parent_center - cb.width as i32 / 2;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Resolve overlaps at this level (left-to-right in group order)
+        let mut prev_end: Option<i32> = None;
+        for id in group {
+            if let Some(cb) = class_boxes.get_mut(id) {
+                if let Some(pe) = prev_end {
+                    let min_x = pe + h_gap as i32;
+                    if cb.x < min_x {
+                        cb.x = min_x;
+                    }
+                }
+                prev_end = Some(cb.x + cb.width as i32);
+            }
+        }
+    }
+
     // Ensure no negative X coordinates - shift everything right if needed
     // Also account for relationship labels that extend left of their parent box
     let mut min_x = class_boxes.values().map(|cb| cb.x).min().unwrap_or(0);
